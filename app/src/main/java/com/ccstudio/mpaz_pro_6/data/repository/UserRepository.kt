@@ -19,6 +19,16 @@ interface UserRepository {
     /** Obtiene un usuario por id. */
     suspend fun getById(id: Int): Result<User>
 
+    /**
+     * Resuelve el inicio de sesión de un usuario.
+     *
+     * El backend **no expone un endpoint de autenticación**: solo existe el CRUD de
+     * `/api/usuarios` y la contraseña nunca vuelve en las respuestas. Mientras no
+     * exista login, esta operación se resuelve en local contra el repositorio; la
+     * contraseña solo puede verificarse contra los datos sembrados en el mock.
+     */
+    suspend fun authenticate(username: String, password: String): Result<User>
+
     /** Crea un usuario (UTP, DOCENTE o ESTUDIANTE). */
     suspend fun create(request: CreateUserRequest): Result<User>
 

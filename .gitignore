@@ -24,3 +24,8 @@ local.properties
 *.hprof
 *.jks
 *.keystore
+
+# Archivos de IDE y build
+/.idea/
+/app/build/
+/build/

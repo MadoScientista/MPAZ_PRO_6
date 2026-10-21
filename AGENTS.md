@@ -96,19 +96,22 @@ El backend y el spec usan español; **el código usa inglés**. No inventar otro
 
 ```
 com/ccstudio/mpaz_pro_6/
-├── MainActivity.kt
+├── MainActivity.kt              # solo crea el AppContainer y monta AppNavGraph
 ├── data/                      # CAPA DE DATOS
 │   ├── model/                 # 1 data class por cada *Response del spec
-│   │                          # (LearningUnit, no Unit: ver 4.3)
+│   │   │                      # (LearningUnit, no Unit: ver 4.3)
+│   │   └── requests/          # cuerpos de Create* y Update* por recurso
 │   ├── enums/                 # enums del backend (nombre inglés, valor wire español)
 │   ├── error/                 # ApiError
 │   ├── repository/            # interfaces (contrato estable con la UI)
 │   ├── mock/                  # ⚠ TEMPORAL: implementaciones en memoria
-│   └── remote/                # ⚠ RESERVADO: cliente HTTP + DTOs + mappers
+│   ├── remote/                # ⚠ RESERVADO: cliente HTTP + DTOs + mappers
+│   ├── session/               # sesión local (no hay endpoint de login)
+│   └── AppContainer.kt        # único punto donde se decide la implementación
 └── ui/                        # CAPA VISUAL
     ├── theme/                 # Color / Theme / Type (Material 3)
     ├── navigation/            # AppRoutes + AppNavGraph
-    ├── common/                # piezas transversales de UI
+    ├── common/                # piezas transversales de UI (UiState)
     ├── screens/               # screens, agrupadas por dominio
     └── components/            # componentes, agrupados por dominio
 ```
@@ -140,14 +143,23 @@ com/ccstudio/mpaz_pro_6/
 ### 4.4 Contrato de datos
 
 - `data/model/` refleja **1:1** los `*Response` del spec. Un campo del modelo = un campo de la respuesta.
+- `data/model/requests/` contiene los cuerpos de las operaciones de escritura: `Create*Request` con los
+  campos obligatorios y `Update*Request` con **todos los campos opcionales** (`null` = "no enviar", porque
+  el `PUT` es parcial).
 - `data/enums/` es el **único** lugar donde viven los enums del dominio. Cada enum expone
   `wireValue` (el texto exacto que viaja al backend) y `fromWire(value)`, que devuelve `null`
   ante un valor desconocido para que el mapper no lance excepciones.
-- `data/repository/` define una interfaz por recurso, con funciones `suspend` que devuelven `Result<T>`
-  o lanzan `ApiError`. **La UI nunca conoce la implementación.**
+- `data/repository/` define una interfaz por recurso, con funciones `suspend` que devuelven `Result<T>`.
+  El fallo **siempre** es un `ApiError` (`BadRequest`, `NotFound`, `Conflict`, `Network`, `Unknown`).
+  **La UI nunca conoce la implementación.**
 - `data/mock/` implementa esas interfaces con datos en memoria. **Es temporal**: cuando exista el backend,
   se implementa la misma interfaz en `data/remote/` y se cambia la inyección. **La UI no cambia.**
 - `data/remote/` está reservado. No se escribe hasta que exista el backend.
+- `data/AppContainer.kt` es el **único** lugar donde se decide la implementación de cada repositorio.
+  No se usa un contenedor de inyección externo (Hilt, Koin): una clase manual es suficiente y evita
+  agregar dependencias y *annotation processing*.
+- `data/session/Session.kt` guarda el usuario con sesión iniciada (`StateFlow<User?>`). La contraseña
+  nunca forma parte del modelo `User`: vive aparte, en `MockStore.passwords`.
 
 ### 4.5 Patrones de Compose que ya rigen el repo
 
@@ -196,7 +208,7 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 | Gap | Consecuencia |
 |---|---|
-| No existe endpoint de login/auth; solo hay CRUD de `/api/usuarios` con `username`/`password`. | `LoginScreen` es UI pura; la sesión se resuelve en local. |
+| No existe endpoint de login/auth; solo hay CRUD de `/api/usuarios` con `username`/`password`. | `UserRepository.authenticate()` resuelve la sesión en local; `LoginScreen` es UI pura. |
 | No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra por `DRAFT` o `EN_REVISION` en cliente. |
 | No hay listado de estudiantes por curso. | El docente ve el listado de usuarios completo. |
 | Las "reglas 1, 2, 4, 7, 9, 11" del modelo no están en el repo. | Los mensajes se apoyan solo en `specs/endpoints`. |
@@ -207,26 +219,36 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 - **No hacer commit ni push** salvo que se pida explícitamente. Si se pide, revisar antes
   `git status`, `git diff` y `git log --oneline -10`, y subir solo lo intencionado.
-- **No borrar ni reescribir código funcional existente** sin motivo explícito. Hoy hay 3 pantallas
-  y 2 componentes con implementación real (`LoginScreen`, `UnitListScreen`, `UnitCard`,
-  `UnitStatusChip`), además de la capa de datos completa: son la referencia de estilo de la app.
+- **No borrar ni reescribir código funcional existente** sin motivo explícito. Hoy hay 5 pantallas
+  y 13 componentes con implementación real (el vertical slice UTP: `LoginScreen`, `HomeUTPScreen`,
+  `UnitListScreen`, `UnitDetailScreen`, `UnitAuthorizationScreen`, más `UnitCard`, `UnitStatusChip`,
+  `UnitSummaryHeader` y las piezas de `ui/components/common/`), además de la capa de datos completa:
+  son la referencia de estilo de la app.
 - **Al crear un archivo nuevo**, dejar en él un comentario en español que describa **qué debe contener**,
   mientras la implementación no esté escrita.
 - **Respetar el idioma**: identificadores en inglés, comentarios y textos de UI en español.
-- **No agregar dependencias** sin avisar. Hoy faltan `navigation-compose` y `lifecycle-viewmodel-compose`,
-  que se añadirán cuando se implemente la navegación real.
+- **No agregar dependencias** sin avisar. Ya están `navigation-compose` y `lifecycle-viewmodel-compose`
+  (navegación y ViewModels); cualquier otra debe avisarse antes.
 - **No tocar** `specs/endpoints` salvo para corregir una errata del contrato.
 
 ---
 
 ## 7. Estado actual del proyecto
 
-La **capa de datos está completa**: los 8 enums de `data/enums/` y los 17 modelos de
-`data/model/` implementan el contrato completo del backend. Faltan por escribir las interfaces de
-`data/repository/`, las implementaciones en memoria de `data/mock/` y el cliente de `data/remote/`
-(reservado hasta que exista el backend).
+La **capa de datos está completa**: los 8 enums de `data/enums/`, los 17 modelos de
+`data/model/`, los 24 cuerpos de `data/model/requests/` y las 14 interfaces de `data/repository/`
+implementan el contrato completo del backend. De `data/mock/` están implementados
+`MockSubjectRepository`, `MockCourseRepository`, `MockUnitRepository` y `MockUserRepository` sobre un
+`MockStore` compartido; los demás repositorios mock (actividad, alternativa, contenido, recurso,
+objetivo, pregunta, asignación, intento, respuesta, informe) y el cliente de `data/remote/`
+(reservado hasta que exista el backend) siguen como stub documentado.
 
-La **capa visual está esqueleto**: la estructura de directorios está completa y cada archivo documenta
-su contenido previsto, pero la implementación de las pantallas nuevas está pendiente. Lo único
-implementado hoy es el flujo `LoginScreen → UnitListScreen → UnitCard` (con `UnitStatusChip`),
-alimentado con datos ficticios en `MainActivity`.
+La **capa visual tiene implementado el vertical slice UTP**: `LoginScreen → HomeUTPScreen →
+UnitListScreen → UnitDetailScreen → UnitAuthorizationScreen`, navegado con `navigation-compose`
+desde `AppNavGraph`, con un `ViewModel` por pantalla y las piezas comunes de `ui/components/common/`.
+Los datos salen de `data/mock/` a través de `AppContainer`; las pantallas de docente y estudiante
+aterrizan por ahora en el mismo listado de unidades, que filtra por rol.
+Las demás pantallas (asignaturas, cursos, objetivos, contenidos, actividades, preguntas,
+asignaciones, intentos, informes y usuarios) siguen como esqueleto documentado.
+
+Los tests unitarios cubren los cuatro repositorios mock implementados (`app/src/test/.../data/mock/`).
