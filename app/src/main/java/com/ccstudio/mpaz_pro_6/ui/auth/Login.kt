@@ -1,4 +1,4 @@
-package com.ccstudio.mpaz_pro_6.ui.screens
+package com.ccstudio.mpaz_pro_6.ui.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.model.Usuario
 
@@ -29,7 +30,7 @@ class Login {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -47,6 +48,7 @@ class Login {
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
 

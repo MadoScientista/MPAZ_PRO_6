@@ -1,0 +1,75 @@
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        setContent {
+            MPAZ_PRO_6Theme {
+
+                // Controla qué pantalla se muestra.
+                var mostrarUnidades by rememberSaveable {
+                    mutableStateOf(false)
+                }
+
+                // Datos ficticios para probar la interfaz.
+                val unidades = remember {
+                    mutableStateListOf(
+                        UnidadPendiente(
+                            id = 1,
+                            asignatura = "Matemática",
+                            titulo = "Números enteros y operaciones",
+                            cantidadActividades = 6
+                        ),
+                        UnidadPendiente(
+                            id = 2,
+                            asignatura = "Ciencias Naturales",
+                            titulo = "Ecosistemas y biodiversidad",
+                            cantidadActividades = 4
+                        ),
+                        UnidadPendiente(
+                            id = 3,
+                            asignatura = "Lenguaje",
+                            titulo = "Comprensión de textos narrativos",
+                            cantidadActividades = 5
+                        )
+                    )
+                }
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+
+                    if (mostrarUnidades) {
+
+                        // Pantalla de revisión de unidades.
+                        UnitListScreen(
+                            unidadesPendientes = unidades,
+
+                            onVerDetalle = { unidad ->
+                                // Aquí conectaremos la navegación
+                                // a la pantalla de detalle.
+                            },
+
+                            onAutorizar = { unidad ->
+                                // Simulación de autorización.
+                                unidades.removeAll {
+                                    it.id == unidad.id
+                                }
+                            },
+
+                            modifier = Modifier.padding(innerPadding)
+                        )
+
+                    } else {
+
+                        // Pantalla de inicio de sesión.
+                        Login().FormScreen(
+                            onNavegarADetalle = { _: Usuario ->
+                                mostrarUnidades = true
+                            },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+            }
+        }
+    }
