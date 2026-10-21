@@ -14,12 +14,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.ccstudio.mpaz_pro_6.model.Usuario
-import com.ccstudio.mpaz_pro_6.ui.auth.Login
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
+import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitListScreen
 import com.ccstudio.mpaz_pro_6.ui.theme.MPAZ_PRO_6Theme
-import com.ccstudio.mpaz_pro_6.ui.utp.UnitListScreen
-import com.ccstudio.mpaz_pro_6.ui.utp.UnidadPendiente
+import java.time.Instant
 
+/**
+ * Punto de entrada de la aplicación.
+ *
+ * Mientras no exista `navigation-compose`, el flujo se resuelve con un estado local
+ * que alterna entre el login y el listado de unidades. Cuando se implemente
+ * `AppNavGraph`, este archivo debe delegar el enrutado por rol (`UserRole`) y
+ * dejar de mantener la lógica de navegación aquí.
+ */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,30 +40,50 @@ class MainActivity : ComponentActivity() {
             MPAZ_PRO_6Theme {
 
                 // Controla qué pantalla se muestra.
-                var mostrarUnidades by rememberSaveable {
+                var showUnits by rememberSaveable {
                     mutableStateOf(false)
                 }
 
                 // Datos ficticios para probar la interfaz.
-                val unidades = remember {
+                val subjects = remember {
                     mutableStateListOf(
-                        UnidadPendiente(
+                        Subject(id = 1, nombre = "Matemática"),
+                        Subject(id = 2, nombre = "Ciencias Naturales"),
+                        Subject(id = 3, nombre = "Lenguaje")
+                    )
+                }
+
+                val units = remember {
+                    mutableStateListOf(
+                        LearningUnit(
                             id = 1,
-                            asignatura = "Matemática",
+                            asignaturaId = 1,
+                            nivelEducativo = "Sexto Basico",
                             titulo = "Números enteros y operaciones",
-                            cantidadActividades = 6
+                            orden = 1,
+                            estado = ContentStatus.DRAFT,
+                            autorizadaPorId = null,
+                            fechaAutorizacion = null
                         ),
-                        UnidadPendiente(
+                        LearningUnit(
                             id = 2,
-                            asignatura = "Ciencias Naturales",
+                            asignaturaId = 2,
+                            nivelEducativo = "Sexto Basico",
                             titulo = "Ecosistemas y biodiversidad",
-                            cantidadActividades = 4
+                            orden = 2,
+                            estado = ContentStatus.IN_REVIEW,
+                            autorizadaPorId = null,
+                            fechaAutorizacion = null
                         ),
-                        UnidadPendiente(
+                        LearningUnit(
                             id = 3,
-                            asignatura = "Lenguaje",
+                            asignaturaId = 3,
+                            nivelEducativo = "Sexto Basico",
                             titulo = "Comprensión de textos narrativos",
-                            cantidadActividades = 5
+                            orden = 1,
+                            estado = ContentStatus.AUTHORIZED,
+                            autorizadaPorId = 1,
+                            fechaAutorizacion = Instant.parse("2026-04-06T08:00:00Z")
                         )
                     )
                 }
@@ -62,21 +92,22 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
 
-                    if (mostrarUnidades) {
+                    if (showUnits) {
 
                         // Pantalla de revisión de unidades.
                         UnitListScreen(
-                            unidadesPendientes = unidades,
+                            pendingUnits = units,
+                            subjects = subjects,
 
-                            onVerDetalle = { unidad ->
+                            onViewDetail = { unit ->
                                 // Aquí conectaremos la navegación
                                 // a la pantalla de detalle.
                             },
 
-                            onAutorizar = { unidad ->
+                            onAuthorize = { unit ->
                                 // Simulación de autorización.
-                                unidades.removeAll {
-                                    it.id == unidad.id
+                                units.removeAll {
+                                    it.id == unit.id
                                 }
                             },
 
@@ -86,9 +117,9 @@ class MainActivity : ComponentActivity() {
                     } else {
 
                         // Pantalla de inicio de sesión.
-                        Login().FormScreen(
-                            onNavegarADetalle = { _: Usuario ->
-                                mostrarUnidades = true
+                        LoginScreen(
+                            onIniciarSesion = { _: String, _: String ->
+                                showUnits = true
                             },
                             modifier = Modifier.padding(innerPadding)
                         )
