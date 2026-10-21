@@ -3,21 +3,16 @@ package com.ccstudio.mpaz_pro_6.ui.screens.auth
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
 
 /**
  * Pantalla de inicio de sesión.
@@ -33,13 +28,18 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun LoginScreen(
-    onIniciarSesion: (username: String, password: String) -> Unit,
-    modifier: Modifier = Modifier
+    username: String,
+    password: String,
+    onUsernameChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onIniciarSesion: () -> Unit,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    error: String? = null,
+    hint: String? = null
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
@@ -50,29 +50,43 @@ fun LoginScreen(
             style = MaterialTheme.typography.headlineMedium
         )
 
-        OutlinedTextField(
+        AppTextField(
             value = username,
-            onValueChange = { username = it },
-            label = { Text("Nombre de usuario") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            onValueChange = onUsernameChange,
+            label = "Nombre de usuario",
+            enabled = !isLoading
         )
 
-        Button(
-            onClick = {
-                if (username.isNotBlank() && password.isNotBlank()) {
-                    onIniciarSesion(username, password)
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Iniciar sesión")
+        AppTextField(
+            value = password,
+            onValueChange = onPasswordChange,
+            label = "Contraseña",
+            isPassword = true,
+            enabled = !isLoading
+        )
+
+        if (error != null) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        AppButton(
+            text = if (isLoading) "Validando..." else "Iniciar sesión",
+            onClick = onIniciarSesion,
+            enabled = !isLoading
+        )
+
+        if (hint != null) {
+            Text(
+                text = hint,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

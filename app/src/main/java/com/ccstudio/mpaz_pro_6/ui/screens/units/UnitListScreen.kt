@@ -3,28 +3,30 @@ package com.ccstudio.mpaz_pro_6.ui.screens.units
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
+import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
+import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
+import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
+import com.ccstudio.mpaz_pro_6.ui.components.common.SearchField
+import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
 
 /**
@@ -39,26 +41,30 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  *
  * El mismo listado sirve a los tres roles; cambia el contenido según el `UserRole`:
  * el UTP ve las unidades `BORRADOR` y `EN_REVISION` pendientes de revisión, el
- * docente las unidades de sus asignaciones y el estudiante solo las `PUBLICADO`.
+ * docente las unidades autorizadas y publicadas, y el estudiante solo las
+ * `PUBLICADO`.
  */
 @Composable
 fun UnitListScreen(
-    pendingUnits: List<LearningUnit>,
-    subjects: List<Subject>,
+    unidades: List<LearningUnit>,
+    asignaturas: List<Subject>,
     onViewDetail: (LearningUnit) -> Unit,
     onAuthorize: (LearningUnit) -> Unit,
-    modifier: Modifier = Modifier
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    error: ApiError? = null
 ) {
     var search by rememberSaveable { mutableStateOf("") }
     var subjectFilter by rememberSaveable { mutableStateOf("Todas") }
 
     // Nombre de cada asignatura, para mostrar y filtrar por ella.
-    val subjectNames = subjects.associate { it.id to it.nombre }
+    val subjectNames = asignaturas.associate { it.id to it.nombre }
 
     val subjectFilterOptions = listOf("Todas") +
-            pendingUnits.mapNotNull { subjectNames[it.asignaturaId] }.distinct().sorted()
+            unidades.mapNotNull { subjectNames[it.asignaturaId] }.distinct().sorted()
 
-    val filteredUnits = pendingUnits.filter { unit ->
+    val filteredUnits = unidades.filter { unit ->
         val subjectName = subjectNames[unit.asignaturaId]
 
         val matchesSubject =
@@ -80,101 +86,67 @@ fun UnitListScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Título y total de revisiones pendientes.
-        Text(
-            text = "Revisión de unidades",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        when {
+            isLoading -> LoadingState(message = "Cargando unidades...")
 
-        Text(
-            text = "${pendingUnits.size} revisiones pendientes",
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.bodyMedium
-        )
+            error != null -> ErrorState(error = error, onRetry = onRetry)
 
-        // Buscador.
-        OutlinedTextField(
-            value = search,
-            onValueChange = { search = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Buscar unidad") },
-            placeholder = { Text("Título o asignatura") },
-            singleLine = true
-        )
+            else -> {
 
-        // Filtros por asignatura.
-        Text(
-            text = "Filtrar por asignatura",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(end = 4.dp)
-        ) {
-            items(subjectFilterOptions) { subject ->
-                FilterChip(
-                    selected = subjectFilter == subject,
-                    onClick = { subjectFilter = subject },
-                    label = { Text(subject) }
-                )
-            }
-        }
-
-        // Encabezado del listado.
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Unidades por revisar",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = " (${filteredUnits.size})",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        // Listado de tarjetas.
-        if (filteredUnits.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Text(
-                    text = if (pendingUnits.isEmpty()) {
-                        "No hay unidades pendientes."
-                    } else {
-                        "No se encontraron unidades."
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Revisión de unidades",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
                 )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 8.dp)
-            ) {
-                items(
-                    items = filteredUnits,
-                    key = { it.id }
-                ) { unit ->
-                    UnitCard(
-                        unit = unit,
-                        subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                        onViewDetail = { onViewDetail(unit) },
-                        onAuthorize = { onAuthorize(unit) }
+
+                Text(
+                    text = "${unidades.size} unidades visibles",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                SearchField(
+                    value = search,
+                    onValueChange = { search = it },
+                    placeholder = "Título o asignatura"
+                )
+
+                if (subjectFilterOptions.size > 1) {
+                    FilterChipRow(
+                        options = subjectFilterOptions,
+                        selected = subjectFilter,
+                        onSelect = { subjectFilter = it }
                     )
+                }
+
+                SectionHeader(title = "Unidades", count = filteredUnits.size)
+
+                if (filteredUnits.isEmpty()) {
+                    EmptyState(
+                        message = if (unidades.isEmpty()) {
+                            "No hay unidades para mostrar."
+                        } else {
+                            "No se encontraron unidades."
+                        }
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 8.dp)
+                    ) {
+                        items(
+                            items = filteredUnits,
+                            key = { it.id }
+                        ) { unit ->
+                            UnitCard(
+                                unit = unit,
+                                subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
+                                onViewDetail = { onViewDetail(unit) },
+                                onAuthorize = { onAuthorize(unit) }
+                            )
+                        }
+                    }
                 }
             }
         }
