@@ -143,19 +143,32 @@ fun AppNavGraph(container: AppContainer) {
                 factory = UnitDetailViewModel.factory(
                     unitRepository = container.unitRepository,
                     subjectRepository = container.subjectRepository,
+                    learningObjectiveRepository = container.learningObjectiveRepository,
+                    contentRepository = container.contentRepository,
+                    contentResourceRepository = container.contentResourceRepository,
+                    activityRepository = container.activityRepository,
                     unitId = unitId
                 )
             )
 
+            LaunchedEffect(Unit) {
+                viewModel.cargar()
+            }
+
             UnitDetailScreen(
                 unidad = viewModel.unidad,
                 asignatura = viewModel.asignatura,
+                objetivos = viewModel.objetivos,
+                contenidosPorObjetivo = viewModel.contenidosPorObjetivo,
+                recursosPorContenido = viewModel.recursosPorContenido,
+                actividades = viewModel.actividades,
                 isLoading = viewModel.isLoading,
                 error = viewModel.error,
                 onAutorizar = {
                     navController.navigate(AppRoutes.unitAuthorization(unitId))
                 },
-                onRetry = viewModel::cargar
+                onRetry = viewModel::cargar,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
