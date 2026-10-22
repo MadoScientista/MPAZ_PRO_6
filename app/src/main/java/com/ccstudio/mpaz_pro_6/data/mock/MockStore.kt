@@ -1,7 +1,11 @@
 package com.ccstudio.mpaz_pro_6.data.mock
 
+import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
+import com.ccstudio.mpaz_pro_6.data.model.Content
+import com.ccstudio.mpaz_pro_6.data.model.ContentResource
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.User
@@ -12,9 +16,7 @@ import kotlinx.coroutines.sync.Mutex
  *
  * Es la fuente única de verdad mientras no exista el backend: todos los
  * repositorios mock comparten estas listas, de modo que las reglas que cruzan
- * entidades (el borrado en cascada de los recursos de un contenido, el `409`
- * de una unidad que tiene objetivos asociados, los cursos de un docente) se
- * resuelven con datos coherentes y no con repositorios aislados.
+ * entidades se resuelven con datos coherentes.
  *
  * `mutex` serializa las escrituras: los repositorios son `suspend` y pueden
  * llamarse desde varias corrutinas.
@@ -30,6 +32,10 @@ class MockStore(
     val assignments: MutableList<Assignment> = mutableListOf(),
     val users: MutableList<User> = mutableListOf(),
     val passwords: MutableMap<Int, String> = mutableMapOf(),
+    val objectives: MutableList<LearningObjective> = mutableListOf(),
+    val contents: MutableList<Content> = mutableListOf(),
+    val contentResources: MutableList<ContentResource> = mutableListOf(),
+    val activities: MutableList<Activity> = mutableListOf(),
     val mutex: Mutex = Mutex()
 ) {
 
@@ -39,4 +45,8 @@ class MockStore(
     var nextUnitId: Int = (units.maxOfOrNull { it.id } ?: 0) + 1
     var nextAssignmentId: Int = (assignments.maxOfOrNull { it.id } ?: 0) + 1
     var nextUserId: Int = (users.maxOfOrNull { it.id } ?: 0) + 1
+    var nextObjectiveId: Int = (objectives.maxOfOrNull { it.id } ?: 0) + 1
+    var nextContentId: Int = (contents.maxOfOrNull { it.id } ?: 0) + 1
+    var nextContentResourceId: Int = (contentResources.maxOfOrNull { it.id } ?: 0) + 1
+    var nextActivityId: Int = (activities.maxOfOrNull { it.id } ?: 0) + 1
 }

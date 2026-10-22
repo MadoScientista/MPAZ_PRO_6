@@ -1,9 +1,16 @@
 package com.ccstudio.mpaz_pro_6.data.mock
 
+import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
+import com.ccstudio.mpaz_pro_6.data.enums.ContentOrigin
+import com.ccstudio.mpaz_pro_6.data.enums.ContentResourceType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
+import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
+import com.ccstudio.mpaz_pro_6.data.model.Content
+import com.ccstudio.mpaz_pro_6.data.model.ContentResource
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.User
@@ -81,9 +88,9 @@ object MockData {
                 nivelEducativo = "Sexto Basico",
                 titulo = "Comprensión de textos narrativos",
                 orden = 1,
-                estado = ContentStatus.AUTHORIZED,
-                autorizadaPorId = 1,
-                fechaAutorizacion = Instant.parse("2026-03-02T10:00:00Z")
+                estado = ContentStatus.IN_REVIEW,
+                autorizadaPorId = null,
+                fechaAutorizacion = null
             ),
             LearningUnit(
                 id = 5,
@@ -91,6 +98,26 @@ object MockData {
                 nivelEducativo = "Sexto Basico",
                 titulo = "Ciclo del agua",
                 orden = 2,
+                estado = ContentStatus.IN_REVIEW,
+                autorizadaPorId = null,
+                fechaAutorizacion = null
+            ),
+            LearningUnit(
+                id = 6,
+                asignaturaId = 3,
+                nivelEducativo = "Sexto Basico",
+                titulo = "Géneros literarios",
+                orden = 2,
+                estado = ContentStatus.AUTHORIZED,
+                autorizadaPorId = 1,
+                fechaAutorizacion = Instant.parse("2026-03-02T10:00:00Z")
+            ),
+            LearningUnit(
+                id = 7,
+                asignaturaId = 2,
+                nivelEducativo = "Sexto Basico",
+                titulo = "La materia y sus cambios",
+                orden = 3,
                 estado = ContentStatus.PUBLISHED,
                 autorizadaPorId = 1,
                 fechaAutorizacion = Instant.parse("2026-03-10T09:30:00Z")
@@ -147,13 +174,144 @@ object MockData {
             4 to "est456"
         )
 
+        val objectives = mutableListOf(
+            LearningObjective(
+                id = 1,
+                unidadId = 2,
+                codigo = "OA01",
+                descripcion = "Identificar componentes de un ecosistema",
+                eje = "Sistemas vivos",
+                textoReferencia = "Texto escolar Ciencias Naturales"
+            ),
+            LearningObjective(
+                id = 2,
+                unidadId = 2,
+                codigo = "OA02",
+                descripcion = "Explicar relaciones tróficas",
+                eje = "Sistemas vivos",
+                textoReferencia = "Texto escolar Ciencias Naturales"
+            ),
+            LearningObjective(
+                id = 3,
+                unidadId = 4,
+                codigo = "OA01",
+                descripcion = "Reconocer elementos narrativos",
+                eje = "Lectura",
+                textoReferencia = "Texto escolar Lenguaje"
+            ),
+            LearningObjective(
+                id = 4,
+                unidadId = 5,
+                codigo = "OA01",
+                descripcion = "Explicar el ciclo del agua",
+                eje = "Tierra y universo",
+                textoReferencia = "Texto escolar Ciencias Naturales"
+            )
+        )
+
+        val contents = mutableListOf(
+            Content(
+                id = 1,
+                oaId = 1,
+                titulo = "¿Qué es un ecosistema?",
+                explicacion = "Un ecosistema está formado por seres vivos y factores no vivos que interactúan entre sí.",
+                ejemplos = "Un bosque, un río o un desierto son ejemplos de ecosistemas.",
+                instrucciones = "Identifica seres bióticos y abióticos en un ejemplo.",
+                orden = 1,
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.AUTHORIZED
+            ),
+            Content(
+                id = 2,
+                oaId = 2,
+                titulo = "Cadenas tróficas",
+                explicacion = "Las cadenas tróficas muestran quién se alimenta de quién en un ecosistema.",
+                ejemplos = "Planta -> Conejo -> Zorro",
+                instrucciones = "Completa una cadena trófica con los organismos dados.",
+                orden = 1,
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.AUTHORIZED
+            ),
+            Content(
+                id = 3,
+                oaId = 3,
+                titulo = "Narrador y personajes",
+                explicacion = "Todo relato tiene un narrador y personajes que desarrollan la acción.",
+                ejemplos = "Cuento, fábula o leyenda.",
+                instrucciones = "Identifica el tipo de narrador en el texto.",
+                orden = 1,
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.AUTHORIZED
+            ),
+            Content(
+                id = 4,
+                oaId = 4,
+                titulo = "Procesos del ciclo del agua",
+                explicacion = "La evaporación, condensación, precipitación y filtración forman el ciclo del agua.",
+                ejemplos = "La lluvia, el rocío y las nubes.",
+                instrucciones = "Ordena los procesos del ciclo del agua.",
+                orden = 1,
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.AUTHORIZED
+            )
+        )
+
+        val contentResources = mutableListOf(
+            ContentResource(
+                id = 1,
+                contenidoId = 1,
+                tipo = ContentResourceType.IMAGE,
+                url = "https://ejemplo.test/ecosistema.png",
+                descripcion = "Esquema de un ecosistema",
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.AUTHORIZED
+            ),
+            ContentResource(
+                id = 2,
+                contenidoId = 4,
+                tipo = ContentResourceType.IMAGE,
+                url = "https://ejemplo.test/ciclo-agua.png",
+                descripcion = "Diagrama del ciclo del agua",
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.AUTHORIZED
+            )
+        )
+
+        val activities = mutableListOf(
+            Activity(
+                id = 1,
+                unidadId = 2,
+                titulo = "Clasificar seres vivos y no vivos",
+                tipo = ActivityType.ACTIVITY,
+                orden = 1
+            ),
+            Activity(
+                id = 2,
+                unidadId = 4,
+                titulo = "Identificar elementos narrativos",
+                tipo = ActivityType.ACTIVITY,
+                orden = 1
+            ),
+            Activity(
+                id = 3,
+                unidadId = 5,
+                titulo = "Desafío: ciclo del agua",
+                tipo = ActivityType.CHALLENGE,
+                orden = 1
+            )
+        )
+
         return MockStore(
             subjects = subjects,
             courses = courses,
             units = units,
             assignments = assignments,
             users = users,
-            passwords = passwords
+            passwords = passwords,
+            objectives = objectives,
+            contents = contents,
+            contentResources = contentResources,
+            activities = activities
         )
     }
 }
