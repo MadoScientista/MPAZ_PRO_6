@@ -4,9 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -74,7 +73,7 @@ fun AppNavGraph(container: AppContainer) {
             )
         }
 
-        composable(AppRoutes.HOME) {
+        composable(AppRoutes.HOME) { entry ->
             when (rol) {
                 UserRole.UTP -> {
                     val viewModel: HomeUTPViewModel = viewModel(
@@ -84,6 +83,21 @@ fun AppNavGraph(container: AppContainer) {
                             subjectRepository = container.subjectRepository
                         )
                     )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    val refreshHome by entry.savedStateHandle
+                        .getStateFlow(REFRESH_UNITS_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refreshHome) {
+                        if (refreshHome) {
+                            viewModel.cargar()
+                            entry.savedStateHandle[REFRESH_UNITS_KEY] = false
+                        }
+                    }
 
                     HomeUTPScreen(
                         userName = usuario?.nombre ?: "",
@@ -107,6 +121,7 @@ fun AppNavGraph(container: AppContainer) {
                     UnitListDestination(
                         container = container,
                         navController = navController,
+                        entry = entry,
                         rol = rol,
                         onViewDetail = { unit ->
                             navController.navigate(AppRoutes.unitDetail(unit.id))
@@ -119,10 +134,11 @@ fun AppNavGraph(container: AppContainer) {
             }
         }
 
-        composable(AppRoutes.UNITS) {
+        composable(AppRoutes.UNITS) { entry ->
             UnitListDestination(
                 container = container,
                 navController = navController,
+                entry = entry,
                 rol = rol,
                 onViewDetail = { unit ->
                     navController.navigate(AppRoutes.unitDetail(unit.id))
@@ -181,12 +197,18 @@ fun AppNavGraph(container: AppContainer) {
             val viewModel: UnitAuthorizationViewModel = viewModel(
                 factory = UnitAuthorizationViewModel.factory(
                     unitRepository = container.unitRepository,
+                    subjectRepository = container.subjectRepository,
                     unitId = unitId
                 )
             )
 
+            LaunchedEffect(Unit) {
+                viewModel.cargar()
+            }
+
             UnitAuthorizationScreen(
                 unidad = viewModel.unidad,
+                asignatura = viewModel.asignatura,
                 isLoading = viewModel.isLoading,
                 error = viewModel.error,
                 mensaje = viewModel.mensaje,
@@ -195,14 +217,20 @@ fun AppNavGraph(container: AppContainer) {
 
                     viewModel.autorizar(autorizanteId) {
                         // Avisa al listado de atrás que tiene que recargar.
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set(REFRESH_UNITS_KEY, true)
-
-                        navController.popBackStack()
+                        navController.marcarListadoParaRecarga(rol)
                     }
                 },
-                onRetry = viewModel::cargar
+                onRechazar = {
+                    viewModel.rechazar {
+                        navController.marcarListadoParaRecarga(rol)
+                    }
+                },
+                onRetry = viewModel::cargar,
+                onNavigateBack = { navController.popBackStack() },
+                onVolverAlListado = {
+                    navController.marcarListadoParaRecarga(rol)
+                    navController.popBackStack(rutaListado(rol), inclusive = false)
+                }
             )
         }
     }
@@ -218,6 +246,7 @@ fun AppNavGraph(container: AppContainer) {
 private fun UnitListDestination(
     container: AppContainer,
     navController: NavHostController,
+    entry: NavBackStackEntry,
     rol: UserRole,
     onViewDetail: (LearningUnit) -> Unit,
     onAuthorize: (LearningUnit) -> Unit
@@ -230,16 +259,14 @@ private fun UnitListDestination(
         )
     )
 
-    val refresh by navController.currentBackStackEntry
-        ?.savedStateHandle
-        ?.getStateFlow(REFRESH_UNITS_KEY, false)
-        ?.collectAsState()
-        ?: remember { mutableStateOf(false) }
+    val refresh by entry.savedStateHandle
+        .getStateFlow(REFRESH_UNITS_KEY, false)
+        .collectAsState()
 
     LaunchedEffect(refresh) {
         if (refresh) {
             viewModel.cargar()
-            navController.currentBackStackEntry?.savedStateHandle?.set(REFRESH_UNITS_KEY, false)
+            entry.savedStateHandle[REFRESH_UNITS_KEY] = false
         }
     }
 
@@ -256,6 +283,27 @@ private fun UnitListDestination(
         onAuthorize = { unit -> onAuthorize(unit) },
         onRetry = viewModel::cargar
     )
+}
+
+/**
+ * Ruta donde vive el listado de unidades según el rol.
+ *
+ * La UTP llega al listado desde su panel de inicio; los otros dos roles aterrizan
+ * directamente en el listado, que es su pantalla de inicio.
+ */
+private fun rutaListado(rol: UserRole): String =
+    if (rol == UserRole.UTP) AppRoutes.UNITS else AppRoutes.HOME
+
+/**
+ * Marca el listado de unidades para que recargue sus datos.
+ *
+ * El listado puede estar dos pantallas más abajo en la pila (listado → detalle →
+ * autorización), así que se busca su entrada en la pila y no solo en la anterior.
+ * Si el listado no está en la pila, no hay nada que marcar.
+ */
+private fun NavHostController.marcarListadoParaRecarga(rol: UserRole) {
+    runCatching { getBackStackEntry(rutaListado(rol)) }
+        .onSuccess { entry -> entry.savedStateHandle[REFRESH_UNITS_KEY] = true }
 }
 
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */

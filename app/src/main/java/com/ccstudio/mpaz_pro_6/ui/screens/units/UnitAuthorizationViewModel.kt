@@ -11,7 +11,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
+import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateLearningUnitRequest
+import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -19,17 +21,23 @@ import java.time.Instant
 /**
  * Estado de la pantalla de autorización y publicación de una unidad.
  *
- * Permite pasar una unidad de `BORRADOR` a `AUTORIZADO` y de `AUTORIZADO` a
- * `PUBLISHED`. El backend exige un autorizante con rol `UTP` y una fecha de
- * autorización: una autorización incompleta devuelve `400 Bad Request`.
+ * Permite pasar una unidad de `BORRADOR` o `EN_REVISION` a `AUTORIZADO`, de
+ * `AUTORIZADO` a `PUBLISHED`, o devolverla a corrección (`BORRADOR`).
+ * El backend exige un autorizante con rol `UTP` y una fecha de autorización
+ * para `AUTORIZADO` y `PUBLISHED`.
  */
 class UnitAuthorizationViewModel(
     private val unitRepository: UnitRepository,
+    private val subjectRepository: SubjectRepository,
     private val unitId: Int
 ) : ViewModel() {
 
     /** Unidad que se está autorizando. */
     var unidad by mutableStateOf<LearningUnit?>(null)
+        private set
+
+    /** Asignatura a la que pertenece la unidad. */
+    var asignatura by mutableStateOf<Subject?>(null)
         private set
 
     /** Indica que la pantalla se está cargando o guardando. */
@@ -55,7 +63,10 @@ class UnitAuthorizationViewModel(
             if (result.isFailure) {
                 error = result.exceptionOrNull() as? ApiError
             } else {
-                unidad = result.getOrThrow()
+                val unit = result.getOrThrow()
+                unidad = unit
+
+                subjectRepository.getById(unit.asignaturaId).onSuccess { asignatura = it }
             }
 
             isLoading = false
@@ -98,6 +109,7 @@ class UnitAuthorizationViewModel(
 
             if (result.isFailure) {
                 error = result.exceptionOrNull() as? ApiError
+                isLoading = false
             } else {
                 unidad = result.getOrThrow()
                 mensaje = if (nuevoEstado == ContentStatus.PUBLISHED) {
@@ -105,22 +117,62 @@ class UnitAuthorizationViewModel(
                 } else {
                     "Unidad autorizada."
                 }
+                isLoading = false
                 onSuccess()
             }
+        }
+    }
 
-            isLoading = false
+    /**
+     * Rechaza la unidad y la devuelve a `BORRADOR` para corrección.
+     */
+    fun rechazar(onSuccess: () -> Unit = {}) {
+        val unit = unidad ?: return
+
+        if (unit.estado == ContentStatus.PUBLISHED) {
+            error = ApiError.BadRequest("No se puede rechazar una unidad publicada.")
+            return
+        }
+
+        if (unit.estado == ContentStatus.DRAFT) {
+            error = ApiError.BadRequest("La unidad ya está en borrador.")
+            return
+        }
+
+        viewModelScope.launch {
+            isLoading = true
+            error = null
+            mensaje = null
+
+            val result = unitRepository.update(
+                id = unit.id,
+                request = UpdateLearningUnitRequest(
+                    estado = ContentStatus.DRAFT
+                )
+            )
+
+            if (result.isFailure) {
+                error = result.exceptionOrNull() as? ApiError
+                isLoading = false
+            } else {
+                unidad = result.getOrThrow()
+                mensaje = "Unidad devuelta a borrador."
+                isLoading = false
+                onSuccess()
+            }
         }
     }
 
     companion object {
 
-        /** Factoría del ViewModel con el repositorio y el id de la unidad. */
+        /** Factoría del ViewModel con los repositorios y el id de la unidad. */
         fun factory(
             unitRepository: UnitRepository,
+            subjectRepository: SubjectRepository,
             unitId: Int
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                UnitAuthorizationViewModel(unitRepository, unitId)
+                UnitAuthorizationViewModel(unitRepository, subjectRepository, unitId)
             }
         }
     }
