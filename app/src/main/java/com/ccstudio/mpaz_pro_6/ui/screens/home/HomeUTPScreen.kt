@@ -27,11 +27,12 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 /**
  * Panel de inicio de la jefa de UTP.
  *
- * Muestra un resumen de la gestión: unidades `BORRADOR` pendientes de revisión,
- * total de cursos y asignaturas, y accesos directos a la gestión de unidades.
+ * Muestra un resumen de la gestión: unidades `EN_REVISION` pendientes de
+ * autorización, total de cursos y asignaturas, y accesos directos a la gestión
+ * de unidades.
  *
- * Las unidades pendientes se obtienen filtrando por `BORRADOR` o `EN_REVISION`
- * sobre `GET /api/unidades`, porque el backend no expone un listado dedicado.
+ * Las unidades pendientes se obtienen filtrando por `EN_REVISION` sobre
+ * `GET /api/unidades`, porque el backend no expone un listado dedicado.
  */
 @Composable
 fun HomeUTPScreen(
@@ -84,7 +85,7 @@ fun HomeUTPScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         ContadorCard(
-                            titulo = "Pendientes",
+                            titulo = "En revisión",
                             valor = unidadesPendientes,
                             modifier = Modifier.weight(1f)
                         )
@@ -105,7 +106,7 @@ fun HomeUTPScreen(
                     SectionHeader(title = "Gestión")
 
                     AppButton(
-                        text = "Revisar unidades pendientes",
+                        text = "Revisar unidades en revisión",
                         onClick = onVerUnidades
                     )
                 }
