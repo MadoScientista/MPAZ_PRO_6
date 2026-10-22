@@ -4,11 +4,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
@@ -38,6 +48,8 @@ fun LoginScreen(
     error: String? = null,
     hint: String? = null
 ) {
+    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -47,7 +59,14 @@ fun LoginScreen(
     ) {
         Text(
             text = "Inicia sesión",
+            fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.headlineMedium
+        )
+
+        Text(
+            text = "Sistema educacional MPAZ",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium
         )
 
         AppTextField(
@@ -62,7 +81,24 @@ fun LoginScreen(
             onValueChange = onPasswordChange,
             label = "Contraseña",
             isPassword = true,
-            enabled = !isLoading
+            passwordVisible = isPasswordVisible,
+            enabled = !isLoading,
+            trailingIcon = {
+                IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                    Icon(
+                        imageVector = if (isPasswordVisible) {
+                            Icons.Filled.Visibility
+                        } else {
+                            Icons.Filled.VisibilityOff
+                        },
+                        contentDescription = if (isPasswordVisible) {
+                            "Ocultar contraseña"
+                        } else {
+                            "Mostrar contraseña"
+                        }
+                    )
+                }
+            }
         )
 
         if (error != null) {

@@ -13,7 +13,7 @@ import androidx.compose.ui.text.input.VisualTransformation
  * Campo de texto con etiqueta.
  *
  * Envuelve `OutlinedTextField` con los estilos del tema y soporta el modo de
- * contraseña.
+ * contraseña, incluida la opción de mostrarla y un icono final opcional.
  */
 @Composable
 fun AppTextField(
@@ -24,8 +24,10 @@ fun AppTextField(
     placeholder: String? = null,
     supportingText: String? = null,
     isPassword: Boolean = false,
+    passwordVisible: Boolean = false,
     singleLine: Boolean = true,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    trailingIcon: (@Composable () -> Unit)? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -36,7 +38,8 @@ fun AppTextField(
         modifier = modifier.fillMaxWidth(),
         singleLine = singleLine,
         enabled = enabled,
-        visualTransformation = if (isPassword) {
+        trailingIcon = trailingIcon,
+        visualTransformation = if (isPassword && !passwordVisible) {
             PasswordVisualTransformation()
         } else {
             VisualTransformation.None
