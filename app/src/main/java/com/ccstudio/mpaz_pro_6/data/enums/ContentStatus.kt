@@ -22,9 +22,10 @@ enum class ContentStatus(val wireValue: String) {
      * Indica si el material está pendiente de revisión de la UTP.
      *
      * El backend no expone un listado de unidades pendientes de revisión, así que
-     * la UTP las cuenta sobre el listado completo.
+     * la UTP las filtra desde el listado completo. La regla actual es que solo se
+     * muestran las unidades en `EN_REVISION`.
      */
-    fun esPendienteDeRevision(): Boolean = this == DRAFT || this == IN_REVIEW
+    fun esPendienteDeRevision(): Boolean = this == IN_REVIEW
 
     companion object {
         /**
