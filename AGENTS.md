@@ -247,7 +247,8 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 ## 6. Reglas de trabajo para agentes
 
-- **No hacer commit ni push** salvo que se pida explícitamente. Si se pide, revisar antes
+- **Nunca hacer commit ni push por iniciativa propia.** Se commitea **solo** si el usuario lo pide
+  expresamente, aunque el trabajo haya quedado listo y verificado. Si se pide, revisar antes
   `git status`, `git diff` y `git log --oneline -10`, y subir solo lo intencionado.
 - **No borrar ni reescribir código funcional existente** sin motivo explícito. Hoy hay 5 pantallas
   y 13 componentes con implementación real (el vertical slice UTP: `LoginScreen`, `HomeUTPScreen`,
