@@ -41,8 +41,11 @@ fun AppNavGraph(container: AppContainer) {
     val navController = rememberNavController()
 
     // Usuario con sesión iniciada: decide el rol y el contenido de las pantallas.
+    // Sin usuario no hay rol: las pantallas de rol no se dibujan y la app vuelve
+    // al login. Si se cayera a un rol por defecto, al cerrar la sesión se vería el
+    // panel de ese rol un instante antes de llegar al login.
     val usuario by container.session.user.collectAsState()
-    val rol = usuario?.rol ?: UserRole.UTP
+    val rol = usuario?.rol
 
     NavHost(
         navController = navController,
@@ -74,7 +77,12 @@ fun AppNavGraph(container: AppContainer) {
         }
 
         composable(AppRoutes.HOME) { entry ->
-            when (rol) {
+            val rolActual = rol
+
+            when (rolActual) {
+                // Sin sesión no hay rol que mostrar: se vuelve al login.
+                null -> VolverAlLogin(navController)
+
                 UserRole.UTP -> {
                     val viewModel: HomeUTPViewModel = viewModel(
                         factory = HomeUTPViewModel.factory(
@@ -107,12 +115,7 @@ fun AppNavGraph(container: AppContainer) {
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
                         onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                        onCerrarSesion = {
-                            container.session.cerrar()
-                            navController.navigate(AppRoutes.LOGIN) {
-                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                            }
-                        },
+                        onCerrarSesion = { container.session.cerrar() },
                         onCargar = viewModel::cargar
                     )
                 }
@@ -122,37 +125,38 @@ fun AppNavGraph(container: AppContainer) {
                         container = container,
                         navController = navController,
                         entry = entry,
-                        rol = rol,
+                        rol = rolActual,
                         onViewDetail = { unit ->
                             navController.navigate(AppRoutes.unitDetail(unit.id))
                         },
                         onAuthorize = { unit ->
                             navController.navigate(AppRoutes.unitAuthorization(unit.id))
                         },
-                        onCerrarSesion = {
-                            container.session.cerrar()
-                            navController.navigate(AppRoutes.LOGIN) {
-                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                            }
-                        }
+                        onCerrarSesion = { container.session.cerrar() }
                     )
                 }
             }
         }
 
         composable(AppRoutes.UNITS) { entry ->
-            UnitListDestination(
-                container = container,
-                navController = navController,
-                entry = entry,
-                rol = rol,
-                onViewDetail = { unit ->
-                    navController.navigate(AppRoutes.unitDetail(unit.id))
-                },
-                onAuthorize = { unit ->
-                    navController.navigate(AppRoutes.unitAuthorization(unit.id))
-                }
-            )
+            val rolActual = rol
+
+            if (rolActual == null) {
+                VolverAlLogin(navController)
+            } else {
+                UnitListDestination(
+                    container = container,
+                    navController = navController,
+                    entry = entry,
+                    rol = rolActual,
+                    onViewDetail = { unit ->
+                        navController.navigate(AppRoutes.unitDetail(unit.id))
+                    },
+                    onAuthorize = { unit ->
+                        navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                    }
+                )
+            }
         }
 
         composable(
@@ -160,39 +164,44 @@ fun AppNavGraph(container: AppContainer) {
             arguments = listOf(navArgument("unitId") { type = NavType.IntType })
         ) { entry ->
             val unitId = entry.arguments?.getInt("unitId") ?: 0
+            val rolActual = rol
 
-            val viewModel: UnitDetailViewModel = viewModel(
-                factory = UnitDetailViewModel.factory(
-                    unitRepository = container.unitRepository,
-                    subjectRepository = container.subjectRepository,
-                    learningObjectiveRepository = container.learningObjectiveRepository,
-                    contentRepository = container.contentRepository,
-                    contentResourceRepository = container.contentResourceRepository,
-                    activityRepository = container.activityRepository,
-                    unitId = unitId
+            if (rolActual == null) {
+                VolverAlLogin(navController)
+            } else {
+                val viewModel: UnitDetailViewModel = viewModel(
+                    factory = UnitDetailViewModel.factory(
+                        unitRepository = container.unitRepository,
+                        subjectRepository = container.subjectRepository,
+                        learningObjectiveRepository = container.learningObjectiveRepository,
+                        contentRepository = container.contentRepository,
+                        contentResourceRepository = container.contentResourceRepository,
+                        activityRepository = container.activityRepository,
+                        unitId = unitId
+                    )
                 )
-            )
 
-            LaunchedEffect(Unit) {
-                viewModel.cargar()
+                LaunchedEffect(Unit) {
+                    viewModel.cargar()
+                }
+
+                UnitDetailScreen(
+                    unidad = viewModel.unidad,
+                    asignatura = viewModel.asignatura,
+                    objetivos = viewModel.objetivos,
+                    contenidosPorObjetivo = viewModel.contenidosPorObjetivo,
+                    recursosPorContenido = viewModel.recursosPorContenido,
+                    actividades = viewModel.actividades,
+                    rol = rolActual,
+                    isLoading = viewModel.isLoading,
+                    error = viewModel.error,
+                    onAutorizar = {
+                        navController.navigate(AppRoutes.unitAuthorization(unitId))
+                    },
+                    onRetry = viewModel::cargar,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
-
-            UnitDetailScreen(
-                unidad = viewModel.unidad,
-                asignatura = viewModel.asignatura,
-                objetivos = viewModel.objetivos,
-                contenidosPorObjetivo = viewModel.contenidosPorObjetivo,
-                recursosPorContenido = viewModel.recursosPorContenido,
-                actividades = viewModel.actividades,
-                rol = rol,
-                isLoading = viewModel.isLoading,
-                error = viewModel.error,
-                onAutorizar = {
-                    navController.navigate(AppRoutes.unitAuthorization(unitId))
-                },
-                onRetry = viewModel::cargar,
-                onNavigateBack = { navController.popBackStack() }
-            )
         }
 
         composable(
@@ -200,46 +209,69 @@ fun AppNavGraph(container: AppContainer) {
             arguments = listOf(navArgument("unitId") { type = NavType.IntType })
         ) { entry ->
             val unitId = entry.arguments?.getInt("unitId") ?: 0
+            val rolActual = rol
 
-            val viewModel: UnitAuthorizationViewModel = viewModel(
-                factory = UnitAuthorizationViewModel.factory(
-                    unitRepository = container.unitRepository,
-                    subjectRepository = container.subjectRepository,
-                    unitId = unitId
+            if (rolActual == null) {
+                VolverAlLogin(navController)
+            } else {
+                val viewModel: UnitAuthorizationViewModel = viewModel(
+                    factory = UnitAuthorizationViewModel.factory(
+                        unitRepository = container.unitRepository,
+                        subjectRepository = container.subjectRepository,
+                        unitId = unitId
+                    )
                 )
-            )
 
-            LaunchedEffect(Unit) {
-                viewModel.cargar()
-            }
-
-            UnitAuthorizationScreen(
-                unidad = viewModel.unidad,
-                asignatura = viewModel.asignatura,
-                rol = rol,
-                isLoading = viewModel.isLoading,
-                error = viewModel.error,
-                mensaje = viewModel.mensaje,
-                onAutorizar = {
-                    val autorizanteId = usuario?.id ?: return@UnitAuthorizationScreen
-
-                    viewModel.autorizar(autorizanteId) {
-                        // Avisa al listado de atrás que tiene que recargar.
-                        navController.marcarListadoParaRecarga(rol)
-                    }
-                },
-                onRechazar = {
-                    viewModel.rechazar {
-                        navController.marcarListadoParaRecarga(rol)
-                    }
-                },
-                onRetry = viewModel::cargar,
-                onNavigateBack = { navController.popBackStack() },
-                onVolverAlListado = {
-                    navController.marcarListadoParaRecarga(rol)
-                    navController.popBackStack(rutaListado(rol), inclusive = false)
+                LaunchedEffect(Unit) {
+                    viewModel.cargar()
                 }
-            )
+
+                UnitAuthorizationScreen(
+                    unidad = viewModel.unidad,
+                    asignatura = viewModel.asignatura,
+                    rol = rolActual,
+                    isLoading = viewModel.isLoading,
+                    error = viewModel.error,
+                    mensaje = viewModel.mensaje,
+                    onAutorizar = {
+                        val autorizanteId = usuario?.id ?: return@UnitAuthorizationScreen
+
+                        viewModel.autorizar(autorizanteId) {
+                            // Avisa al listado de atrás que tiene que recargar.
+                            navController.marcarListadoParaRecarga(rolActual)
+                        }
+                    },
+                    onRechazar = {
+                        viewModel.rechazar {
+                            navController.marcarListadoParaRecarga(rolActual)
+                        }
+                    },
+                    onRetry = viewModel::cargar,
+                    onNavigateBack = { navController.popBackStack() },
+                    onVolverAlListado = {
+                        navController.marcarListadoParaRecarga(rolActual)
+                        navController.popBackStack(rutaListado(rolActual), inclusive = false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Destino sin sesión: vuelve al login.
+ *
+ * Al cerrar la sesión el usuario desaparece y ya no hay rol que mostrar. En vez de
+ * caer en un rol por defecto (y dibujar su panel un instante antes de llegar al
+ * login), la pantalla queda vacía y se regresa al login.
+ */
+@Composable
+private fun VolverAlLogin(navController: NavHostController) {
+    LaunchedEffect(Unit) {
+        // Se limpia la pila (HOME es siempre el destino de abajo tras iniciar
+        // sesión) para que el login no tenga detrás una pantalla sin sesión.
+        navController.navigate(AppRoutes.LOGIN) {
+            popUpTo(AppRoutes.HOME) { inclusive = true }
         }
     }
 }
