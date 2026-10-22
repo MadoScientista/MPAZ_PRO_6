@@ -128,6 +128,12 @@ fun AppNavGraph(container: AppContainer) {
                         },
                         onAuthorize = { unit ->
                             navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                        },
+                        onCerrarSesion = {
+                            container.session.cerrar()
+                            navController.navigate(AppRoutes.LOGIN) {
+                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                            }
                         }
                     )
                 }
@@ -178,6 +184,7 @@ fun AppNavGraph(container: AppContainer) {
                 contenidosPorObjetivo = viewModel.contenidosPorObjetivo,
                 recursosPorContenido = viewModel.recursosPorContenido,
                 actividades = viewModel.actividades,
+                rol = rol,
                 isLoading = viewModel.isLoading,
                 error = viewModel.error,
                 onAutorizar = {
@@ -209,6 +216,7 @@ fun AppNavGraph(container: AppContainer) {
             UnitAuthorizationScreen(
                 unidad = viewModel.unidad,
                 asignatura = viewModel.asignatura,
+                rol = rol,
                 isLoading = viewModel.isLoading,
                 error = viewModel.error,
                 mensaje = viewModel.mensaje,
@@ -249,7 +257,8 @@ private fun UnitListDestination(
     entry: NavBackStackEntry,
     rol: UserRole,
     onViewDetail: (LearningUnit) -> Unit,
-    onAuthorize: (LearningUnit) -> Unit
+    onAuthorize: (LearningUnit) -> Unit,
+    onCerrarSesion: (() -> Unit)? = null
 ) {
     val viewModel: UnitListViewModel = viewModel(
         factory = UnitListViewModel.factory(
@@ -277,11 +286,13 @@ private fun UnitListDestination(
     UnitListScreen(
         unidades = viewModel.unidades,
         asignaturas = viewModel.asignaturas,
+        rol = rol,
         isLoading = viewModel.isLoading,
         error = viewModel.error,
         onViewDetail = { unit -> onViewDetail(unit) },
         onAuthorize = { unit -> onAuthorize(unit) },
-        onRetry = viewModel::cargar
+        onRetry = viewModel::cargar,
+        onCerrarSesion = onCerrarSesion
     )
 }
 

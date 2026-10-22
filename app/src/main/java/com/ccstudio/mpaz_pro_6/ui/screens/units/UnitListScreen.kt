@@ -3,6 +3,7 @@ package com.ccstudio.mpaz_pro_6.ui.screens.units
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,14 +11,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
@@ -40,20 +44,22 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  * de asignaturas para resolver el nombre que se muestra y por el que se filtra.
  *
  * El mismo listado sirve a los tres roles; cambia el contenido según el `UserRole`:
- * el UTP ve las unidades `BORRADOR` y `EN_REVISION` pendientes de revisión, el
- * docente las unidades autorizadas y publicadas, y el estudiante solo las
- * `PUBLICADO`.
+ * el UTP ve las unidades `EN_REVISION` pendientes de autorización, el docente las
+ * `AUTORIZADO` y `PUBLICADO`, y el estudiante solo las `PUBLICADO`. La acción de
+ * autorizar solo se ofrece al rol `UTP`.
  */
 @Composable
 fun UnitListScreen(
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
+    rol: UserRole,
     onViewDetail: (LearningUnit) -> Unit,
     onAuthorize: (LearningUnit) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
-    error: ApiError? = null
+    error: ApiError? = null,
+    onCerrarSesion: (() -> Unit)? = null
 ) {
     var search by rememberSaveable { mutableStateOf("") }
     var subjectFilter by rememberSaveable { mutableStateOf("Todas") }
@@ -93,17 +99,33 @@ fun UnitListScreen(
 
             else -> {
 
-                Text(
-                    text = "Revisión de unidades",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = tituloListado(rol),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                Text(
-                    text = "${unidades.size} unidades visibles",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                        Text(
+                            text = "${unidades.size} ${subtituloListado(rol)}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    // El docente y el estudiante aterrizan en este listado, así que
+                    // necesitan aquí su forma de cerrar sesión.
+                    if (onCerrarSesion != null) {
+                        TextButton(onClick = onCerrarSesion) {
+                            Text("Salir")
+                        }
+                    }
+                }
 
                 SearchField(
                     value = search,
@@ -124,7 +146,7 @@ fun UnitListScreen(
                 if (filteredUnits.isEmpty()) {
                     EmptyState(
                         message = if (unidades.isEmpty()) {
-                            "No hay unidades para mostrar."
+                            mensajeListadoVacio(rol)
                         } else {
                             "No se encontraron unidades."
                         }
@@ -143,7 +165,8 @@ fun UnitListScreen(
                                 unit = unit,
                                 subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
                                 onViewDetail = { onViewDetail(unit) },
-                                onAuthorize = { onAuthorize(unit) }
+                                onAuthorize = { onAuthorize(unit) },
+                                puedeAutorizar = rol == UserRole.UTP
                             )
                         }
                     }
@@ -151,4 +174,31 @@ fun UnitListScreen(
             }
         }
     }
+}
+
+/**
+ * Título del listado según el rol: cada uno ve un conjunto distinto de unidades.
+ */
+private fun tituloListado(rol: UserRole): String = when (rol) {
+    UserRole.UTP -> "Unidades en revisión"
+    UserRole.DOCENTE -> "Mis unidades"
+    UserRole.ESTUDIANTE -> "Unidades disponibles"
+}
+
+/**
+ * Texto que acompaña al contador de unidades del listado.
+ */
+private fun subtituloListado(rol: UserRole): String = when (rol) {
+    UserRole.UTP -> "unidades por autorizar"
+    UserRole.DOCENTE -> "unidades asignadas"
+    UserRole.ESTUDIANTE -> "unidades publicadas"
+}
+
+/**
+ * Aviso que se muestra cuando el listado no tiene unidades para el rol.
+ */
+private fun mensajeListadoVacio(rol: UserRole): String = when (rol) {
+    UserRole.UTP -> "No hay unidades en revisión para autorizar."
+    UserRole.DOCENTE -> "No hay unidades autorizadas ni publicadas."
+    UserRole.ESTUDIANTE -> "No hay unidades publicadas."
 }

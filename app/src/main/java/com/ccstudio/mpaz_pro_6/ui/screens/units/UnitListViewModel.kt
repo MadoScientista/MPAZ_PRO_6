@@ -21,9 +21,8 @@ import kotlinx.coroutines.launch
  * Estado del listado de unidades.
  *
  * El mismo listado sirve a los tres roles y cambia su contenido según el
- * `UserRole`: la UTP ve las unidades `BORRADOR` y `EN_REVISION` pendientes de
- * revisión, el docente las `AUTORIZADO` y `PUBLICADO`, y el estudiante solo las
- * `PUBLICADO`.
+ * `UserRole`: la UTP ve las unidades `EN_REVISION` pendientes de revisión, el
+ * docente las `AUTORIZADO` y `PUBLISHED`, y el estudiante solo las `PUBLISHED`.
  *
  * La búsqueda por texto libre es **client-side**: el backend no la expone.
  */

@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
@@ -37,11 +38,15 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
  * `AUTORIZADO` a `PUBLISHED`, o devolverla a `BORRADOR` para corrección.
  * El backend exige un autorizante con rol `UTP` y una fecha de autorización para
  * `AUTORIZADO` y `PUBLISHED`.
+ *
+ * Solo el rol `UTP` puede ejecutar estas acciones: para los demás la pantalla es de
+ * consulta y no ofrece ninguna.
  */
 @Composable
 fun UnitAuthorizationScreen(
     unidad: LearningUnit?,
     asignatura: Subject?,
+    rol: UserRole,
     isLoading: Boolean,
     error: ApiError?,
     mensaje: String?,
@@ -53,6 +58,8 @@ fun UnitAuthorizationScreen(
     modifier: Modifier = Modifier
 ) {
     var mostrarConfirmarRechazo by remember { mutableStateOf(false) }
+
+    val esUtp = rol == UserRole.UTP
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -83,7 +90,11 @@ fun UnitAuthorizationScreen(
                     SectionHeader(title = "Acción disponible")
 
                     Text(
-                        text = descripcionAccion(unidad.estado),
+                        text = if (esUtp) {
+                            descripcionAccion(unidad.estado)
+                        } else {
+                            "Solo la jefa de UTP puede autorizar o publicar unidades."
+                        },
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -105,12 +116,14 @@ fun UnitAuthorizationScreen(
                         )
                     }
 
-                    val puedeAutorizar = unidad.estado == ContentStatus.DRAFT ||
-                            unidad.estado == ContentStatus.IN_REVIEW ||
-                            unidad.estado == ContentStatus.AUTHORIZED
+                    val puedeAutorizar = esUtp &&
+                            (unidad.estado == ContentStatus.DRAFT ||
+                                    unidad.estado == ContentStatus.IN_REVIEW ||
+                                    unidad.estado == ContentStatus.AUTHORIZED)
 
-                    val puedeRechazar = unidad.estado == ContentStatus.IN_REVIEW ||
-                            unidad.estado == ContentStatus.AUTHORIZED
+                    val puedeRechazar = esUtp &&
+                            (unidad.estado == ContentStatus.IN_REVIEW ||
+                                    unidad.estado == ContentStatus.AUTHORIZED)
 
                     if (mensaje != null) {
                         // La operación terminó: la pantalla solo ofrece el regreso.

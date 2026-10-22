@@ -27,16 +27,17 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
  * Muestra el resumen de una `LearningUnit`: asignatura, título, nivel educativo y
  * estado. La unidad solo trae el `asignaturaId`, así que el nombre de la asignatura
  * lo resuelve la pantalla que la lista y se lo entrega como `subjectName`.
- * Las acciones dependen del `ContentStatus`: el botón de autorizar solo debe
- * aparecer cuando la unidad está en `BORRADOR` o `EN_REVISION` y el usuario tiene
- * rol `UTP`.
+ *
+ * La acción de autorizar solo se muestra al rol `UTP`: el resto de los roles
+ * consulta la unidad pero no la autoriza.
  */
 @Composable
 fun UnitCard(
     unit: LearningUnit,
     subjectName: String,
     onViewDetail: () -> Unit,
-    onAuthorize: () -> Unit
+    onAuthorize: () -> Unit,
+    puedeAutorizar: Boolean = true
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -89,7 +90,7 @@ fun UnitCard(
                 UnitStatusChip(status = unit.estado)
             }
 
-            // Acciones de la jefa de UTP.
+            // Acciones: solo la UTP autoriza y publica.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -101,11 +102,13 @@ fun UnitCard(
                     Text("Ver detalle")
                 }
 
-                Button(
-                    onClick = onAuthorize,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Autorizar")
+                if (puedeAutorizar) {
+                    Button(
+                        onClick = onAuthorize,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Autorizar")
+                    }
                 }
             }
         }

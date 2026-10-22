@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
@@ -37,6 +38,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
  * Muestra la información principal de la unidad y la estructura pedagógica
  * (objetivos, contenidos, recursos y actividades) para revisión efectiva por
  * parte del UTP. Todo el contenido es solo lectura.
+ *
+ * La acción de autorizar solo se ofrece al rol `UTP`: los demás roles consultan,
+ * pero no autorizan ni publican.
  */
 @Composable
 fun UnitDetailScreen(
@@ -46,6 +50,7 @@ fun UnitDetailScreen(
     contenidosPorObjetivo: Map<Int, List<Content>>,
     recursosPorContenido: Map<Int, List<ContentResource>>,
     actividades: List<Activity>,
+    rol: UserRole,
     isLoading: Boolean,
     error: ApiError?,
     onAutorizar: () -> Unit,
@@ -145,12 +150,14 @@ fun UnitDetailScreen(
                         }
                     }
 
-                    item {
-                        AppButton(
-                            text = "Autorizar / Revisar",
-                            onClick = onAutorizar,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    if (rol == UserRole.UTP) {
+                        item {
+                            AppButton(
+                                text = "Autorizar / Revisar",
+                                onClick = onAutorizar,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
