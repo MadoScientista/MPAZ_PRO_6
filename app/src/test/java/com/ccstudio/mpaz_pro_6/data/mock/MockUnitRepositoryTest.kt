@@ -35,8 +35,8 @@ class MockUnitRepositoryTest {
     fun listOrdenaPorAsignaturaYOrden() = runBlocking {
         val units = repository.list().getOrThrow()
 
-        assertEquals(5, units.size)
-        assertEquals(listOf(1, 1, 2, 2, 3), units.map { it.asignaturaId })
+        assertEquals(7, units.size)
+        assertEquals(listOf(1, 1, 2, 2, 2, 3, 3), units.map { it.asignaturaId })
     }
 
     @Test
@@ -198,6 +198,6 @@ class MockUnitRepositoryTest {
         val result = repository.delete(2)
 
         assertTrue(result.isSuccess)
-        assertEquals(4, repository.list().getOrThrow().size)
+        assertEquals(6, repository.list().getOrThrow().size)
     }
 }
