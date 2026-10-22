@@ -96,7 +96,8 @@ El backend y el spec usan español; **el código usa inglés**. No inventar otro
 
 ```
 com/ccstudio/mpaz_pro_6/
-├── MainActivity.kt              # solo crea el AppContainer y monta AppNavGraph
+├── MainActivity.kt              # crea el AppContainer, aplica los insets del sistema
+│                                # y monta AppNavGraph
 ├── data/                      # CAPA DE DATOS
 │   ├── model/                 # 1 data class por cada *Response del spec
 │   │   │                      # (LearningUnit, no Unit: ver 4.3)
@@ -111,9 +112,10 @@ com/ccstudio/mpaz_pro_6/
 └── ui/                        # CAPA VISUAL
     ├── theme/                 # Color / Theme / Type (Material 3)
     ├── navigation/            # AppRoutes + AppNavGraph
-    ├── common/                # piezas transversales de UI (UiState)
+    ├── common/                # UiState y piezas transversales
     ├── screens/               # screens, agrupadas por dominio
     └── components/            # componentes, agrupados por dominio
+                                # (components/common/ para lo transversal)
 ```
 
 ### 4.2 Reglas de ubicación (obligatorias)
@@ -172,6 +174,10 @@ com/ccstudio/mpaz_pro_6/
 - Material 3 + `RoundedCornerShape(16.dp)` en tarjetas, `12.dp` de espaciado vertical,
   `16.dp` de padding de pantalla.
 - Colores: siempre desde `MaterialTheme.colorScheme`. Nunca colores literales.
+- Las pantallas que ofrecen acciones por rol reciben `rol: UserRole` como parámetro y
+  **ocultan** los botones que no corresponden a ese rol (ver 4.6, regla 11).
+- Cada `items(...)` de un `LazyColumn` lleva clave prefijada por tipo, aunque el `id` sea único
+  dentro de su lista (ver 4.6, regla 12).
 
 ### 4.6 Reglas de UI derivadas del contrato
 
@@ -188,6 +194,8 @@ Estas reglas existen para que la app se comporte igual que el backend:
    `PUBLISHED` → visible al estudiante, solo lectura.
    El backend usa el mismo enum (`ContentStatus`) para la unidad, el contenido y el
    recurso de contenido.
+   El listado de la UTP muestra **solo** `EN_REVISION` (regla de `specs/flujo-autorizacion-utp.md`):
+   los borradores son del docente hasta que los envía a revisión.
 4. **`Attempt` en progreso se deduce de `fechaFin == null`**, no de un campo aparte.
 5. **Una `PRUEBA_FINAL` no se puede asociar como actividad** de una asignación (`400` en el spec):
    el selector debe marcarla y excluirla. Su habilitación depende de `pruebaFinalHabilitada` y `maxIntentos`.
@@ -199,6 +207,22 @@ Estas reglas existen para que la app se comporte igual que el backend:
 8. **`esCorrecta` viene congelado en la respuesta** (`StudentAnswer`): no se recalcula en la app.
 9. **Solo hay una alternativa correcta por pregunta** → el editor usa selección exclusiva, no múltiple.
 10. **Ningún endpoint pagina.** Las listas se cargan completas: no implementar scroll infinito.
+11. **Toda acción que cambia el estado de un recurso se ofrece solo al rol que puede ejecutarla.**
+    El backend valida el rol, pero la UI debe **prevenir** la acción: si el botón existe para todos,
+    un docente acaba cambiando un estado que no le corresponde. El rol llega a la pantalla
+    como parámetro (`rol: UserRole`) y las acciones se filtran con él.
+12. **Cada `LazyColumn` necesita claves únicas por elemento.** Varios `items(...)` en la **misma** lista
+    comparten espacio de claves: los `id` de recursos distintos son secuencias independientes y
+    colisionan (`Key "1" was already used` → cierre de la app). Prefijar por tipo:
+    `key = { "objetivo-${it.id}" }`, `key = { "actividad-${it.id}" }`.
+13. **La app dibuja de borde a borde** (`enableEdgeToEdge()`): el margen de la barra de navegación se
+    aplica una sola vez, en la raíz (`MainActivity`, sobre el `Surface`). Las pantallas no repiten el
+    inset, salvo que necesiten un padding propio adicional. `MainActivity` declara
+    `android:configChanges` en el manifiesto: la actividad no se recrea al girar el dispositivo, así
+    que el `AppContainer`, la sesión y los datos en memoria sobreviven al cambio de orientación.
+14. **Las llamadas al repositorio no se hacen en el hilo principal.** Cada `ViewModel` mueve el I/O a
+    `Dispatchers.IO` (`withContext`) y paraleliza lo que no depende (`async` + `awaitAll`): el detalle
+    de unidad encadena objetivos → contenidos → recursos y se volvería un N+1 secuencial.
 
 ---
 
@@ -209,8 +233,9 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 | Gap | Consecuencia |
 |---|---|
 | No existe endpoint de login/auth; solo hay CRUD de `/api/usuarios` con `username`/`password`. | `UserRepository.authenticate()` resuelve la sesión en local; `LoginScreen` es UI pura. |
-| No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra por `DRAFT` o `EN_REVISION` en cliente. |
+| No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra **solo** por `EN_REVISION` en cliente (`ContentStatus.esPendienteDeRevision()`). |
 | No hay listado de estudiantes por curso. | El docente ve el listado de usuarios completo. |
+| No está confirmado si el backend limpia `autorizadaPorId` / `fechaAutorizacion` al devolver una unidad a `BORRADOR`. | El `PUT` es parcial: la app solo envía `estado` y el backend decide si conserva los datos de autorización. |
 | Las "reglas 1, 2, 4, 7, 9, 11" del modelo no están en el repo. | Los mensajes se apoyan solo en `specs/endpoints`. |
 
 ---
@@ -230,6 +255,12 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 - **No agregar dependencias** sin avisar. Ya están `navigation-compose` y `lifecycle-viewmodel-compose`
   (navegación y ViewModels); cualquier otra debe avisarse antes.
 - **No tocar** `specs/endpoints` salvo para corregir una errata del contrato.
+- **Los tests del mock dependen de la semilla.** `MockData.crearStore()` define el número de
+  unidades, asignaturas, cursos y usuarios; los tests assertan sobre esos conteos. Si cambia la
+  semilla, hay que actualizar los tests en el mismo commit (`./gradlew test`).
+- **Probar en el dispositivo antes de dar por buena una pantalla**: `adb install -r`, abrir la app y
+  recorrer el flujo completo. El login lo hace una persona (el teclado en pantalla estorba a la
+  automatización por `adb input`).
 
 ---
 
@@ -238,17 +269,23 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 La **capa de datos está completa**: los 8 enums de `data/enums/`, los 17 modelos de
 `data/model/`, los 24 cuerpos de `data/model/requests/` y las 14 interfaces de `data/repository/`
 implementan el contrato completo del backend. De `data/mock/` están implementados
-`MockSubjectRepository`, `MockCourseRepository`, `MockUnitRepository` y `MockUserRepository` sobre un
-`MockStore` compartido; los demás repositorios mock (actividad, alternativa, contenido, recurso,
-objetivo, pregunta, asignación, intento, respuesta, informe) y el cliente de `data/remote/`
+`MockSubjectRepository`, `MockCourseRepository`, `MockUnitRepository`, `MockUserRepository`,
+`MockLearningObjectiveRepository`, `MockContentRepository`, `MockContentResourceRepository` y
+`MockActivityRepository` sobre un `MockStore` compartido; los demás repositorios mock
+(alternativa, pregunta, asignación, intento, respuesta, informe) y el cliente de `data/remote/`
 (reservado hasta que exista el backend) siguen como stub documentado.
 
 La **capa visual tiene implementado el vertical slice UTP**: `LoginScreen → HomeUTPScreen →
 UnitListScreen → UnitDetailScreen → UnitAuthorizationScreen`, navegado con `navigation-compose`
 desde `AppNavGraph`, con un `ViewModel` por pantalla y las piezas comunes de `ui/components/common/`.
 Los datos salen de `data/mock/` a través de `AppContainer`; las pantallas de docente y estudiante
-aterrizan por ahora en el mismo listado de unidades, que filtra por rol.
+aterrizan por ahora en el mismo listado de unidades, que filtra por rol y les ofrece cerrar sesión.
 Las demás pantallas (asignaturas, cursos, objetivos, contenidos, actividades, preguntas,
 asignaciones, intentos, informes y usuarios) siguen como esqueleto documentado.
+
+El **flujo de autorización UTP está verificado en el dispositivo** (ver
+`specs/flujo-autorizacion-utp.md`): listar las unidades `EN_REVISION`, revisar el detalle completo
+de la unidad, autorizar a `AUTORIZADO` o devolver a `BORRADOR` con confirmación, y volver al listado
+ya refrescado. Las transiciones que cambian el estado se ofrecen **solo al rol UTP**.
 
 Los tests unitarios cubren los cuatro repositorios mock implementados (`app/src/test/.../data/mock/`).
