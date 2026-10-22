@@ -5,20 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.ccstudio.mpaz_pro_6.model.Usuario
-import com.ccstudio.mpaz_pro_6.ui.screens.Login
+import com.ccstudio.mpaz_pro_6.data.AppContainer
+import com.ccstudio.mpaz_pro_6.ui.navigation.AppNavGraph
 import com.ccstudio.mpaz_pro_6.ui.theme.MPAZ_PRO_6Theme
 
+/**
+ * Punto de entrada de la aplicación.
+ *
+ * El enrutado vive en `ui/navigation/AppNavGraph` y las dependencias en
+ * `data/AppContainer`. Este archivo solo crea el contenedor y monta el grafo: cuando
+ * exista el backend, se cambia la implementación de los repositorios en
+ * `AppContainer` y ni la UI ni la navegación se tocan.
+ */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,37 +28,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MPAZ_PRO_6Theme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
 
-                    Login().FormScreen(
-                        onNavegarADetalle = { usuario: Usuario ->
-                            // Aquí puedes gestionar la navegación
-                            // a la siguiente pantalla.
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                // Contenedor de dependencias: sobrevive a los cambios de configuración.
+                val container = remember { AppContainer() }
+
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    AppNavGraph(container = container)
                 }
             }
         }
     }
 }
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MPAZ_PRO_6Theme {
-        Greeting("Android")
-    }
-}
-
-

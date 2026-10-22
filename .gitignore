@@ -13,3 +13,19 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Datos incrementales del compilador de Kotlin.
+.kotlin/
+
+# Capturas del editor de diseño de Android Studio.
+/app/captures/
+
+# Volcados de memoria y claves de firma: nunca deben subirse.
+*.hprof
+*.jks
+*.keystore
+
+# Archivos de IDE y build
+/.idea/
+/app/build/
+/build/
