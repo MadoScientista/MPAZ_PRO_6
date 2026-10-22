@@ -293,7 +293,4 @@ El **flujo de autorización UTP está verificado en el dispositivo** (ver
 de la unidad, autorizar a `AUTORIZADO` o devolver a `BORRADOR` con confirmación, y volver al listado
 ya refrescado. Las transiciones que cambian el estado se ofrecen **solo al rol UTP**.
 
-El **cierre de sesión** del listado de docente y estudiante ya no muestra el panel de la UTP antes
-de volver al login; queda pendiente la comprobación en el dispositivo (regla 15 de 4.6).
-
 Los tests unitarios cubren los cuatro repositorios mock implementados (`app/src/test/.../data/mock/`).
