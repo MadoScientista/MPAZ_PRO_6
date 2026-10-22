@@ -223,6 +223,11 @@ Estas reglas existen para que la app se comporte igual que el backend:
 14. **Las llamadas al repositorio no se hacen en el hilo principal.** Cada `ViewModel` mueve el I/O a
     `Dispatchers.IO` (`withContext`) y paraleliza lo que no depende (`async` + `awaitAll`): el detalle
     de unidad encadena objetivos → contenidos → recursos y se volvería un N+1 secuencial.
+15. **Sin sesión no hay rol.** `Session.user` es `StateFlow<User?>`: al cerrar la sesión el rol pasa
+    a `null` y la navegación **no dibuja ninguna pantalla de rol**. Nada de caer en un rol por
+    defecto (`usuario?.rol ?: UserRole.UTP`): se vería el panel de la UTP un instante antes de llegar
+    al login. El destino sin sesión devuelve la app al login y los botones de cerrar sesión solo
+    cierran la sesión: la navegación al login tiene un único punto.
 
 ---
 
@@ -287,5 +292,8 @@ El **flujo de autorización UTP está verificado en el dispositivo** (ver
 `specs/flujo-autorizacion-utp.md`): listar las unidades `EN_REVISION`, revisar el detalle completo
 de la unidad, autorizar a `AUTORIZADO` o devolver a `BORRADOR` con confirmación, y volver al listado
 ya refrescado. Las transiciones que cambian el estado se ofrecen **solo al rol UTP**.
+
+El **cierre de sesión** del listado de docente y estudiante ya no muestra el panel de la UTP antes
+de volver al login; queda pendiente la comprobación en el dispositivo (regla 15 de 4.6).
 
 Los tests unitarios cubren los cuatro repositorios mock implementados (`app/src/test/.../data/mock/`).
