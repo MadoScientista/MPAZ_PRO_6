@@ -9,19 +9,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
-import com.ccstudio.mpaz_pro_6.data.model.User
-import com.ccstudio.mpaz_pro_6.data.repository.UserRepository
+import com.ccstudio.mpaz_pro_6.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 /**
  * Estado de la pantalla de inicio de sesión.
  *
- * El backend no expone un endpoint de autenticación, así que la validación se
- * resuelve contra el [UserRepository]. El ViewModel guarda el usuario que inició
- * sesión para que la navegación elija el destino inicial según su rol.
+ * Valida las credenciales contra `/api/auth/login`. Cuando el repositorio guarda
+ * la sesión, la navegación observa `Session` y cambia al panel del rol.
  */
 class LoginViewModel(
-    private val userRepository: UserRepository
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     /** Nombre de usuario escrito en el formulario. */
@@ -52,12 +50,8 @@ class LoginViewModel(
         error = null
     }
 
-    /**
-     * Valida las credenciales.
-     *
-     * @param onSesionIniciada se invoca con el usuario validado.
-     */
-    fun iniciarSesion(onSesionIniciada: (User) -> Unit) {
+    /** Envía las credenciales al backend. */
+    fun iniciarSesion() {
         if (username.isBlank() || password.isBlank()) {
             error = "Completa el usuario y la contraseña."
             return
@@ -67,8 +61,7 @@ class LoginViewModel(
             isLoading = true
             error = null
 
-            userRepository.authenticate(username, password)
-                .onSuccess { onSesionIniciada(it) }
+            authRepository.login(username, password)
                 .onFailure {
                     error = (it as? ApiError)?.message
                         ?: "No se pudo iniciar sesión."
@@ -80,10 +73,10 @@ class LoginViewModel(
 
     companion object {
 
-        /** Factoría del ViewModel con el repositorio de usuarios. */
-        fun factory(userRepository: UserRepository): ViewModelProvider.Factory =
+        /** Factoría del ViewModel con el repositorio de autenticación. */
+        fun factory(authRepository: AuthRepository): ViewModelProvider.Factory =
             viewModelFactory {
-                initializer { LoginViewModel(userRepository) }
+                initializer { LoginViewModel(authRepository) }
             }
     }
 }

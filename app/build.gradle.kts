@@ -1,7 +1,18 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
+
+val mpazBaseUrl = providers.gradleProperty("MPAZ_BASE_URL")
+    .orElse(providers.environmentVariable("MPAZ_BASE_URL"))
+    .getOrElse("http://10.0.2.2:8080/")
+
+val mpazLocalOnly = providers.gradleProperty("MPAZ_LOCAL_ONLY")
+    .orElse(providers.environmentVariable("MPAZ_LOCAL_ONLY"))
+    .map(String::toBoolean)
+    .getOrElse(false)
 
 android {
     namespace = "com.ccstudio.mpaz_pro_6"
@@ -17,6 +28,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "MPAZ_BASE_URL", "\"$mpazBaseUrl\"")
+        buildConfigField("boolean", "MPAZ_LOCAL_ONLY", "$mpazLocalOnly")
     }
 
     buildTypes {
@@ -34,7 +48,12 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -58,5 +77,15 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.androidx.datastore.preferences)
+    androidTestImplementation(libs.androidx.room.testing)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

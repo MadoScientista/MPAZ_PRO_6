@@ -20,13 +20,12 @@ interface UserRepository {
     suspend fun getById(id: Int): Result<User>
 
     /**
-     * Resuelve el inicio de sesión de un usuario.
+     * Resuelve el inicio de sesión local contra el mock.
      *
-     * El backend **no expone un endpoint de autenticación**: solo existe el CRUD de
-     * `/api/usuarios` y la contraseña nunca vuelve en las respuestas. Mientras no
-     * exista login, esta operación se resuelve en local contra el repositorio; la
-     * contraseña solo puede verificarse contra los datos sembrados en el mock.
+     * Se conserva solo para pruebas y datos de demostración. El flujo real de la
+     * app usa [AuthRepository], que llama a `/api/auth/login` y persiste el token.
      */
+    @Deprecated("La app autentica con AuthRepository y /api/auth/login.")
     suspend fun authenticate(username: String, password: String): Result<User>
 
     /** Crea un usuario (UTP, DOCENTE o ESTUDIANTE). */

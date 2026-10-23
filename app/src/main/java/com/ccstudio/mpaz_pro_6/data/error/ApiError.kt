@@ -23,6 +23,9 @@ sealed class ApiError(override val message: String) : Exception(message) {
     /** `404 Not Found`: la referencia indicada no existe. */
     data class NotFound(override val message: String) : ApiError(message)
 
+    /** `401 Unauthorized`: credenciales inválidas o token vencido. */
+    data class Unauthorized(override val message: String) : ApiError(message)
+
     /** `409 Conflict`: duplicado o dependencia que impide la operación. */
     data class Conflict(override val message: String) : ApiError(message)
 

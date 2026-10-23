@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,20 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.BuildConfig
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
 
 /**
  * Pantalla de inicio de sesión.
  *
- * Solo es UI: el backend no expone un endpoint de autenticación (solo el CRUD de
- * `/api/usuarios` con `username` y `password`), así que la validación de la sesión
- * se resuelve localmente. Cuando exista el endpoint de login, esta pantalla deberá
- * delegar en el repositorio y propagar el rol (`UserRole`) para elegir el destino
- * de la navegación.
- *
- * La contraseña es un dato del formulario, no del modelo `User`: viaja en claro
- * únicamente hacia el backend y nunca forma parte de una respuesta.
+ * Solo es UI: las credenciales viajan a `/api/auth/login` a través de
+ * `AuthRepository`. La contraseña es un dato del formulario, no del modelo `User`,
+ * y nunca se persiste en el dispositivo.
  */
 @Composable
 fun LoginScreen(
@@ -46,7 +43,9 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: String? = null,
-    hint: String? = null
+    hint: String? = null,
+    onResetLocalData: (() -> Unit)? = null,
+    isResettingData: Boolean = false
 ) {
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -123,6 +122,28 @@ fun LoginScreen(
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center
             )
+        } else if (BuildConfig.MPAZ_LOCAL_ONLY) {
+            Text(
+                text = "Modo local: usa un usuario de la semilla. Contraseña: mpaz123",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        if (onResetLocalData != null) {
+            TextButton(
+                onClick = onResetLocalData,
+                enabled = !isResettingData
+            ) {
+                Text(
+                    text = if (isResettingData) {
+                        "Restableciendo datos..."
+                    } else {
+                        "Restablecer datos locales"
+                    }
+                )
+            }
         }
     }
 }

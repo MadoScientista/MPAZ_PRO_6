@@ -54,7 +54,9 @@ Convenciones del contrato (mapply en `data/error/ApiError.kt`):
 | `404 Not Found` | Referencia inexistente | `ApiError.NotFound` |
 | `409 Conflict` | Duplicado o dependencia que impide borrar | `ApiError.Conflict` |
 
-Base URL local del backend: `http://localhost:8080`.
+Base URL configurable en Gradle/entorno. Default de debug: `http://10.0.2.2:8080/` (emulador).
+Para dispositivo físico, definir `MPAZ_BASE_URL` con la IP LAN del backend. Las llamadas usan
+`Authorization: Bearer <token>`; no se usa la cookie `JSESSIONID`.
 
 ### Glosario: dominio español → identificador inglés
 
@@ -96,18 +98,21 @@ El backend y el spec usan español; **el código usa inglés**. No inventar otro
 
 ```
 com/ccstudio/mpaz_pro_6/
-├── MainActivity.kt              # solo crea el AppContainer y monta AppNavGraph
+├── MpazApplication.kt         # crea el AppContainer por proceso
+├── MainActivity.kt            # obtiene el contenedor y monta AppNavGraph
 ├── data/                      # CAPA DE DATOS
 │   ├── model/                 # 1 data class por cada *Response del spec
-│   │   │                      # (LearningUnit, no Unit: ver 4.3)
 │   │   └── requests/          # cuerpos de Create* y Update* por recurso
 │   ├── enums/                 # enums del backend (nombre inglés, valor wire español)
-│   ├── error/                 # ApiError
+│   ├── error/                 # ApiError, ApiCall y traducción HTTP/red
 │   ├── repository/            # interfaces (contrato estable con la UI)
-│   ├── mock/                  # ⚠ TEMPORAL: implementaciones en memoria
-│   ├── remote/                # ⚠ RESERVADO: cliente HTTP + DTOs + mappers
-│   ├── session/               # sesión local (no hay endpoint de login)
-│   └── AppContainer.kt        # único punto donde se decide la implementación
+│   ├── local/                 # Room: entidades, DAOs, mappers y repositorios
+│   ├── remote/                # Retrofit: MpazApi, DTOs y mappers wire
+│   ├── auth/                  # RemoteAuthRepository
+│   ├── session/               # Session + SessionStore (DataStore)
+│   ├── sync/                  # InitialSync del catálogo
+│   ├── mock/                  # mocks en memoria conservados para tests
+│   └── AppContainer.kt        # composición de todas las dependencias
 └── ui/                        # CAPA VISUAL
     ├── theme/                 # Color / Theme / Type (Material 3)
     ├── navigation/            # AppRoutes + AppNavGraph
@@ -150,16 +155,20 @@ com/ccstudio/mpaz_pro_6/
   `wireValue` (el texto exacto que viaja al backend) y `fromWire(value)`, que devuelve `null`
   ante un valor desconocido para que el mapper no lance excepciones.
 - `data/repository/` define una interfaz por recurso, con funciones `suspend` que devuelven `Result<T>`.
-  El fallo **siempre** es un `ApiError` (`BadRequest`, `NotFound`, `Conflict`, `Network`, `Unknown`).
-  **La UI nunca conoce la implementación.**
-- `data/mock/` implementa esas interfaces con datos en memoria. **Es temporal**: cuando exista el backend,
-  se implementa la misma interfaz en `data/remote/` y se cambia la inyección. **La UI no cambia.**
-- `data/remote/` está reservado. No se escribe hasta que exista el backend.
+  El fallo **siempre** es un `ApiError` (`BadRequest`, `Unauthorized`, `NotFound`, `Conflict`,
+  `Network`, `Unknown`). **La UI nunca conoce la implementación.**
+- `data/local/repository/` implementa las interfaces con política offline-first: lectura remota,
+  `upsert` en Room y respaldo desde caché solo ante `Network` o `Unknown`. Las escrituras son
+  online y nunca se encolan. Una lista vacía del backend no se reemplaza por caché.
+- `data/local/` es el único lugar con entidades Room. Los modelos de dominio no se anotan para Room.
+- `data/remote/` contiene `MpazApi`, `ApiClient`, DTOs wire y mappers. No se usa desde la UI.
+- `data/mock/` se conserva para tests y previews; `AppContainer` no lo inyecta en la app.
+- `data/auth/` y `data/session/` manejan `/api/auth/*`, el token JWT en DataStore y el estado de
+  sesión (`Loading`, `Authenticated`, `Unauthenticated`). `Session` expone `StateFlow<SessionState>`.
 - `data/AppContainer.kt` es el **único** lugar donde se decide la implementación de cada repositorio.
-  No se usa un contenedor de inyección externo (Hilt, Koin): una clase manual es suficiente y evita
-  agregar dependencias y *annotation processing*.
-- `data/session/Session.kt` guarda el usuario con sesión iniciada (`StateFlow<User?>`). La contraseña
-  nunca forma parte del modelo `User`: vive aparte, en `MockStore.passwords`.
+  No se usa un contenedor de inyección externo (Hilt, Koin).
+- La contraseña nunca forma parte del modelo `User` ni de la caché local. Solo existe en el cuerpo
+  del login y en `MockStore.passwords` para pruebas.
 
 ### 4.5 Patrones de Compose que ya rigen el repo
 
@@ -199,6 +208,12 @@ Estas reglas existen para que la app se comporte igual que el backend:
 8. **`esCorrecta` viene congelado en la respuesta** (`StudentAnswer`): no se recalcula en la app.
 9. **Solo hay una alternativa correcta por pregunta** → el editor usa selección exclusiva, no múltiple.
 10. **Ningún endpoint pagina.** Las listas se cargan completas: no implementar scroll infinito.
+11. **Offline-first solo para lectura.** Si el remoto falla con `Network` o `Unknown`, la UI recibe
+    la caché Room si existe; si no, recibe el `ApiError` original. Escrituras siempre online.
+12. **La sesión manda la navegación.** `AppNavGraph` no muestra login con sesión válida. Un `401`
+    limpia el token y vuelve a login; un fallo de red al validar `/auth/me` conserva la sesión.
+13. **Caché compartida por usuario.** Logout, reset y cambio de usuario limpian la base local;
+    `InitialSync` reemplaza el catálogo de forma transaccional tras autenticar.
 
 ---
 
@@ -208,10 +223,11 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 | Gap | Consecuencia |
 |---|---|
-| No existe endpoint de login/auth; solo hay CRUD de `/api/usuarios` con `username`/`password`. | `UserRepository.authenticate()` resuelve la sesión en local; `LoginScreen` es UI pura. |
+| Los endpoints `/api/auth/*` no aparecen en `specs/endpoints`; están descritos en `specs/implementacion-sqlite.md`. | La app usa login JWT, `/auth/me` y logout; si cambia el contrato, actualizar DTOs y `RemoteAuthRepository`. |
 | No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra por `DRAFT` o `EN_REVISION` en cliente. |
 | No hay listado de estudiantes por curso. | El docente ve el listado de usuarios completo. |
 | Las "reglas 1, 2, 4, 7, 9, 11" del modelo no están en el repo. | Los mensajes se apoyan solo en `specs/endpoints`. |
+| `InitialSync` descarga el catálogo completo sin distinguir rol. | Si el backend restringe algún endpoint, la sync falla y se conserva la caché anterior. |
 
 ---
 
@@ -235,20 +251,21 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 ## 7. Estado actual del proyecto
 
-La **capa de datos está completa**: los 8 enums de `data/enums/`, los 17 modelos de
-`data/model/`, los 24 cuerpos de `data/model/requests/` y las 14 interfaces de `data/repository/`
-implementan el contrato completo del backend. De `data/mock/` están implementados
-`MockSubjectRepository`, `MockCourseRepository`, `MockUnitRepository` y `MockUserRepository` sobre un
-`MockStore` compartido; los demás repositorios mock (actividad, alternativa, contenido, recurso,
-objetivo, pregunta, asignación, intento, respuesta, informe) y el cliente de `data/remote/`
-(reservado hasta que exista el backend) siguen como stub documentado.
+La **capa de datos está completa**: los 8 enums, los 17 modelos, los 24 cuerpos de request y las
+14 interfaces implementan el contrato. Room tiene las 17 entidades, 7 DAOs, conversores, mappers,
+semilla desde `assets/database/seed.sql` e índice parcial de `PRUEBA_FINAL`. Las 14 interfaces
+tienen implementación offline-first en `data/local/repository/`; `AppContainer` las expone todas
+junto con `SessionStore`, `Session`, `AuthRepository`, `InitialSync` y el cliente Retrofit.
 
-La **capa visual tiene implementado el vertical slice UTP**: `LoginScreen → HomeUTPScreen →
-UnitListScreen → UnitDetailScreen → UnitAuthorizationScreen`, navegado con `navigation-compose`
-desde `AppNavGraph`, con un `ViewModel` por pantalla y las piezas comunes de `ui/components/common/`.
-Los datos salen de `data/mock/` a través de `AppContainer`; las pantallas de docente y estudiante
-aterrizan por ahora en el mismo listado de unidades, que filtra por rol.
-Las demás pantallas (asignaturas, cursos, objetivos, contenidos, actividades, preguntas,
-asignaciones, intentos, informes y usuarios) siguen como esqueleto documentado.
+La **autenticación es real**: `LoginViewModel` usa `/api/auth/login`, el token persiste en DataStore,
+`Session` restaura y valida con `/auth/me`, un `401` limpia la sesión y un fallo de red conserva la
+sesión. Logout y reset limpian la caché; el reset solo se muestra en debug.
 
-Los tests unitarios cubren los cuatro repositorios mock implementados (`app/src/test/.../data/mock/`).
+La **capa visual mantiene el vertical slice UTP**: `LoginScreen → HomeUTPScreen → UnitListScreen →
+UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. Las
+pantallas de docente y estudiante aterrizan en el mismo listado filtrado por rol. El resto de
+pantallas sigue como esqueleto documentado.
+
+Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las
+pruebas instrumentadas de Room cubren FK, únicos, PK compuesta, índice parcial, transacción y seed;
+requieren emulador o dispositivo y aún no se ejecutaron localmente.

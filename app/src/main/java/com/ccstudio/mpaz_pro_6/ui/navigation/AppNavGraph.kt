@@ -1,11 +1,19 @@
 package com.ccstudio.mpaz_pro_6.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -13,9 +21,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ccstudio.mpaz_pro_6.BuildConfig
 import com.ccstudio.mpaz_pro_6.data.AppContainer
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
+import com.ccstudio.mpaz_pro_6.data.model.User
+import com.ccstudio.mpaz_pro_6.data.session.SessionState
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPScreen
@@ -26,118 +37,159 @@ import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitDetailScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitDetailViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitListViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Grafo de navegación de la app.
  *
- * Conecta las rutas de `AppRoutes` con las pantallas de `ui/screens/`, aplicando
- * el destino inicial según el rol del usuario: UTP, docente o estudiante.
- *
- * En este vertical slice la UTP tiene su panel propio y los otros dos roles
- * aterrizan en su listado de unidades, que ya filtra por rol.
+ * Espera a que `Session` termine de leer el token persistido y elige el destino
+ * inicial: login si no hay sesión, panel del rol si la hay.
  */
 @Composable
 fun AppNavGraph(container: AppContainer) {
+    val sessionState by container.session.state.collectAsState()
 
+    when (val state = sessionState) {
+        SessionState.Loading -> LoadingScreen()
+
+        SessionState.Unauthenticated -> {
+            key(false) {
+                AppNavHost(
+                    container = container,
+                    user = null
+                )
+            }
+        }
+
+        is SessionState.Authenticated -> {
+            key(true) {
+                AppNavHost(
+                    container = container,
+                    user = state.user
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun AppNavHost(
+    container: AppContainer,
+    user: User?
+) {
     val navController = rememberNavController()
-
-    // Usuario con sesión iniciada: decide el rol y el contenido de las pantallas.
-    val usuario by container.session.user.collectAsState()
-    val rol = usuario?.rol ?: UserRole.UTP
+    val authenticated = user != null
+    val rol = user?.rol ?: UserRole.UTP
 
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.LOGIN
+        startDestination = if (authenticated) AppRoutes.HOME else AppRoutes.LOGIN
     ) {
 
         composable(AppRoutes.LOGIN) {
             val viewModel: LoginViewModel = viewModel(
-                factory = LoginViewModel.factory(container.userRepository)
+                factory = LoginViewModel.factory(container.authRepository)
             )
+            val scope = rememberCoroutineScope()
+            var isResetting by remember { mutableStateOf(false) }
 
             LoginScreen(
                 username = viewModel.username,
                 password = viewModel.password,
                 isLoading = viewModel.isLoading,
                 error = viewModel.error,
-                hint = CREDENCIALES_DEMO,
                 onUsernameChange = viewModel::onUsernameChange,
                 onPasswordChange = viewModel::onPasswordChange,
-                onIniciarSesion = {
-                    viewModel.iniciarSesion { user ->
-                        container.session.iniciar(user)
-                        navController.navigate(AppRoutes.HOME) {
-                            popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                onIniciarSesion = viewModel::iniciarSesion,
+                onResetLocalData = if (BuildConfig.DEBUG) {
+                    {
+                        scope.launch {
+                            isResetting = true
+                            container.resetLocalData()
+                            isResetting = false
                         }
                     }
-                }
+                } else {
+                    null
+                },
+                isResettingData = isResetting
             )
         }
 
-        composable(AppRoutes.HOME) {
-            when (rol) {
-                UserRole.UTP -> {
-                    val viewModel: HomeUTPViewModel = viewModel(
-                        factory = HomeUTPViewModel.factory(
-                            unitRepository = container.unitRepository,
-                            courseRepository = container.courseRepository,
-                            subjectRepository = container.subjectRepository
+        if (user != null) {
+            composable(AppRoutes.HOME) {
+                when (rol) {
+                    UserRole.UTP -> {
+                        val viewModel: HomeUTPViewModel = viewModel(
+                            factory = HomeUTPViewModel.factory(
+                                unitRepository = container.unitRepository,
+                                courseRepository = container.courseRepository,
+                                subjectRepository = container.subjectRepository
+                            )
                         )
-                    )
 
-                    HomeUTPScreen(
-                        userName = usuario?.nombre ?: "",
-                        unidadesPendientes = viewModel.unidadesPendientes,
-                        totalCursos = viewModel.totalCursos,
-                        totalAsignaturas = viewModel.totalAsignaturas,
-                        isLoading = viewModel.isLoading,
-                        error = viewModel.error,
-                        onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                        onCerrarSesion = {
-                            container.session.cerrar()
-                            navController.navigate(AppRoutes.LOGIN) {
-                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                            }
-                        },
-                        onCargar = viewModel::cargar
-                    )
-                }
-
-                UserRole.DOCENTE, UserRole.ESTUDIANTE -> {
-                    UnitListDestination(
-                        container = container,
-                        navController = navController,
-                        rol = rol,
-                        onViewDetail = { unit ->
-                            navController.navigate(AppRoutes.unitDetail(unit.id))
-                        },
-                        onAuthorize = { unit ->
-                            navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
                         }
-                    )
+
+                        HomeUTPScreen(
+                            userName = user.nombre,
+                            unidadesPendientes = viewModel.unidadesPendientes,
+                            totalCursos = viewModel.totalCursos,
+                            totalAsignaturas = viewModel.totalAsignaturas,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error,
+                            onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
+                            onCerrarSesion = container::logout,
+                            onCargar = viewModel::cargar
+                        )
+                    }
+
+                    UserRole.DOCENTE, UserRole.ESTUDIANTE -> {
+                        UnitListDestination(
+                            container = container,
+                            navController = navController,
+                            rol = rol,
+                            onViewDetail = { unit ->
+                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                            },
+                            onAuthorize = { unit ->
+                                navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                            }
+                        )
+                    }
                 }
             }
-        }
 
-        composable(AppRoutes.UNITS) {
-            UnitListDestination(
-                container = container,
-                navController = navController,
-                rol = rol,
-                onViewDetail = { unit ->
-                    navController.navigate(AppRoutes.unitDetail(unit.id))
-                },
-                onAuthorize = { unit ->
-                    navController.navigate(AppRoutes.unitAuthorization(unit.id))
-                }
-            )
-        }
+            composable(AppRoutes.UNITS) {
+                UnitListDestination(
+                    container = container,
+                    navController = navController,
+                    rol = rol,
+                    onViewDetail = { unit ->
+                        navController.navigate(AppRoutes.unitDetail(unit.id))
+                    },
+                    onAuthorize = { unit ->
+                        navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                    }
+                )
+            }
 
-        composable(
-            route = AppRoutes.UNIT_DETAIL,
-            arguments = listOf(navArgument("unitId") { type = NavType.IntType })
-        ) { entry ->
-            val unitId = entry.arguments?.getInt("unitId") ?: 0
+            composable(
+                route = AppRoutes.UNIT_DETAIL,
+                arguments = listOf(navArgument("unitId") { type = NavType.IntType })
+            ) { entry ->
+                val unitId = entry.arguments?.getInt("unitId") ?: 0
 
             val viewModel: UnitDetailViewModel = viewModel(
                 factory = UnitDetailViewModel.factory(
@@ -146,6 +198,10 @@ fun AppNavGraph(container: AppContainer) {
                     unitId = unitId
                 )
             )
+
+            LaunchedEffect(Unit) {
+                viewModel.cargar()
+            }
 
             UnitDetailScreen(
                 unidad = viewModel.unidad,
@@ -157,13 +213,13 @@ fun AppNavGraph(container: AppContainer) {
                 },
                 onRetry = viewModel::cargar
             )
-        }
+            }
 
-        composable(
-            route = AppRoutes.UNIT_AUTHORIZATION,
-            arguments = listOf(navArgument("unitId") { type = NavType.IntType })
-        ) { entry ->
-            val unitId = entry.arguments?.getInt("unitId") ?: 0
+            composable(
+                route = AppRoutes.UNIT_AUTHORIZATION,
+                arguments = listOf(navArgument("unitId") { type = NavType.IntType })
+            ) { entry ->
+                val unitId = entry.arguments?.getInt("unitId") ?: 0
 
             val viewModel: UnitAuthorizationViewModel = viewModel(
                 factory = UnitAuthorizationViewModel.factory(
@@ -172,15 +228,17 @@ fun AppNavGraph(container: AppContainer) {
                 )
             )
 
+            LaunchedEffect(Unit) {
+                viewModel.cargar()
+            }
+
             UnitAuthorizationScreen(
                 unidad = viewModel.unidad,
                 isLoading = viewModel.isLoading,
                 error = viewModel.error,
                 mensaje = viewModel.mensaje,
                 onAutorizar = {
-                    val autorizanteId = usuario?.id ?: return@UnitAuthorizationScreen
-
-                    viewModel.autorizar(autorizanteId) {
+                    viewModel.autorizar(user.id) {
                         // Avisa al listado de atrás que tiene que recargar.
                         navController.previousBackStackEntry
                             ?.savedStateHandle
@@ -191,6 +249,7 @@ fun AppNavGraph(container: AppContainer) {
                 },
                 onRetry = viewModel::cargar
             )
+            }
         }
     }
 }
@@ -247,12 +306,3 @@ private fun UnitListDestination(
 
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
-
-/**
- * Usuarios de prueba de la semilla en memoria.
- *
- * Se muestran en la pantalla de inicio de sesión porque la sesión se resuelve en
- * el dispositivo mientras el backend no exponga un endpoint de autenticación.
- */
-private val CREDENCIALES_DEMO =
-    "Usuarios de prueba: elena / utp123 (UTP), marco / doc123 (docente), camila / est123 (estudiante)"
