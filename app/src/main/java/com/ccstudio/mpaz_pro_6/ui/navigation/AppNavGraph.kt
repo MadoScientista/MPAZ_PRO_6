@@ -1,5 +1,6 @@
 package com.ccstudio.mpaz_pro_6.ui.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -28,7 +29,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ccstudio.mpaz_pro_6.BuildConfig
 import com.ccstudio.mpaz_pro_6.data.AppContainer
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
@@ -141,30 +141,33 @@ private fun AppNavHost(
                 val scope = rememberCoroutineScope()
                 var isResetting by remember { mutableStateOf(false) }
 
-                LoginScreen(
-                    username = viewModel.username,
-                    password = viewModel.password,
-                    isLoading = viewModel.isLoading,
-                    error = viewModel.error,
-                    onUsernameChange = viewModel::onUsernameChange,
-                    onPasswordChange = viewModel::onPasswordChange,
-                    onIniciarSesion = viewModel::iniciarSesion,
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme,
-                    onResetLocalData = if (BuildConfig.DEBUG) {
-                        {
-                            scope.launch {
-                                isResetting = true
+            LoginScreen(
+                username = viewModel.username,
+                password = viewModel.password,
+                isLoading = viewModel.isLoading,
+                error = viewModel.error,
+                onUsernameChange = viewModel::onUsernameChange,
+                onPasswordChange = viewModel::onPasswordChange,
+                onIniciarSesion = viewModel::iniciarSesion,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
+                onResetLocalData = {
+                        scope.launch {
+                            isResetting = true
+
+                            try {
                                 container.resetLocalData()
+                            } catch (e: Exception) {
+                                Log.e("ResetLocalData", "Error al restablecer datos locales", e)
+                            } finally {
                                 isResetting = false
                             }
                         }
-                    } else {
-                        null
-                    },
-                    isResettingData = isResetting
-                )
-            }
+                    }
+               ,
+                isResettingData = isResetting
+            )
+        }
 
             if (user != null) {
                 composable(AppRoutes.HOME) {

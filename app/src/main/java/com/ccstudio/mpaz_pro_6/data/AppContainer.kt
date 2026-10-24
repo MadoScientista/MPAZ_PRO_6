@@ -63,6 +63,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Contenedor de dependencias de la app.
@@ -323,10 +324,17 @@ class AppContainer(context: Context) {
 
     /** Restaura la semilla de demostración y deja la app sin sesión. */
     suspend fun resetLocalData() {
-        authRepository.clearLocalSession()
-        cacheMutex.withLock {
-            database.clearAllTables()
-            SeedLoader.load(appContext, database.openHelper.writableDatabase)
+        withContext(Dispatchers.IO) {
+            authRepository.clearLocalSession()
+
+            cacheMutex.withLock {
+                database.clearAllTables()
+
+                SeedLoader.load(
+                    appContext,
+                    database.openHelper.writableDatabase
+                )
+            }
         }
     }
 }
