@@ -29,3 +29,5 @@ local.properties
 /.idea/
 /app/build/
 /build/
+
+.vscode
