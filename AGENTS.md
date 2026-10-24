@@ -268,9 +268,10 @@ La **autenticación es real**: `LoginViewModel` usa `/api/auth/login`, el token 
 sesión. Logout y reset limpian la caché; el reset solo se muestra en debug.
 
 La **capa visual mantiene el vertical slice UTP**: `LoginScreen → HomeUTPScreen → UnitListScreen →
-UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. Las
-pantallas de docente y estudiante aterrizan en el mismo listado filtrado por rol. El resto de
-pantallas sigue como esqueleto documentado.
+UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. El
+docente aterriza en `HomeTeacherScreen`, con sus cursos, unidades asignadas, actividades e informes
+pendientes; el estudiante sigue en el listado filtrado por rol. El resto de pantallas sigue como
+esqueleto documentado.
 
 Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las
 pruebas instrumentadas de Room cubren FK, únicos, PK compuesta, índice parcial, transacción y seed;

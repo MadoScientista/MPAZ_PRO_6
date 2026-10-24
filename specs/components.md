@@ -29,8 +29,7 @@ Ubicación: `ui/components/common/`.
 | `LoadingState` | `modifier`, `message` (por defecto `"Cargando..."`) | Indicador circular y mensaje | Presenta la espera de datos |
 | `SearchField` | `value`, `onValueChange`, `modifier`, `placeholder`, `label` | Campo de búsqueda con lupa y botón de limpiar | Emite el texto; la búsqueda libre es siempre client-side |
 | `SectionHeader` | `title`, `modifier`, `count` (nullable) | Título de sección y contador opcional | Separa visualmente secciones de una pantalla |
-
-`StatusChip` todavía es un esqueleto documentado; no implementa UI.
+| `StatusChip` | `label`, `modifier`, `containerColor`, `contentColor` | Etiqueta de estado con formato de chip | Presenta un estado ya resuelto por la pantalla; por defecto usa el color neutro del tema y la pantalla elige el color semántico cuando corresponde |
 
 ---
 
@@ -164,10 +163,3 @@ Ubicación: `ui/components/attempt/`.
 | `AttemptProgress` | `attempt: Attempt`, `answeredCount`, `totalQuestions`, `modifier` | Número de intento, chip «En progreso»/«Completado», barra de progreso y contador de preguntas respondidas | Deduce la finalización de `attempt.fechaFin == null` y normaliza el conteo para no salir del rango |
 | `AttemptQuestionCard` | `question: Question`, `alternatives`, `selectedAlternativeId`, `onSelectAlternative`, `modifier`, `questionNumber` (nullable), `isReadOnly`, `showCorrectness`, `enabled` | Enunciado, criterio de respuesta opcional y alternativas con `AnswerOption` | Mantiene la selección exclusiva delegando en la pantalla. En solo lectura desactiva las opciones; `showCorrectness` revela el resultado congelado de cada alternativa |
 
----
-
-## Componentes pendientes
-
-Los siguientes archivos existen como esqueleto documentado, sin implementación:
-
-- `common/StatusChip`

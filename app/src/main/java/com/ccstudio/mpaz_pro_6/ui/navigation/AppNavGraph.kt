@@ -29,6 +29,8 @@ import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.session.SessionState
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationScreen
@@ -155,7 +157,42 @@ private fun AppNavHost(
                         )
                     }
 
-                    UserRole.DOCENTE, UserRole.ESTUDIANTE -> {
+                    UserRole.DOCENTE -> {
+                        val viewModel: HomeTeacherViewModel = viewModel(
+                            factory = HomeTeacherViewModel.factory(
+                                userRepository = container.userRepository,
+                                assignmentRepository = container.assignmentRepository,
+                                unitRepository = container.unitRepository,
+                                subjectRepository = container.subjectRepository,
+                                activityRepository = container.activityRepository,
+                                pedagogicalReportRepository = container.pedagogicalReportRepository,
+                                teacherId = user.id
+                            )
+                        )
+
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        HomeTeacherScreen(
+                            userName = user.nombre,
+                            cursos = viewModel.cursos,
+                            unidades = viewModel.unidades,
+                            asignaturas = viewModel.asignaturas,
+                            actividades = viewModel.actividades,
+                            informesPendientes = viewModel.informesPendientes,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error,
+                            onViewUnit = { unit ->
+                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                            },
+                            onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
+                            onCerrarSesion = container::logout,
+                            onCargar = viewModel::cargar
+                        )
+                    }
+
+                    UserRole.ESTUDIANTE -> {
                         UnitListDestination(
                             container = container,
                             navController = navController,
