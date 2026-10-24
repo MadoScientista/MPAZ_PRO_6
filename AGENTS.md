@@ -37,6 +37,11 @@ de planificación pedagogical (**MPAZ**), servida por un backend Spring Boot que
 
 En Windows usar `gradlew.bat`. Todo lo que se ejecute debe ir con el *workdir* en la raíz del repo.
 
+**JDK de Gradle:** la elección del JDK es por máquina y no se versiona. No definir
+`org.gradle.java.home` en `gradle.properties`: una ruta absoluta (Windows o Linux) rompe el sync en
+el otro sistema operativo. Se elige en Android Studio → *Build Tools → Gradle → Gradle JDK* o se
+fija en `~/.gradle/gradle.properties`. Ver `README.md`.
+
 ---
 
 ## 3. Contrato de API: `specs/endpoints`
