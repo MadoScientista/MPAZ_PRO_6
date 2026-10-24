@@ -34,6 +34,7 @@ import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstStudentAnswerRe
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstSubjectRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstUnitRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstUserRepository
+import com.ccstudio.mpaz_pro_6.data.preferences.ThemePreferenceStore
 import com.ccstudio.mpaz_pro_6.data.remote.ApiClient
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AlternativeRepository
@@ -90,6 +91,9 @@ class AppContainer(context: Context) {
 
     /** Almacenamiento persistente de la sesión. */
     val sessionStore = SessionStore(appContext)
+
+    /** Preferencia de tema claro/oscuro, independiente de la sesión. */
+    val themePreferenceStore = ThemePreferenceStore(appContext)
 
     /** Sesión en memoria que consume la navegación. */
     val session = Session()

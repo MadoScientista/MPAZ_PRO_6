@@ -55,7 +55,11 @@ import kotlinx.coroutines.launch
  * inicial: login si no hay sesión, panel del rol si la hay.
  */
 @Composable
-fun AppNavGraph(container: AppContainer) {
+fun AppNavGraph(
+    container: AppContainer,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit
+) {
     val sessionState by container.session.state.collectAsState()
 
     when (val state = sessionState) {
@@ -65,7 +69,9 @@ fun AppNavGraph(container: AppContainer) {
             key(false) {
                 AppNavHost(
                     container = container,
-                    user = null
+                    user = null,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
                 )
             }
         }
@@ -74,7 +80,9 @@ fun AppNavGraph(container: AppContainer) {
             key(true) {
                 AppNavHost(
                     container = container,
-                    user = state.user
+                    user = state.user,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
                 )
             }
         }
@@ -94,7 +102,9 @@ private fun LoadingScreen() {
 @Composable
 private fun AppNavHost(
     container: AppContainer,
-    user: User?
+    user: User?,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit
 ) {
     val navController = rememberNavController()
     val authenticated = user != null
@@ -139,6 +149,8 @@ private fun AppNavHost(
                     onUsernameChange = viewModel::onUsernameChange,
                     onPasswordChange = viewModel::onPasswordChange,
                     onIniciarSesion = viewModel::iniciarSesion,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
                     onResetLocalData = if (BuildConfig.DEBUG) {
                         {
                             scope.launch {
@@ -179,7 +191,9 @@ private fun AppNavHost(
                                 error = viewModel.error,
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
                                 onCerrarSesion = container::logout,
-                                onCargar = viewModel::cargar
+                                onCargar = viewModel::cargar,
+                                isDarkTheme = isDarkTheme,
+                                onToggleTheme = onToggleTheme
                             )
                         }
 
@@ -214,7 +228,9 @@ private fun AppNavHost(
                                 },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
                                 onCerrarSesion = container::logout,
-                                onCargar = viewModel::cargar
+                                onCargar = viewModel::cargar,
+                                isDarkTheme = isDarkTheme,
+                                onToggleTheme = onToggleTheme
                             )
                         }
 
@@ -223,6 +239,8 @@ private fun AppNavHost(
                                 container = container,
                                 navController = navController,
                                 rol = rol,
+                                isDarkTheme = isDarkTheme,
+                                onToggleTheme = onToggleTheme,
                                 onViewDetail = { unit ->
                                     navController.navigate(AppRoutes.unitDetail(unit.id))
                                 },
@@ -239,6 +257,8 @@ private fun AppNavHost(
                         container = container,
                         navController = navController,
                         rol = rol,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = onToggleTheme,
                         onViewDetail = { unit ->
                             navController.navigate(AppRoutes.unitDetail(unit.id))
                         },
@@ -271,6 +291,8 @@ private fun AppNavHost(
                     asignatura = viewModel.asignatura,
                     isLoading = viewModel.isLoading,
                     error = viewModel.error,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
                     onAutorizar = {
                         navController.navigate(AppRoutes.unitAuthorization(unitId))
                     },
@@ -300,6 +322,8 @@ private fun AppNavHost(
                     isLoading = viewModel.isLoading,
                     error = viewModel.error,
                     mensaje = viewModel.mensaje,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
                     onAutorizar = {
                         viewModel.autorizar(user.id) {
                             // Avisa al listado de atrás que tiene que recargar.
@@ -329,6 +353,8 @@ private fun UnitListDestination(
     container: AppContainer,
     navController: NavHostController,
     rol: UserRole,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     onViewDetail: (LearningUnit) -> Unit,
     onAuthorize: (LearningUnit) -> Unit
 ) {
@@ -362,6 +388,8 @@ private fun UnitListDestination(
         asignaturas = viewModel.asignaturas,
         isLoading = viewModel.isLoading,
         error = viewModel.error,
+        isDarkTheme = isDarkTheme,
+        onToggleTheme = onToggleTheme,
         onViewDetail = { unit -> onViewDetail(unit) },
         onAuthorize = { unit -> onAuthorize(unit) },
         onRetry = viewModel::cargar

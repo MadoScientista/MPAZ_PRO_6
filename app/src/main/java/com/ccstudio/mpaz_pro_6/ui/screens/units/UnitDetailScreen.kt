@@ -22,6 +22,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
+import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 
 /**
@@ -45,6 +46,8 @@ fun UnitDetailScreen(
     error: ApiError?,
     onAutorizar: () -> Unit,
     onRetry: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -52,7 +55,13 @@ fun UnitDetailScreen(
     ) {
         AppTopBar(
             title = "Detalle de la unidad",
-            onNavigateBack = null
+            onNavigateBack = null,
+            actions = {
+                ThemeToggleButton(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
+                )
+            }
         )
 
         Column(

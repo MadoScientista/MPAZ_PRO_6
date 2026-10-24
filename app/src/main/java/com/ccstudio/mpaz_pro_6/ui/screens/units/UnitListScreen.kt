@@ -21,12 +21,14 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SearchField
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
+import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
 
 /**
@@ -51,6 +53,8 @@ fun UnitListScreen(
     onViewDetail: (LearningUnit) -> Unit,
     onAuthorize: (LearningUnit) -> Unit,
     onRetry: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -80,71 +84,83 @@ fun UnitListScreen(
         matchesSubject && matchesSearch
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        when {
-            isLoading -> LoadingState(message = "Cargando unidades...")
-
-            error != null -> ErrorState(error = error, onRetry = onRetry)
-
-            else -> {
-
-                Text(
-                    text = "Revisión de unidades",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+    Column(modifier = modifier.fillMaxSize()) {
+        AppTopBar(
+            title = "Unidades",
+            actions = {
+                ThemeToggleButton(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
                 )
+            }
+        )
 
-                Text(
-                    text = "${unidades.size} unidades visibles",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            when {
+                isLoading -> LoadingState(message = "Cargando unidades...")
 
-                SearchField(
-                    value = search,
-                    onValueChange = { search = it },
-                    placeholder = "Título o asignatura"
-                )
+                error != null -> ErrorState(error = error, onRetry = onRetry)
 
-                if (subjectFilterOptions.size > 1) {
-                    FilterChipRow(
-                        options = subjectFilterOptions,
-                        selected = subjectFilter,
-                        onSelect = { subjectFilter = it }
+                else -> {
+
+                    Text(
+                        text = "Revisión de unidades",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
-                }
 
-                SectionHeader(title = "Unidades", count = filteredUnits.size)
-
-                if (filteredUnits.isEmpty()) {
-                    EmptyState(
-                        message = if (unidades.isEmpty()) {
-                            "No hay unidades para mostrar."
-                        } else {
-                            "No se encontraron unidades."
-                        }
+                    Text(
+                        text = "${unidades.size} unidades visibles",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 8.dp)
-                    ) {
-                        items(
-                            items = filteredUnits,
-                            key = { it.id }
-                        ) { unit ->
-                            UnitCard(
-                                unit = unit,
-                                subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                                onViewDetail = { onViewDetail(unit) },
-                                onAuthorize = { onAuthorize(unit) }
-                            )
+
+                    SearchField(
+                        value = search,
+                        onValueChange = { search = it },
+                        placeholder = "Título o asignatura"
+                    )
+
+                    if (subjectFilterOptions.size > 1) {
+                        FilterChipRow(
+                            options = subjectFilterOptions,
+                            selected = subjectFilter,
+                            onSelect = { subjectFilter = it }
+                        )
+                    }
+
+                    SectionHeader(title = "Unidades", count = filteredUnits.size)
+
+                    if (filteredUnits.isEmpty()) {
+                        EmptyState(
+                            message = if (unidades.isEmpty()) {
+                                "No hay unidades para mostrar."
+                            } else {
+                                "No se encontraron unidades."
+                            }
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 8.dp)
+                        ) {
+                            items(
+                                items = filteredUnits,
+                                key = { it.id }
+                            ) { unit ->
+                                UnitCard(
+                                    unit = unit,
+                                    subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
+                                    onViewDetail = { onViewDetail(unit) },
+                                    onAuthorize = { onAuthorize(unit) }
+                                )
+                            }
                         }
                     }
                 }

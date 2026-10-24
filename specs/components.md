@@ -29,6 +29,7 @@ Ubicación: `ui/components/common/`.
 | `LoadingState` | `modifier`, `message` (por defecto `"Cargando..."`) | Indicador circular y mensaje | Presenta la espera de datos |
 | `SearchField` | `value`, `onValueChange`, `modifier`, `placeholder`, `label` | Campo de búsqueda con lupa y botón de limpiar | Emite el texto; la búsqueda libre es siempre client-side |
 | `SectionHeader` | `title`, `modifier`, `count` (nullable) | Título de sección y contador opcional | Separa visualmente secciones de una pantalla |
+| `ThemeToggleButton` | `isDarkTheme`, `onToggleTheme`, `modifier` | Ícono con la acción disponible: luna cuando el tema es claro y sol cuando es oscuro | Alterna entre tema claro y oscuro; el estado lo resuelve `MainActivity` y lo persiste `ThemePreferenceStore` |
 | `StatusChip` | `label`, `modifier`, `containerColor`, `contentColor` | Etiqueta de estado con formato de chip | Presenta un estado ya resuelto por la pantalla; por defecto usa el color neutro del tema y la pantalla elige el color semántico cuando corresponde |
 
 ---

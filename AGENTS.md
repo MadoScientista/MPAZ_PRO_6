@@ -119,6 +119,7 @@ com/ccstudio/mpaz_pro_6/
 │   ├── remote/                # Retrofit: MpazApi, DTOs y mappers wire
 │   ├── auth/                  # RemoteAuthRepository
 │   ├── session/               # Session + SessionStore (DataStore)
+│   ├── preferences/           # tema claro/oscuro (ThemeMode + ThemePreferenceStore)
 │   ├── sync/                  # InitialSync del catálogo
 │   ├── mock/                  # mocks en memoria conservados para tests
 │   └── AppContainer.kt        # composición de todas las dependencias
@@ -174,6 +175,8 @@ com/ccstudio/mpaz_pro_6/
 - `data/mock/` se conserva para tests y previews; `AppContainer` no lo inyecta en la app.
 - `data/auth/` y `data/session/` manejan `/api/auth/*`, el token JWT en DataStore y el estado de
   sesión (`Loading`, `Authenticated`, `Unauthenticated`). `Session` expone `StateFlow<SessionState>`.
+- `data/preferences/` guarda preferencias ajenas a la sesión. `ThemePreferenceStore` persiste
+  `SYSTEM`, `LIGHT` o `DARK` en su propio DataStore para sobrevivir a logout y reset.
 - `data/AppContainer.kt` es el **único** lugar donde se decide la implementación de cada repositorio.
   No se usa un contenedor de inyección externo (Hilt, Koin).
 - La contraseña nunca forma parte del modelo `User` ni de la caché local. Solo existe en el cuerpo
@@ -277,8 +280,9 @@ sesión. Logout y reset limpian la caché; el reset solo se muestra en debug.
 La **capa visual mantiene el vertical slice UTP**: `LoginScreen → HomeUTPScreen → UnitListScreen →
 UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. El
 docente aterriza en `HomeTeacherScreen`, con sus cursos, unidades asignadas, actividades e informes
-pendientes; el estudiante sigue en el listado filtrado por rol. El resto de pantallas sigue como
-esqueleto documentado.
+pendientes; el estudiante sigue en el listado filtrado por rol. Todas las pantallas reales exponen
+el botón de tema claro/oscuro (`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
+El resto de pantallas sigue como esqueleto documentado.
 
 Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las
 pruebas instrumentadas de Room cubren FK, únicos, PK compuesta, índice parcial, transacción y seed;

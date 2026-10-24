@@ -20,6 +20,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
+import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 
 /**
  * Panel de inicio de la jefa de UTP.
@@ -39,6 +40,8 @@ fun HomeUTPScreen(
     onVerUnidades: () -> Unit,
     onCerrarSesion: () -> Unit,
     onCargar: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -49,6 +52,10 @@ fun HomeUTPScreen(
         AppTopBar(
             title = "Panel de UTP",
             actions = {
+                ThemeToggleButton(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
+                )
                 TextButton(onClick = onCerrarSesion) {
                     Text(text = "Salir")
                 }

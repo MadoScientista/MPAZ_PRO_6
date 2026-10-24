@@ -4,11 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import com.ccstudio.mpaz_pro_6.data.preferences.ThemeMode
 import com.ccstudio.mpaz_pro_6.ui.navigation.AppNavGraph
 import com.ccstudio.mpaz_pro_6.ui.theme.MPAZ_PRO_6Theme
+import kotlinx.coroutines.launch
 
 /**
  * Punto de entrada de la aplicación.
@@ -23,13 +29,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MPAZ_PRO_6Theme {
+            // El contenedor vive en la Application: sobrevive a la actividad.
+            val container = (application as MpazApplication).container
 
-                // El contenedor vive en la Application: sobrevive a la actividad.
-                val container = (application as MpazApplication).container
+            // `SYSTEM` es el valor inicial: mientras DataStore responde, la app
+            // sigue el modo del teléfono. Después manda la elección guardada.
+            val themeMode by container.themePreferenceStore.mode
+                .collectAsState(initial = ThemeMode.SYSTEM)
+            val isDarkTheme = themeMode.resolveDarkTheme(isSystemInDarkTheme())
+            val scope = rememberCoroutineScope()
 
+            MPAZ_PRO_6Theme(darkTheme = isDarkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavGraph(container = container)
+                    AppNavGraph(
+                        container = container,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = {
+                            scope.launch {
+                                container.themePreferenceStore.setMode(
+                                    themeMode.toggled(isDarkTheme)
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }

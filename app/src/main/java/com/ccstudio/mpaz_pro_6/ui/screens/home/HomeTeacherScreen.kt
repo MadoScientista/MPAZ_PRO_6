@@ -27,6 +27,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
+import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.course.CourseList
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
 
@@ -54,6 +55,8 @@ fun HomeTeacherScreen(
     onVerUnidades: () -> Unit,
     onCerrarSesion: () -> Unit,
     onCargar: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -66,6 +69,10 @@ fun HomeTeacherScreen(
         AppTopBar(
             title = "Panel del docente",
             actions = {
+                ThemeToggleButton(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
+                )
                 TextButton(onClick = onCerrarSesion) {
                     Text(text = "Salir")
                 }
