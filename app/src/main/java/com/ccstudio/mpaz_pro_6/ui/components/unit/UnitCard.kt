@@ -11,13 +11,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 
@@ -92,7 +90,7 @@ fun UnitCard(
 
                 if(onAuthorize != null){
                     Button(
-                        onClick = onAuthorize as () -> Unit,
+                        onClick = onAuthorize,
                         modifier = modifier.weight(1f)
                     ) {
                         Text("Autorizar")
