@@ -25,6 +25,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ccstudio.mpaz_pro_6.BuildConfig
@@ -99,6 +100,16 @@ private fun AppNavHost(
     val authenticated = user != null
     val rol = user?.rol ?: UserRole.UTP
 
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    // El login se dibuja a pantalla completa: el fondo llega hasta atrás de la
+    // barra del sistema y el formulario queda centrado en el centro físico de la
+    // pantalla. El `null` cubre el primer frame, antes de que el `NavHost`
+    // resuelva la ruta, para no aplicar el padding y quitarlo después.
+    val isFullBleed = currentRoute == AppRoutes.LOGIN ||
+            (currentRoute == null && !authenticated)
+
     // Shell de la app: el `Scaffold` reserva el inset inferior del sistema para
     // que el contenido no quede debajo de la barra de navegación. El inset
     // superior lo consume el `AppTopBar` de cada pantalla, por eso aquí solo se
@@ -110,7 +121,7 @@ private fun AppNavHost(
         NavHost(
             navController = navController,
             startDestination = if (authenticated) AppRoutes.HOME else AppRoutes.LOGIN,
-            modifier = Modifier.padding(innerPadding)
+            modifier = if (isFullBleed) Modifier else Modifier.padding(innerPadding)
         ) {
 
             composable(AppRoutes.LOGIN) {
