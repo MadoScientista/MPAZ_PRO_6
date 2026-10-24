@@ -1,8 +1,134 @@
 package com.ccstudio.mpaz_pro_6.ui.components.activity
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.model.Activity
+
 /**
  * Tarjeta de una actividad.
  *
- * Muestra el título, el tipo (`ActivityType`) y el orden de la actividad dentro de
- * la unidad.
+ * Muestra el tipo (`ActivityType`), el orden, el título y la cantidad de preguntas.
+ * La actividad solo trae `unidadId`, así que el título de la unidad lo resuelve la
+ * pantalla que lista y se entrega como `unitTitle` (opcional).
+ *
+ * El borrado siempre se ofrece; si la actividad tiene preguntas, asignaciones o
+ * intentos asociados, el backend responde `409 Conflict` y la pantalla lo explica.
  */
+@Composable
+fun ActivityCard(
+    activity: Activity,
+    questionsCount: Int,
+    onViewDetail: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+    unitTitle: String? = null
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Tipo y orden dentro de la unidad.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ActivityTypeChip(activityType = activity.tipo)
+
+                Text(
+                    text = "Orden ${activity.orden}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Título.
+            Text(
+                text = activity.titulo,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Unidad, si la pantalla pudo resolver su título.
+            if (unitTitle != null) {
+                Text(
+                    text = "Unidad: $unitTitle",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Cantidad de preguntas.
+            Text(
+                text = questionsCountLabel(questionsCount),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Acciones.
+            OutlinedButton(
+                onClick = onViewDetail,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Ver detalle")
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Editar")
+                }
+
+                Button(
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            }
+        }
+    }
+}
+
+/** Texto de la cantidad de preguntas, con singular y plural. */
+private fun questionsCountLabel(count: Int): String = when (count) {
+    0 -> "Sin preguntas"
+    1 -> "1 pregunta"
+    else -> "$count preguntas"
+}

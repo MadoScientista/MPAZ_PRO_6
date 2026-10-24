@@ -44,6 +44,10 @@ En Windows usar `gradlew.bat`. Todo lo que se ejecute debe ir con el *workdir* e
 `specs/endpoints` es la **fuente de verdad** del contrato. Antes de tocar cualquier capa de datos o cualquier
 screen, leer la sección correspondiente.
 
+`specs/components.md` es el **inventario de los componentes de UI**: para cada componente ya implementado
+registra cómo se llama, qué recibe, qué muestra y qué hace. Antes de crear o modificar un componente,
+leerlo y mantenerlo actualizado.
+
 Convenciones del contrato (mapply en `data/error/ApiError.kt`):
 
 | Código HTTP | Significado | `ApiError` |
@@ -242,6 +246,8 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
   son la referencia de estilo de la app.
 - **Al crear un archivo nuevo**, dejar en él un comentario en español que describa **qué debe contener**,
   mientras la implementación no esté escrita.
+- **Mantener `specs/components.md` al día.** Al implementar, cambiar o eliminar un componente,
+  actualizar su sección en el inventario.
 - **Respetar el idioma**: identificadores en inglés, comentarios y textos de UI en español.
 - **No agregar dependencias** sin avisar. Ya están `navigation-compose` y `lifecycle-viewmodel-compose`
   (navegación y ViewModels); cualquier otra debe avisarse antes.

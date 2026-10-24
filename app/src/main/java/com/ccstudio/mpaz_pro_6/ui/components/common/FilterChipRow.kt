@@ -16,13 +16,18 @@ import androidx.compose.ui.unit.dp
  *
  * Muestra en horizontal los filtros activos de un listado, como el filtro por
  * asignatura del listado de unidades.
+ *
+ * `disabledOptions` permite bloquear opciones concretas sin quitarlas de la fila,
+ * para que la pantalla pueda explicar por qué no están disponibles (por ejemplo,
+ * una segunda `PRUEBA_FINAL` en una unidad).
  */
 @Composable
 fun FilterChipRow(
     options: List<String>,
     selected: String,
     onSelect: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    disabledOptions: Set<String> = emptySet()
 ) {
     Row(
         modifier = modifier
@@ -34,7 +39,8 @@ fun FilterChipRow(
             FilterChip(
                 selected = option == selected,
                 onClick = { onSelect(option) },
-                label = { Text(text = option) }
+                label = { Text(text = option) },
+                enabled = option !in disabledOptions
             )
         }
     }
