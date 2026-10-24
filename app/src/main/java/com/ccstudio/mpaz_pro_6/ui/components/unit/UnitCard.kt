@@ -36,10 +36,11 @@ fun UnitCard(
     unit: LearningUnit,
     subjectName: String,
     onViewDetail: () -> Unit,
-    onAuthorize: () -> Unit
+    onAuthorize: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
@@ -47,66 +48,57 @@ fun UnitCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Asignatura.
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ) {
-                Text(
-                    text = subjectName,
-                    modifier = Modifier.padding(
-                        horizontal = 10.dp,
-                        vertical = 5.dp
-                    ),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-
-            // Título de la unidad.
-            Text(
-                text = unit.titulo,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            // Nivel educativo y estado de la unidad.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = unit.nivelEducativo,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = subjectName,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
                 )
 
                 UnitStatusChip(status = unit.estado)
             }
 
+            Text(
+                text = unit.titulo,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = unit.nivelEducativo,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+
             // Acciones de la jefa de UTP.
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
                     onClick = onViewDetail,
-                    modifier = Modifier.weight(1f)
+                    modifier = modifier.weight(1f)
                 ) {
                     Text("Ver detalle")
                 }
 
-                Button(
-                    onClick = onAuthorize,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Autorizar")
+                if(onAuthorize != null){
+                    Button(
+                        onClick = onAuthorize as () -> Unit,
+                        modifier = modifier.weight(1f)
+                    ) {
+                        Text("Autorizar")
+                    }
                 }
+
             }
         }
     }

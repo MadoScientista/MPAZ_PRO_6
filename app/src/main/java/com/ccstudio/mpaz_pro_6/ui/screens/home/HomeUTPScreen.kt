@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
+import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
@@ -83,19 +84,19 @@ fun HomeUTPScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        ContadorCard(
+                        CounterCard(
                             titulo = "Pendientes",
                             valor = unidadesPendientes,
                             modifier = Modifier.weight(1f)
                         )
 
-                        ContadorCard(
+                        CounterCard(
                             titulo = "Cursos",
                             valor = totalCursos,
                             modifier = Modifier.weight(1f)
                         )
 
-                        ContadorCard(
+                        CounterCard(
                             titulo = "Asignaturas",
                             valor = totalAsignaturas,
                             modifier = Modifier.weight(1f)
@@ -114,39 +115,3 @@ fun HomeUTPScreen(
     }
 }
 
-/**
- * Tarjeta con un contador del resumen.
- */
-@Composable
-private fun ContadorCard(
-    titulo: String,
-    valor: Int,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = valor.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}

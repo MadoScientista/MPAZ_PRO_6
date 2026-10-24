@@ -27,11 +27,14 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
+import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitStatusChip
+import com.ccstudio.mpaz_pro_6.ui.components.course.CourseList
+import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
+
 
 /**
  * Panel de inicio del docente.
@@ -108,19 +111,19 @@ fun HomeTeacherScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        TeacherCounterCard(
+                        CounterCard(
                             titulo = "Unidades",
                             valor = unidades.size,
                             modifier = Modifier.weight(1f)
                         )
 
-                        TeacherCounterCard(
+                        CounterCard(
                             titulo = "Actividades",
                             valor = actividades,
                             modifier = Modifier.weight(1f)
                         )
 
-                        TeacherCounterCard(
+                        CounterCard(
                             titulo = "Informes pendientes",
                             valor = informesPendientes,
                             modifier = Modifier.weight(1f)
@@ -147,7 +150,7 @@ fun HomeTeacherScreen(
                             description = "Cuando la UTP te asigne un curso aparecerá aquí."
                         )
                     } else {
-                        TeacherCourseList(cursos = cursos)
+                        CourseList(cursos = cursos)
                     }
                 }
 
@@ -167,10 +170,12 @@ fun HomeTeacherScreen(
                         items = unidades,
                         key = { it.id }
                     ) { unit ->
-                        TeacherUnitCard(
+                        UnitCard(
                             unit = unit,
                             subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                            onViewDetail = { onViewUnit(unit) }
+                            onViewDetail = { onViewUnit(unit) },
+                            null
+
                         )
                     }
                 }
@@ -186,138 +191,7 @@ fun HomeTeacherScreen(
     }
 }
 
-/**
- * Tarjeta con un contador del resumen del docente.
- */
-@Composable
-private fun TeacherCounterCard(
-    titulo: String,
-    valor: Int,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = valor.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
 
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
 
-/**
- * Lista los cursos que maneja el docente.
- */
-@Composable
-private fun TeacherCourseList(
-    cursos: List<Course>,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            cursos.forEach { course ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = course.nombre,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
 
-                    Text(
-                        text = course.anio.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
 
-/**
- * Tarjeta de una unidad asignada al docente.
- *
- * Muestra la asignatura, el estado, el título y el nivel educativo, y permite
- * abrir el detalle de la unidad.
- */
-@Composable
-private fun TeacherUnitCard(
-    unit: LearningUnit,
-    subjectName: String,
-    onViewDetail: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = subjectName,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-
-                UnitStatusChip(status = unit.estado)
-            }
-
-            Text(
-                text = unit.titulo,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = unit.nivelEducativo,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            OutlinedButton(
-                onClick = onViewDetail,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Ver detalle")
-            }
-        }
-    }
-}
