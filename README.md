@@ -35,8 +35,9 @@ Gradle JDK**.
 > - Linux/macOS: `~/.gradle/gradle.properties`
 > - Windows: `%USERPROFILE%\.gradle\gradle.properties`
 
-Por el mismo motivo no se commitean rutas absolutas en archivos del IDE como
-`.idea/gradle.xml`; `local.properties` ya está ignorado por `.gitignore`.
+Por el mismo motivo la carpeta `.idea/` **no se versiona**: cada IDE guarda ahí su configuración
+local (Gradle JDK, dispositivo seleccionado, inspecciones) y Android Studio la regenera al abrir el
+proyecto. `local.properties` también está ignorado por `.gitignore`.
 
 ## Comandos
 

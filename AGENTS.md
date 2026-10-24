@@ -257,6 +257,8 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 - **No agregar dependencias** sin avisar. Ya están `navigation-compose` y `lifecycle-viewmodel-compose`
   (navegación y ViewModels); cualquier otra debe avisarse antes.
 - **No tocar** `specs/endpoints` salvo para corregir una errata del contrato.
+- **No versionar configuración de máquina**: `.idea/`, `local.properties` y rutas absolutas
+  (JDK, SDK, dispositivos) no se commitean. Cada IDE las regenera; ver `README.md`.
 
 ---
 
