@@ -9,43 +9,57 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
+import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentResourceRepository
+import com.ccstudio.mpaz_pro_6.data.repository.LearningObjectiveRepository
 import kotlinx.coroutines.launch
 
 /**
  * Estado del detalle de un contenido.
  *
- * Consume `GET /api/contenidos/{id}` y sus recursos publicados con
- * `GET /api/recursos-contenido?contenidoId=`. La vista es de solo lectura para el
- * estudiante.
+ * Consume `GET /api/contenidos/{id}` y resuelve, además:
+ *
+ * - El objetivo de aprendizaje del contenido (`contenido.oaId`).
+ * - Los recursos asociados, desde `GET /api/recursos-contenido?contenidoId={id}`.
+ *
+ * El objetivo y los recursos son complementarios: si fallan, el contenido se sigue
+ * mostrando y la pantalla deja su sección vacía. Para el estudiante solo se
+ * muestran los recursos publicados.
  */
 class ContentDetailViewModel(
     private val contentRepository: ContentRepository,
+    private val learningObjectiveRepository: LearningObjectiveRepository,
     private val contentResourceRepository: ContentResourceRepository,
+    private val rol: UserRole,
     private val contentId: Int
 ) : ViewModel() {
 
     /** Contenido consultado. */
-    var content by mutableStateOf<Content?>(null)
+    var contenido by mutableStateOf<Content?>(null)
         private set
 
-    /** Recursos publicados del contenido. */
-    var resources by mutableStateOf<List<ContentResource>>(emptyList())
+    /** Objetivo de aprendizaje del contenido. */
+    var objetivo by mutableStateOf<LearningObjective?>(null)
+        private set
+
+    /** Recursos asociados al contenido. */
+    var recursos by mutableStateOf<List<ContentResource>>(emptyList())
         private set
 
     /** Indica que el detalle se está cargando. */
     var isLoading by mutableStateOf(false)
         private set
 
-    /** Error de la última carga, si lo hubo. */
+    /** Error de la carga del contenido, si lo hubo. */
     var error by mutableStateOf<ApiError?>(null)
         private set
 
-    /** Carga el contenido y sus recursos. */
+    /** Carga el contenido, su objetivo y sus recursos. */
     fun cargar() {
         viewModelScope.launch {
             isLoading = true
@@ -59,26 +73,27 @@ class ContentDetailViewModel(
                 return@launch
             }
 
-            val loadedContent = contentResult.getOrNull()
+            val content = contentResult.getOrThrow()
+            contenido = content
 
-            if (loadedContent == null) {
-                error = ApiError.NotFound("El contenido ya no existe.")
-                isLoading = false
-                return@launch
+            val objectiveResult = learningObjectiveRepository.getById(content.oaId)
+
+            if (objectiveResult.isSuccess) {
+                objetivo = objectiveResult.getOrNull()
             }
 
-            content = loadedContent
+            val resourcesResult = contentResourceRepository.list(content.id)
 
-            val resourcesResult = contentResourceRepository.list(contentId)
+            if (resourcesResult.isSuccess) {
+                val allResources = resourcesResult.getOrDefault(emptyList())
+                    .sortedBy { it.id }
 
-            if (resourcesResult.isFailure) {
-                error = resourcesResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
+                recursos = if (rol == UserRole.ESTUDIANTE) {
+                    allResources.filter { it.estado == ContentStatus.PUBLISHED }
+                } else {
+                    allResources
+                }
             }
-
-            resources = resourcesResult.getOrDefault(emptyList())
-                .filter { it.estado == ContentStatus.PUBLISHED }
 
             isLoading = false
         }
@@ -86,16 +101,20 @@ class ContentDetailViewModel(
 
     companion object {
 
-        /** Factoría del detalle con los repositorios y el id del contenido. */
+        /** Factoría del ViewModel con los repositorios y el id del contenido. */
         fun factory(
             contentRepository: ContentRepository,
+            learningObjectiveRepository: LearningObjectiveRepository,
             contentResourceRepository: ContentResourceRepository,
+            rol: UserRole,
             contentId: Int
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 ContentDetailViewModel(
                     contentRepository = contentRepository,
+                    learningObjectiveRepository = learningObjectiveRepository,
                     contentResourceRepository = contentResourceRepository,
+                    rol = rol,
                     contentId = contentId
                 )
             }

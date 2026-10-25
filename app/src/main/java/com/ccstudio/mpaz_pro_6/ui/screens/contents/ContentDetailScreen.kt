@@ -2,56 +2,59 @@ package com.ccstudio.mpaz_pro_6.ui.screens.contents
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
+import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
+import com.ccstudio.mpaz_pro_6.ui.components.content.ContentResourceCard
 
 /**
  * Detalle de un contenido.
  *
- * Consume `GET /api/contenidos/{id}` y muestra la explicación, los ejemplos, las
- * instrucciones y los recursos publicados. Es una vista de solo lectura para el
- * estudiante.
+ * Pantalla de consulta para la revisión de la UTP: muestra el título (sin origen
+ * ni orden), la explicación completa, los ejemplos, los recursos y las
+ * instrucciones. No ofrece edición ni borrado.
+ *
+ * El contenido y su objetivo llegan resueltos por el ViewModel. Los recursos se
+ * abren por callback, para que la pantalla no dependa del `Context` ni de un
+ * `Intent`.
  */
 @Composable
 fun ContentDetailScreen(
-    content: Content?,
-    resources: List<ContentResource>,
+    contenido: Content?,
+    objetivo: LearningObjective?,
+    recursos: List<ContentResource>,
     isLoading: Boolean,
     error: ApiError?,
-    onRetry: () -> Unit,
+    onOpenResource: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onRetry: () -> Unit,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
         AppTopBar(
-            title = "Contenido",
+            title = "Detalle del contenido",
             onNavigateBack = onNavigateBack,
             actions = {
                 ThemeToggleButton(
@@ -61,77 +64,98 @@ fun ContentDetailScreen(
             }
         )
 
-        when {
-            isLoading -> LoadingState(message = "Cargando el contenido...")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            when {
+                isLoading -> LoadingState(message = "Cargando el contenido...")
 
-            error != null -> ErrorState(error = error, onRetry = onRetry)
+                error != null -> ErrorState(error = error, onRetry = onRetry)
 
-            content == null -> EmptyState(
-                message = "No se encontró el contenido.",
-                modifier = Modifier.padding(16.dp)
-            )
+                contenido != null -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = contenido.titulo,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
 
-            else -> Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = content.titulo,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                        val etiquetaObjetivo = etiquetaObjetivo(objetivo)
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    StatusChip(label = content.origen.wireValue)
+                        if (etiquetaObjetivo != null) {
+                            Text(
+                                text = "OA: $etiquetaObjetivo",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    }
+
+                    SectionHeader(
+                        title = "Explicación",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
 
                     Text(
-                        text = "Orden ${content.orden}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = contenido.explicacion,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
-                }
 
-                SectionHeader(title = "Explicación")
-                Text(
-                    text = content.explicacion,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                    if (!contenido.ejemplos.isNullOrBlank()) {
+                        SectionHeader(
+                            title = "Ejemplos",
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
 
-                if (!content.ejemplos.isNullOrBlank()) {
-                    SectionHeader(title = "Ejemplos")
-                    Text(
-                        text = content.ejemplos,
-                        style = MaterialTheme.typography.bodyMedium
+                        Text(
+                            text = contenido.ejemplos,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+
+                    SectionHeader(
+                        title = "Recursos",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        count = recursos.size
                     )
-                }
 
-                if (!content.instrucciones.isNullOrBlank()) {
-                    SectionHeader(title = "Instrucciones")
-                    Text(
-                        text = content.instrucciones,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                    if (recursos.isEmpty()) {
+                        EmptyState(
+                            message = "Este contenido no tiene recursos asociados.",
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    } else {
+                        recursos.forEach { resource ->
+                            ContentResourceCard(
+                                resource = resource,
+                                onOpen = { onOpenResource(resource.url) },
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    }
 
-                SectionHeader(
-                    title = "Recursos",
-                    count = resources.size
-                )
+                    if (!contenido.instrucciones.isNullOrBlank()) {
+                        SectionHeader(
+                            title = "Instrucciones",
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
 
-                if (resources.isEmpty()) {
-                    EmptyState(
-                        message = "Este contenido no tiene recursos.",
-                        description = "Cuando se agregue una imagen o un audio aparecerá aquí."
-                    )
-                } else {
-                    resources.forEach { resource ->
-                        ResourceSummary(resource = resource)
+                        Text(
+                            text = contenido.instrucciones,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
                 }
             }
@@ -139,38 +163,15 @@ fun ContentDetailScreen(
     }
 }
 
-/** Resumen de solo lectura de un recurso de contenido. */
-@Composable
-private fun ResourceSummary(
-    resource: ContentResource,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatusChip(label = resource.tipo.wireValue)
+/**
+ * Etiqueta del objetivo de aprendizaje del contenido.
+ *
+ * Usa el código del objetivo (`OA01`) y, si no tiene, el número de su id.
+ */
+private fun etiquetaObjetivo(objetivo: LearningObjective?): String? {
+    if (objetivo == null) return null
 
-            if (!resource.descripcion.isNullOrBlank()) {
-                Text(
-                    text = resource.descripcion,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+    val codigo = objetivo.codigo?.takeIf { it.isNotBlank() }
 
-            Text(
-                text = resource.url,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
+    return codigo ?: "OA ${objetivo.id}"
 }

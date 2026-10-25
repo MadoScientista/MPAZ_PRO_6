@@ -29,16 +29,17 @@ import com.ccstudio.mpaz_pro_6.data.model.ContentResource
  *
  * Muestra el tipo, la URL y la descripción del recurso, con acceso a abrir el
  * enlace. La descripción se muestra solo cuando está definida.
- * El borrado siempre se ofrece; el recurso se elimina directo en el backend y la
- * pantalla explica cualquier `409 Conflict`.
+ * Las acciones de edición y borrado son opcionales: en una pantalla de solo
+ * consulta se omiten. Cuando la pantalla las habilita, el borrado siempre se
+ * ofrece y la pantalla explica cualquier `409 Conflict`.
  */
 @Composable
 fun ContentResourceCard(
     resource: ContentResource,
     onOpen: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -86,26 +87,32 @@ fun ContentResourceCard(
                 Text("Abrir enlace")
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onEdit,
-                    modifier = Modifier.weight(1f)
+            if (onEdit != null || onDelete != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Editar")
-                }
+                    if (onEdit != null) {
+                        OutlinedButton(
+                            onClick = onEdit,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Editar")
+                        }
+                    }
 
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text("Eliminar")
+                    if (onDelete != null) {
+                        Button(
+                            onClick = onDelete,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) {
+                            Text("Eliminar")
+                        }
+                    }
                 }
             }
         }

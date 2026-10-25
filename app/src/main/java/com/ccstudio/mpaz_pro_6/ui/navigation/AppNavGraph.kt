@@ -1,6 +1,9 @@
 package com.ccstudio.mpaz_pro_6.ui.navigation
 
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -21,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -883,11 +887,14 @@ private fun AppNavHost(
                     arguments = listOf(navArgument("contentId") { type = NavType.IntType })
                 ) { entry ->
                     val contentId = entry.arguments?.getInt("contentId") ?: 0
+                    val context = LocalContext.current
 
                     val viewModel: ContentDetailViewModel = viewModel(
                         factory = ContentDetailViewModel.factory(
                             contentRepository = container.contentRepository,
+                            learningObjectiveRepository = container.learningObjectiveRepository,
                             contentResourceRepository = container.contentResourceRepository,
+                            rol = rol,
                             contentId = contentId
                         )
                     )
@@ -897,12 +904,26 @@ private fun AppNavHost(
                     }
 
                     ContentDetailScreen(
-                        content = viewModel.content,
-                        resources = viewModel.resources,
+                        contenido = viewModel.contenido,
+                        objetivo = viewModel.objetivo,
+                        recursos = viewModel.recursos,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
-                        onRetry = viewModel::cargar,
+                        onOpenResource = { url ->
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                )
+                            }.onFailure {
+                                Toast.makeText(
+                                    context,
+                                    "No se pudo abrir el recurso.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
                         onNavigateBack = { navController.popBackStack() },
+                        onRetry = viewModel::cargar,
                         isDarkTheme = isDarkTheme,
                         onToggleTheme = onToggleTheme
                     )
