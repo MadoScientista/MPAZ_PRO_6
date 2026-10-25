@@ -286,11 +286,13 @@ Inicio, Unidades, Asignaciones e Informes. El UTP ya muestra sus cinco destinos:
 Asignaturas, Cursos y Usuarios, con CRUD completo en Asignaturas, Cursos y Usuarios (crear, editar y
 borrar con confirmación y explicación del `409 Conflict`). El estudiante tiene cuatro destinos:
 Inicio, Unidades, Actividades e Informes. Desde Inicio puede iniciar o continuar un intento y ver su
-resultado; en el detalle de una unidad ve sus objetivos, contenidos publicados y actividades
-asignadas, y puede abrir un contenido o resolver una actividad. En Actividades ve el estado de cada
-una y accede a su resultado; en Informes consulta sus informes pedagógicos y el detalle por objetivo
-de aprendizaje en modo lectura. Todas las pantallas reales exponen el botón de tema claro/oscuro
-(`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
+resultado; en el detalle de una unidad ve el resumen, los contenidos y las actividades. La UTP y el
+docente ven todo el material en modo lectura; el estudiante ve solo contenidos publicados y
+actividades asignadas, y puede resolverlas. La autorización solo se ofrece a la UTP en `EN_REVISION`
+o `AUTORIZADO`. En Actividades ve el estado de cada una y accede a su resultado; en Informes consulta
+sus informes pedagógicos y el detalle por objetivo de aprendizaje en modo lectura. Todas las
+pantallas reales exponen el botón de tema claro/oscuro (`ThemeToggleButton`), cuya elección persiste
+en `data/preferences/`.
 El resto de pantallas sigue como esqueleto documentado.
 
 Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las

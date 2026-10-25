@@ -20,7 +20,9 @@ import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
+import com.ccstudio.mpaz_pro_6.data.repository.ContentResourceRepository
 import com.ccstudio.mpaz_pro_6.data.repository.LearningObjectiveRepository
+import com.ccstudio.mpaz_pro_6.data.repository.QuestionRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
@@ -28,16 +30,22 @@ import kotlinx.coroutines.launch
 /**
  * Estado del detalle de una unidad.
  *
- * Consume `GET /api/unidades/{id}`. Para el estudiante agrega el material de la
- * unidad: objetivos de aprendizaje, contenidos publicados y actividades asignadas
- * a su curso. El docente y la UTP conservan la vista de gestión de la unidad.
+ * Consume `GET /api/unidades/{id}` y resuelve el material de la unidad:
+ * objetivos, contenidos, actividades, cantidad de recursos por contenido y
+ * cantidad de preguntas por actividad.
+ *
+ * Para la UTP y el docente se muestra todo el material de la unidad. Para el
+ * estudiante se muestran solo los contenidos publicados y las actividades
+ * asignadas a su curso, más la prueba final habilitada.
  */
 class UnitDetailViewModel(
     private val unitRepository: UnitRepository,
     private val subjectRepository: SubjectRepository,
     private val learningObjectiveRepository: LearningObjectiveRepository,
     private val contentRepository: ContentRepository,
+    private val contentResourceRepository: ContentResourceRepository,
     private val activityRepository: ActivityRepository,
+    private val questionRepository: QuestionRepository,
     private val assignmentRepository: AssignmentRepository,
     private val rol: UserRole,
     private val courseId: Int?,
@@ -48,7 +56,7 @@ class UnitDetailViewModel(
     var unidad by mutableStateOf<LearningUnit?>(null)
         private set
 
-    /** Nombre de la asignatura de la unidad. */
+    /** Asignatura de la unidad. */
     var asignatura by mutableStateOf<Subject?>(null)
         private set
 
@@ -56,12 +64,20 @@ class UnitDetailViewModel(
     var objetivos by mutableStateOf<List<LearningObjective>>(emptyList())
         private set
 
-    /** Contenidos publicados de los objetivos de la unidad. */
+    /** Contenidos visibles de los objetivos de la unidad. */
     var contenidos by mutableStateOf<List<Content>>(emptyList())
         private set
 
-    /** Actividades asignadas al curso del estudiante, más la prueba final habilitada. */
+    /** Actividades visibles de la unidad. */
     var actividades by mutableStateOf<List<Activity>>(emptyList())
+        private set
+
+    /** Cantidad de preguntas por actividad. */
+    var preguntasPorActividad by mutableStateOf<Map<Int, Int>>(emptyMap())
+        private set
+
+    /** Cantidad de recursos por contenido. */
+    var recursosPorContenido by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
     /** Indica que el detalle se está cargando. */
@@ -72,7 +88,7 @@ class UnitDetailViewModel(
     var error by mutableStateOf<ApiError?>(null)
         private set
 
-    /** Carga la unidad y, para el estudiante, su material. */
+    /** Carga la unidad y su material según el rol. */
     fun cargar() {
         viewModelScope.launch {
             isLoading = true
@@ -80,6 +96,8 @@ class UnitDetailViewModel(
             objetivos = emptyList()
             contenidos = emptyList()
             actividades = emptyList()
+            preguntasPorActividad = emptyMap()
+            recursosPorContenido = emptyMap()
 
             val unitResult = unitRepository.getById(unitId)
 
@@ -106,75 +124,41 @@ class UnitDetailViewModel(
                     .find { it.id == unit.asignaturaId }
             }
 
-            if (rol != UserRole.ESTUDIANTE) {
+            val objectivesResult = learningObjectiveRepository.list(unitId)
+
+            if (objectivesResult.isFailure) {
+                error = objectivesResult.exceptionOrNull() as? ApiError
                 isLoading = false
                 return@launch
             }
 
-            val objetivosResult = learningObjectiveRepository.list(unitId = unitId)
+            val unitObjectives = objectivesResult.getOrDefault(emptyList())
+                .filter { it.unidadId == unitId }
+                .sortedWith(compareBy({ it.codigo.orEmpty() }, { it.id }))
 
-            if (objetivosResult.isFailure) {
-                error = objetivosResult.exceptionOrNull() as? ApiError
+            objetivos = unitObjectives
+            val objectiveIds = unitObjectives.map { it.id }.toSet()
+
+            val contentsResult = contentRepository.list()
+
+            if (contentsResult.isFailure) {
+                error = contentsResult.exceptionOrNull() as? ApiError
                 isLoading = false
                 return@launch
             }
 
-            val loadedObjetivos = objetivosResult.getOrDefault(emptyList())
-            objetivos = loadedObjetivos
+            val allContents = contentsResult.getOrDefault(emptyList())
+                .filter { it.oaId in objectiveIds }
 
-            val contenidosResult = contentRepository.list()
-
-            if (contenidosResult.isFailure) {
-                error = contenidosResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
+            val visibleContents = if (rol == UserRole.ESTUDIANTE) {
+                allContents.filter { it.estado == ContentStatus.PUBLISHED }
+            } else {
+                allContents
             }
 
-            val oaIds = loadedObjetivos.map { it.id }.toSet()
-            contenidos = contenidosResult.getOrDefault(emptyList())
-                .filter {
-                    it.oaId in oaIds &&
-                            it.estado == ContentStatus.PUBLISHED
-                }
+            contenidos = visibleContents.sortedWith(compareBy({ it.orden }, { it.id }))
 
-            if (courseId == null) {
-                actividades = emptyList()
-                isLoading = false
-                return@launch
-            }
-
-            val asignacionesResult = assignmentRepository.list(
-                courseId = courseId,
-                unitId = unitId
-            )
-
-            if (asignacionesResult.isFailure) {
-                error = asignacionesResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
-            }
-
-            val assignment = asignacionesResult.getOrDefault(emptyList()).firstOrNull()
-
-            if (assignment == null) {
-                actividades = emptyList()
-                isLoading = false
-                return@launch
-            }
-
-            val enlacesResult = assignmentRepository.listActivities(assignment.id)
-
-            if (enlacesResult.isFailure) {
-                error = enlacesResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
-            }
-
-            val assignedIds = enlacesResult.getOrDefault(emptyList())
-                .map { it.actividadId }
-                .toMutableSet()
-
-            val activitiesResult = activityRepository.list(unitId = unitId)
+            val activitiesResult = activityRepository.list(unitId)
 
             if (activitiesResult.isFailure) {
                 error = activitiesResult.exceptionOrNull() as? ApiError
@@ -183,19 +167,94 @@ class UnitDetailViewModel(
             }
 
             val unitActivities = activitiesResult.getOrDefault(emptyList())
+                .filter { it.unidadId == unitId }
 
-            if (assignment.pruebaFinalHabilitada) {
+            val visibleActivities = if (rol == UserRole.ESTUDIANTE) {
+                actividadesParaEstudiante(unitActivities)
+            } else {
                 unitActivities
-                    .firstOrNull {
-                        it.unidadId == unitId &&
-                                it.tipo == ActivityType.FINAL_TEST
-                    }
-                    ?.let { assignedIds += it.id }
             }
 
-            actividades = unitActivities.filter { it.id in assignedIds }
+            if (error != null) {
+                isLoading = false
+                return@launch
+            }
+
+            actividades = visibleActivities
+                .sortedWith(compareBy({ it.orden }, { it.id }))
+
+            // Los conteos son complementarios: si fallan, se muestran en cero.
+            val activityIds = actividades.map { it.id }.toSet()
+            val questionsResult = questionRepository.list()
+
+            preguntasPorActividad = if (questionsResult.isSuccess) {
+                questionsResult.getOrDefault(emptyList())
+                    .filter { it.actividadId in activityIds }
+                    .groupingBy { it.actividadId }
+                    .eachCount()
+            } else {
+                emptyMap()
+            }
+
+            val contentIds = contenidos.map { it.id }.toSet()
+            val resourcesResult = contentResourceRepository.list()
+
+            recursosPorContenido = if (resourcesResult.isSuccess) {
+                resourcesResult.getOrDefault(emptyList())
+                    .filter { it.contenidoId in contentIds }
+                    .groupingBy { it.contenidoId }
+                    .eachCount()
+            } else {
+                emptyMap()
+            }
+
             isLoading = false
         }
+    }
+
+    /**
+     * Resuelve las actividades visibles para el estudiante: las asociadas a la
+     * asignación de su curso más la prueba final habilitada.
+     */
+    private suspend fun actividadesParaEstudiante(
+        unitActivities: List<Activity>
+    ): List<Activity> {
+        if (courseId == null) return emptyList()
+
+        val assignmentsResult = assignmentRepository.list(
+            courseId = courseId,
+            unitId = unitId
+        )
+
+        if (assignmentsResult.isFailure) {
+            error = assignmentsResult.exceptionOrNull() as? ApiError
+            return emptyList()
+        }
+
+        val assignment = assignmentsResult.getOrDefault(emptyList()).firstOrNull()
+            ?: return emptyList()
+
+        val linksResult = assignmentRepository.listActivities(assignment.id)
+
+        if (linksResult.isFailure) {
+            error = linksResult.exceptionOrNull() as? ApiError
+            return emptyList()
+        }
+
+        val assignedIds = linksResult.getOrDefault(emptyList())
+            .map { it.actividadId }
+            .toMutableSet()
+
+        if (assignment.pruebaFinalHabilitada) {
+            unitActivities
+                .firstOrNull {
+                    it.unidadId == unitId &&
+                            it.tipo == ActivityType.FINAL_TEST
+                }
+                ?.let { assignedIds += it.id }
+        }
+
+        return unitActivities.filter { it.id in assignedIds }
     }
 
     companion object {
@@ -206,7 +265,9 @@ class UnitDetailViewModel(
             subjectRepository: SubjectRepository,
             learningObjectiveRepository: LearningObjectiveRepository,
             contentRepository: ContentRepository,
+            contentResourceRepository: ContentResourceRepository,
             activityRepository: ActivityRepository,
+            questionRepository: QuestionRepository,
             assignmentRepository: AssignmentRepository,
             rol: UserRole,
             courseId: Int?,
@@ -218,7 +279,9 @@ class UnitDetailViewModel(
                     subjectRepository = subjectRepository,
                     learningObjectiveRepository = learningObjectiveRepository,
                     contentRepository = contentRepository,
+                    contentResourceRepository = contentResourceRepository,
                     activityRepository = activityRepository,
+                    questionRepository = questionRepository,
                     assignmentRepository = assignmentRepository,
                     rol = rol,
                     courseId = courseId,

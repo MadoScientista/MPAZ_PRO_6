@@ -836,7 +836,9 @@ private fun AppNavHost(
                         subjectRepository = container.subjectRepository,
                         learningObjectiveRepository = container.learningObjectiveRepository,
                         contentRepository = container.contentRepository,
+                        contentResourceRepository = container.contentResourceRepository,
                         activityRepository = container.activityRepository,
+                        questionRepository = container.questionRepository,
                         assignmentRepository = container.assignmentRepository,
                         rol = rol,
                         courseId = user.cursoId,
@@ -851,25 +853,28 @@ private fun AppNavHost(
                 UnitDetailScreen(
                     unidad = viewModel.unidad,
                     asignatura = viewModel.asignatura,
+                    contenidos = viewModel.contenidos,
+                    objetivos = viewModel.objetivos,
+                    actividades = viewModel.actividades,
+                    recursosPorContenido = viewModel.recursosPorContenido,
+                    preguntasPorActividad = viewModel.preguntasPorActividad,
                     isLoading = viewModel.isLoading,
                     error = viewModel.error,
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme,
+                    onViewContent = { content ->
+                        navController.navigate(AppRoutes.contentDetail(content.id))
+                    },
+                    onOpenActivity = { activity ->
+                        navController.navigate(AppRoutes.activityAttempt(activity.id))
+                    },
                     onAutorizar = {
                         navController.navigate(AppRoutes.unitAuthorization(unitId))
                     },
-                    onRetry = viewModel::cargar,
                     onNavigateBack = { navController.popBackStack() },
-                    mostrarMaterial = rol == UserRole.ESTUDIANTE,
-                    objetivos = viewModel.objetivos,
-                    contenidos = viewModel.contenidos,
-                    actividades = viewModel.actividades,
-                    onOpenContent = { content ->
-                        navController.navigate(AppRoutes.contentDetail(content.id))
-                    },
-                    onResolveActivity = { activity ->
-                        navController.navigate(AppRoutes.activityAttempt(activity.id))
-                    }
+                    onRetry = viewModel::cargar,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
+                    puedeAutorizar = rol == UserRole.UTP,
+                    puedeResolverActividades = rol == UserRole.ESTUDIANTE
                 )
                 }
 

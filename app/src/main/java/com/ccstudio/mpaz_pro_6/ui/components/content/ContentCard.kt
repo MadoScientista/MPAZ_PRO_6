@@ -12,35 +12,40 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ccstudio.mpaz_pro_6.data.enums.ContentOrigin
 import com.ccstudio.mpaz_pro_6.data.model.Content
 
 /**
- * Tarjeta de un contenido.
+ * Tarjeta resumen de un contenido.
  *
- * Muestra el título, el origen (`ContentOrigin`) y un resumen de la explicación.
- * El contenido solo trae `oaId`, así que el código del objetivo lo resuelve la
- * pantalla que lista y se entrega como `objectiveCode` (opcional).
- * El borrado siempre se ofrece; al eliminar un contenido el backend borra en
- * cascada sus recursos, y la pantalla explica cualquier `409 Conflict`.
+ * Muestra el título, una descripción breve de la explicación, el número de
+ * recursos, los códigos de los objetivos de aprendizaje asociados y el acceso
+ * **Ver contenido**. El contenido solo trae `oaId`, así que los códigos de los
+ * objetivos los resuelve la pantalla que lista y se entregan como
+ * `objectiveLabels`.
+ *
+ * El orden del contenido no se muestra: solo indica su posición en la lista y no
+ * aporta información para la revisión.
+ *
+ * Las acciones de edición y borrado son opcionales: en una pantalla de solo
+ * consulta (por ejemplo, la revisión de la UTP) se omiten y la tarjeta queda como
+ * resumen. El borrado siempre se ofrece cuando la pantalla lo habilita; al eliminar
+ * un contenido el backend borra en cascada sus recursos.
  */
 @Composable
 fun ContentCard(
     content: Content,
-    onViewDetail: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    resourceCount: Int,
+    onViewContent: () -> Unit,
     modifier: Modifier = Modifier,
-    objectiveCode: String? = null
+    objectiveLabels: List<String> = emptyList(),
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -53,21 +58,6 @@ fun ContentCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Origen y orden.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ContentOriginChip(origin = content.origen)
-
-                Text(
-                    text = "Orden ${content.orden}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
             // Título.
             Text(
                 text = content.titulo,
@@ -75,10 +65,10 @@ fun ContentCard(
                 fontWeight = FontWeight.SemiBold
             )
 
-            // Objetivo de aprendizaje, si la pantalla pudo resolver su código.
-            if (objectiveCode != null) {
+            // Códigos de los objetivos de aprendizaje, si la pantalla pudo resolverlos.
+            if (objectiveLabels.isNotEmpty()) {
                 Text(
-                    text = "Objetivo: $objectiveCode",
+                    text = objectiveLabels.joinToString(", "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -93,65 +83,50 @@ fun ContentCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Acciones.
+            // Recursos asociados.
+            Text(
+                text = if (resourceCount == 1) "1 recurso" else "$resourceCount recursos",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.secondary
+            )
+
+            // Acceso al contenido completo.
             OutlinedButton(
-                onClick = onViewDetail,
+                onClick = onViewContent,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Ver detalle")
+                Text("Ver contenido")
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onEdit,
-                    modifier = Modifier.weight(1f)
+            // Acciones de gestión, solo si la pantalla las habilita.
+            if (onEdit != null || onDelete != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Editar")
-                }
+                    if (onEdit != null) {
+                        OutlinedButton(
+                            onClick = onEdit,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Editar")
+                        }
+                    }
 
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text("Eliminar")
+                    if (onDelete != null) {
+                        Button(
+                            onClick = onDelete,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) {
+                            Text("Eliminar")
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-/** Chip del origen del material (`PROPIO`, `PUBLICO` o `AUTORIZADO`). */
-@Composable
-private fun ContentOriginChip(
-    origin: ContentOrigin,
-    modifier: Modifier = Modifier
-) {
-    val color = when (origin) {
-        ContentOrigin.OWN -> MaterialTheme.colorScheme.secondaryContainer
-        ContentOrigin.PUBLIC -> MaterialTheme.colorScheme.tertiaryContainer
-        ContentOrigin.AUTHORIZED -> MaterialTheme.colorScheme.primaryContainer
-    }
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
-    ) {
-        Text(
-            text = origin.wireValue,
-            modifier = Modifier.padding(
-                horizontal = 10.dp,
-                vertical = 5.dp
-            ),
-            style = MaterialTheme.typography.labelLarge
-        )
     }
 }
