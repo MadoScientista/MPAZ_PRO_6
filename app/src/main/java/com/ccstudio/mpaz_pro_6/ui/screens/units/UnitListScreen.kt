@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
@@ -59,6 +60,9 @@ fun UnitListScreen(
     title: String = "Unidades",
     headerTitle: String = "Revisión de unidades",
     emptyMessage: String? = null,
+    contenidosPorUnidad: Map<Int, Int> = emptyMap(),
+    actividadesPorUnidad: Map<Int, Int> = emptyMap(),
+    pruebaFinalPorUnidad: Map<Int, Boolean> = emptyMap(),
     isLoading: Boolean = false,
     error: ApiError? = null
 ) {
@@ -162,8 +166,17 @@ fun UnitListScreen(
                                     subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
                                     onViewDetail = { onViewDetail(unit) },
                                     onAuthorize = onAuthorize?.let { authorize ->
-                                        { authorize(unit) }
-                                    }
+                                        if (unit.estado == ContentStatus.IN_REVIEW ||
+                                            unit.estado == ContentStatus.AUTHORIZED
+                                        ) {
+                                            { authorize(unit) }
+                                        } else {
+                                            null
+                                        }
+                                    },
+                                    contentCount = contenidosPorUnidad[unit.id] ?: 0,
+                                    activityCount = actividadesPorUnidad[unit.id] ?: 0,
+                                    hasFinalTest = pruebaFinalPorUnidad[unit.id] ?: false
                                 )
                             }
                         }

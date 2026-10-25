@@ -63,7 +63,7 @@ Ubicación: `ui/components/unit/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `UnitCard` | `unit: LearningUnit`, `subjectName`, `onViewDetail`, `onAuthorize` | Chip de asignatura, título, nivel educativo, `UnitStatusChip` y botones «Ver detalle» y «Autorizar» | Ejecuta la acción correspondiente. La pantalla decide cuándo mostrar la tarjeta según el rol y el estado |
+| `UnitCard` | `unit: LearningUnit`, `subjectName`, `onViewDetail`, `onAuthorize` (nullable), `modifier`, `contentCount` (nullable), `activityCount` (nullable), `hasFinalTest` (nullable) | Chip de asignatura, título, nivel educativo, `UnitStatusChip`, resumen opcional de contenidos/actividades/prueba final y botones «Ver detalle» y «Autorizar» | Ejecuta la acción correspondiente. El resumen solo se muestra cuando la pantalla entrega los conteos; la pantalla decide cuándo mostrar la tarjeta según el rol y el estado |
 | `UnitForm` | `subjects`, `asignaturaId`, `nivelEducativo`, `titulo`, `orden`, `estado`, callbacks de cada campo, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error` | Selector de asignatura, campos de nivel, título y orden, estado y botones | Valida título (máx. 200), nivel (máx. 50) y orden (> 0). La asignatura no se cambia en edición; la creación fija `BORRADOR`; los estados se gestionan desde autorización |
 | `UnitStatusChip` | `status: ContentStatus`, `modifier` | Chip con el valor wire (`BORRADOR`, `EN_REVISION`, `AUTORIZADO`, `PUBLICADO`) | Asigna el color del tema según el estado |
 | `UnitSummaryHeader` | `unit: LearningUnit`, `subjectName`, `modifier` | Asignatura, título grande, nivel educativo y estado | Encabeza el detalle de una unidad |

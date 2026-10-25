@@ -994,6 +994,9 @@ private fun UnitListDestination(
             unitRepository = container.unitRepository,
             subjectRepository = container.subjectRepository,
             assignmentRepository = container.assignmentRepository,
+            learningObjectiveRepository = container.learningObjectiveRepository,
+            contentRepository = container.contentRepository,
+            activityRepository = container.activityRepository,
             rol = rol,
             courseId = courseId
         )
@@ -1044,7 +1047,10 @@ private fun UnitListDestination(
         },
         onRetry = viewModel::cargar,
         headerTitle = headerTitle,
-        emptyMessage = emptyMessage
+        emptyMessage = emptyMessage,
+        contenidosPorUnidad = viewModel.contenidosPorUnidad,
+        actividadesPorUnidad = viewModel.actividadesPorUnidad,
+        pruebaFinalPorUnidad = viewModel.pruebaFinalPorUnidad
     )
 }
 

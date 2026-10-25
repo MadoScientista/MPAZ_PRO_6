@@ -15,14 +15,13 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.BottomDestination
 /**
  * Destinos de la barra inferior según el rol.
  *
- * Solo incluye pantallas de nivel superior que ya existen como destino del
- * `NavHost`. Los detalles, formularios y la resolución de intentos quedan fuera
- * de la barra y se alcanzan desde su listado.
+ * Solo incluye pantallas de nivel superior que existen como destino del
+ * `NavHost`. Los detalles, formularios, la resolución de intentos y el detalle de
+ * contenido quedan fuera de la barra y se alcanzan desde su listado.
  *
- * El docente tiene la barra completa del piloto. El UTP arranca con Inicio y
- * Unidades, que ya están implementados; Asignaturas, Cursos y Usuarios se suman
- * en las etapas siguientes. El estudiante todavía no la tiene: su Inicio aún es
- * un esqueleto y hoy `HOME` renderiza el mismo listado que `UNITS`.
+ * - UTP: Inicio, Unidades, Asignaturas, Cursos y Usuarios.
+ * - Docente: Inicio, Unidades, Asignaciones e Informes.
+ * - Estudiante: Inicio, Unidades, Actividades e Informes.
  */
 fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role) {
     UserRole.UTP -> listOf(

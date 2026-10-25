@@ -176,8 +176,7 @@ fun HomeTeacherScreen(
                             unit = unit,
                             subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
                             onViewDetail = { onViewUnit(unit) },
-                            null
-
+                            onAuthorize = null
                         )
                     }
                 }
