@@ -1,11 +1,12 @@
 package com.ccstudio.mpaz_pro_6.ui.components.attempt
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -15,6 +16,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,16 +63,13 @@ fun AnswerOption(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .then(
-                if (canSelect) {
-                    Modifier.clickable(
-                        role = Role.RadioButton,
-                        onClick = { onSelect?.invoke() }
-                    )
-                } else {
-                    Modifier
-                }
-            ),
+            .selectable(
+                selected = isSelected,
+                enabled = canSelect,
+                role = Role.RadioButton,
+                onClick = { onSelect?.invoke() }
+            )
+            .testTag("alternative-${alternative.id}"),
         shape = RoundedCornerShape(12.dp),
         color = containerColor,
         contentColor = contentColorFor(containerColor),
@@ -80,17 +79,16 @@ fun AnswerOption(
         )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 48.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
                 selected = isSelected,
-                onClick = if (canSelect) {
-                    { onSelect?.invoke() }
-                } else {
-                    null
-                },
+                onClick = null,
                 enabled = enabled
             )
 

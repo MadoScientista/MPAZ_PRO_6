@@ -44,6 +44,10 @@ class CourseListViewModel(
     var error by mutableStateOf<ApiError?>(null)
         private set
 
+    /** Mensaje de una operación de borrado, para mostrarlo en el listado. */
+    var mensajeOperacion by mutableStateOf<String?>(null)
+        private set
+
     private var aniosCargados = false
 
     /** Cambia el filtro de año y recarga desde el backend. */
@@ -89,8 +93,48 @@ class CourseListViewModel(
             }
 
             cursos = result.getOrDefault(emptyList())
+
+            // Sin filtro, la lista es el catálogo completo: refresca los años.
+            if (anioSeleccionado == null) {
+                aniosDisponibles = cursos.map { it.anio }.distinct().sortedDescending()
+            }
+
             isLoading = false
         }
+    }
+
+    /**
+     * Elimina un curso y recarga el listado.
+     *
+     * Un `409 Conflict` significa que todavía tiene estudiantes o asignaciones;
+     * el mensaje lo explica en la pantalla.
+     */
+    fun eliminar(id: Int) {
+        viewModelScope.launch {
+            mensajeOperacion = null
+
+            val result = courseRepository.delete(id)
+
+            if (result.isFailure) {
+                mensajeOperacion = when (val fallo = result.exceptionOrNull() as? ApiError) {
+                    is ApiError.Conflict -> "No se puede eliminar: tiene estudiantes o asignaciones."
+                    is ApiError.NotFound -> "El curso ya no existe."
+                    is ApiError.Network -> "Sin conexión. Revisa tu red e intenta de nuevo."
+                    is ApiError.Unauthorized -> "Tu sesión venció. Vuelve a iniciar sesión."
+                    is ApiError.BadRequest -> fallo.message
+                    is ApiError.Unknown -> fallo.message
+                    null -> "No se pudo eliminar el curso."
+                }
+                return@launch
+            }
+
+            cargar()
+        }
+    }
+
+    /** Oculta el mensaje de la última operación. */
+    fun limpiarMensaje() {
+        mensajeOperacion = null
     }
 
     companion object {

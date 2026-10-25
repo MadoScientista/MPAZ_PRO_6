@@ -10,15 +10,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ccstudio.mpaz_pro_6.data.enums.ReportStatus
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import java.time.Instant
 import java.time.ZoneId
@@ -38,7 +35,8 @@ fun ReportCard(
     unitName: String,
     onViewDetail: () -> Unit,
     modifier: Modifier = Modifier,
-    showActions: Boolean = true
+    showActions: Boolean = true,
+    showStudentName: Boolean = true
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -51,18 +49,20 @@ fun ReportCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Estudiante e informe.
+            // Estudiante e informe. Para el estudiante, la unidad es el título.
             Text(
-                text = studentName,
+                text = if (showStudentName) studentName else unitName,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
 
-            Text(
-                text = unitName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (showStudentName) {
+                Text(
+                    text = unitName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             // Estado y fechas.
             Row(
@@ -97,35 +97,6 @@ fun ReportCard(
                 }
             }
         }
-    }
-}
-
-/** Chip del estado de validación de un informe. */
-@Composable
-private fun ReportStatusChip(
-    status: ReportStatus,
-    modifier: Modifier = Modifier
-) {
-    val color = when (status) {
-        ReportStatus.GENERATED -> MaterialTheme.colorScheme.surfaceVariant
-        ReportStatus.PENDING_VALIDATION -> MaterialTheme.colorScheme.tertiaryContainer
-        ReportStatus.VALIDATED -> MaterialTheme.colorScheme.primaryContainer
-    }
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
-    ) {
-        Text(
-            text = status.wireValue,
-            modifier = Modifier.padding(
-                horizontal = 10.dp,
-                vertical = 5.dp
-            ),
-            style = MaterialTheme.typography.labelLarge
-        )
     }
 }
 

@@ -27,21 +27,30 @@ class RoleBottomDestinationsTest {
     }
 
     @Test
-    fun utpArrancaConInicioUnidadesAsignaturasYCursos() {
+    fun utpTieneLosCincoDestinosSuperiores() {
         assertEquals(
             listOf(
                 AppRoutes.HOME,
                 AppRoutes.UNITS,
                 AppRoutes.SUBJECTS,
-                AppRoutes.COURSES
+                AppRoutes.COURSES,
+                AppRoutes.USERS
             ),
             bottomDestinationsFor(UserRole.UTP).map { it.route }
         )
     }
 
     @Test
-    fun estudianteAunNoTieneBarra() {
-        assertTrue(bottomDestinationsFor(UserRole.ESTUDIANTE).isEmpty())
+    fun estudianteTieneLosCuatroDestinosSuperiores() {
+        assertEquals(
+            listOf(
+                AppRoutes.HOME,
+                AppRoutes.UNITS,
+                AppRoutes.ACTIVITIES,
+                AppRoutes.REPORTS
+            ),
+            bottomDestinationsFor(UserRole.ESTUDIANTE).map { it.route }
+        )
     }
 
     @Test

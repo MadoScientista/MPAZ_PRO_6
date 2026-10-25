@@ -51,11 +51,14 @@ fun UnitListScreen(
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
     onViewDetail: (LearningUnit) -> Unit,
-    onAuthorize: (LearningUnit) -> Unit,
+    onAuthorize: ((LearningUnit) -> Unit)?,
     onRetry: () -> Unit,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String = "Unidades",
+    headerTitle: String = "Revisión de unidades",
+    emptyMessage: String? = null,
     isLoading: Boolean = false,
     error: ApiError? = null
 ) {
@@ -86,7 +89,7 @@ fun UnitListScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         AppTopBar(
-            title = "Unidades",
+            title = title,
             actions = {
                 ThemeToggleButton(
                     isDarkTheme = isDarkTheme,
@@ -109,7 +112,7 @@ fun UnitListScreen(
                 else -> {
 
                     Text(
-                        text = "Revisión de unidades",
+                        text = headerTitle,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -138,7 +141,7 @@ fun UnitListScreen(
 
                     if (filteredUnits.isEmpty()) {
                         EmptyState(
-                            message = if (unidades.isEmpty()) {
+                            message = emptyMessage ?: if (unidades.isEmpty()) {
                                 "No hay unidades para mostrar."
                             } else {
                                 "No se encontraron unidades."
@@ -158,7 +161,9 @@ fun UnitListScreen(
                                     unit = unit,
                                     subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
                                     onViewDetail = { onViewDetail(unit) },
-                                    onAuthorize = { onAuthorize(unit) }
+                                    onAuthorize = onAuthorize?.let { authorize ->
+                                        { authorize(unit) }
+                                    }
                                 )
                             }
                         }

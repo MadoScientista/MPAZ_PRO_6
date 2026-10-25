@@ -35,6 +35,10 @@ class SubjectListViewModel(
     var error by mutableStateOf<ApiError?>(null)
         private set
 
+    /** Mensaje de una operación de borrado, para mostrarlo en el listado. */
+    var mensajeOperacion by mutableStateOf<String?>(null)
+        private set
+
     /** Carga las asignaturas. */
     fun cargar() {
         viewModelScope.launch {
@@ -52,6 +56,40 @@ class SubjectListViewModel(
             asignaturas = result.getOrDefault(emptyList())
             isLoading = false
         }
+    }
+
+    /**
+     * Elimina una asignatura y recarga el listado.
+     *
+     * Un `409 Conflict` significa que todavía tiene unidades asociadas; el
+     * mensaje lo explica en la pantalla.
+     */
+    fun eliminar(id: Int) {
+        viewModelScope.launch {
+            mensajeOperacion = null
+
+            val result = subjectRepository.delete(id)
+
+            if (result.isFailure) {
+                mensajeOperacion = when (val fallo = result.exceptionOrNull() as? ApiError) {
+                    is ApiError.Conflict -> "No se puede eliminar: tiene unidades asociadas."
+                    is ApiError.NotFound -> "La asignatura ya no existe."
+                    is ApiError.Network -> "Sin conexión. Revisa tu red e intenta de nuevo."
+                    is ApiError.Unauthorized -> "Tu sesión venció. Vuelve a iniciar sesión."
+                    is ApiError.BadRequest -> fallo.message
+                    is ApiError.Unknown -> fallo.message
+                    null -> "No se pudo eliminar la asignatura."
+                }
+                return@launch
+            }
+
+            cargar()
+        }
+    }
+
+    /** Oculta el mensaje de la última operación. */
+    fun limpiarMensaje() {
+        mensajeOperacion = null
     }
 
     companion object {

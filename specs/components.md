@@ -42,6 +42,7 @@ Ubicación: `ui/components/subject/`.
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
 | `SubjectCard` | `subject: Subject`, `onEdit`, `onDelete`, `modifier`, `showActions` | Nombre de la asignatura y botones «Editar» y «Eliminar» | Navega a la edición o pide el borrado. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla. Con `showActions = false` oculta las acciones para listados de solo lectura |
+| `SubjectForm` | `nombre`, `onNombreChange`, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error` | Campo de nombre con contador y botones «Crear/Guardar» y «Cancelar» | Exige nombre no vacío de hasta 100 caracteres. La pantalla arma el `CreateSubjectRequest` o el `UpdateSubjectRequest` |
 
 ---
 
@@ -100,6 +101,7 @@ Ubicación: `ui/components/activity/`.
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
 | `ActivityTypeChip` | `activityType: ActivityType`, `modifier` | Chip con el valor wire (`ACTIVIDAD`, `DESAFIO`, `PRUEBA_FINAL`) | Asigna el color del tema según el tipo; la `PRUEBA_FINAL` usa el color de error por sus reglas propias |
+| `StudentActivityCard` | `activity: Activity`, `unitTitle`, `status: StudentActivityStatus`, `attemptsCount`, `onClick`, `modifier` | Tipo, orden, título, unidad, chip de estado (`Pendiente`, `En progreso`, `Completada`), cantidad de intentos y texto de acción (`Resolver`, `Continuar`, `Ver resultado`) | Presenta la actividad al estudiante y emite el toque; la pantalla decide si abre el intento o el resultado |
 | `ActivityCard` | `activity: Activity`, `questionsCount: Int`, `onViewDetail`, `onEdit`, `onDelete`, `modifier`, `unitTitle` (nullable) | Chip de tipo, orden, título, unidad opcional, cantidad de preguntas y botones «Ver detalle», «Editar» y «Eliminar» | Presenta la actividad y delega las acciones. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla |
 | `ActivityForm` | `titulo`, `tipo`, `orden`, callbacks de cada campo, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error`, `hasFinalTest` | Campos de título y orden, chips de tipo con `PRUEBA_FINAL` bloqueada si ya existe una y botones | Exige título (máx. 200) y valida orden (> 0 si se escribe). La unidad la gestiona la pantalla. Al crear, el orden vacío deja que el backend aplique `1`; al editar, vacío conserva el valor actual |
 
@@ -111,7 +113,7 @@ Ubicación: `ui/components/user/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `UserCard` | `user: User`, `onEdit`, `onDelete`, `modifier`, `courseName` (nullable) | Nombre, usuario, chip de rol y curso si es estudiante; botones «Editar» y «Eliminar» | Ejecuta la acción de edición o borrado. El nombre del curso lo resuelve la pantalla |
+| `UserCard` | `user: User`, `onEdit`, `onDelete`, `modifier`, `courseName` (nullable), `showActions` | Nombre, usuario, chip de rol y curso si es estudiante; botones «Editar» y «Eliminar» | Ejecuta la acción de edición o borrado. El nombre del curso lo resuelve la pantalla. Con `showActions = false` oculta las acciones para listados de solo lectura |
 | `UserForm` | `nombre`, `username`, `password`, `rol`, `cursoId`, `courses`, callbacks de cada campo, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error` | Campos de nombre, usuario y contraseña, chips de rol y selector de curso para estudiantes | Valida el `username` (3–100 caracteres) y exige contraseña al crear. Al cambiar a un rol que no es estudiante limpia el curso. En edición la contraseña vacía no se envía |
 
 ---
@@ -122,7 +124,8 @@ Ubicación: `ui/components/report/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `ReportCard` | `report: PedagogicalReport`, `studentName`, `unitName`, `onViewDetail`, `modifier`, `showActions` | Estudiante, unidad, chip de estado, fechas de generación/validación y botón «Ver informe» | Abre el detalle del informe. Los nombres los resuelve la pantalla. Con `showActions = false` oculta el botón para listados de solo lectura |
+| `ReportCard` | `report: PedagogicalReport`, `studentName`, `unitName`, `onViewDetail`, `modifier`, `showActions`, `showStudentName` | Estudiante, unidad, chip de estado, fechas de generación/validación y botón «Ver informe» | Abre el detalle del informe. Los nombres los resuelve la pantalla. Con `showActions = false` oculta el botón para listados de solo lectura; con `showStudentName = false` usa la unidad como título, para la vista del estudiante |
+| `ReportStatusChip` | `status: ReportStatus`, `modifier` | Chip con el valor wire (`GENERADO`, `PENDIENTE_VALIDACION`, `VALIDADO`) | Asigna el color del tema según el estado; se comparte entre el listado y el detalle del informe |
 | `ReportObjectiveLevelCard` | `detail: ReportObjectiveDetail`, `modifier`, `objectiveCode` (nullable), `objectiveDescription` (nullable) | Código del OA, chip de nivel (`FORTALEZA`/`REFUERZO`), barra de progreso y correctas sobre total | Presenta el nivel ya calculado por el backend; con `total = 0` muestra «Sin preguntas respondidas» |
 
 ---
@@ -161,7 +164,7 @@ Ubicación: `ui/components/attempt/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `AnswerOption` | `alternative: Alternative`, `modifier`, `isSelected`, `isCorrect` (nullable), `enabled`, `onSelect` (nullable) | Texto de la alternativa, selección radial y chip «Correcta»/«Incorrecta» cuando se conoce el resultado | Emite la alternativa tocada. Con `onSelect` nulo queda como solo lectura y conserva la marca de selección. El estado de corrección llega congelado desde el backend y no se recalcula |
+| `AnswerOption` | `alternative: Alternative`, `modifier`, `isSelected`, `isCorrect` (nullable), `enabled`, `onSelect` (nullable) | Texto de la alternativa, selección radial y chip «Correcta»/«Incorrecta» cuando se conoce el resultado | Emite la alternativa tocada mediante `Modifier.selectable` con rol `RadioButton` y `testTag("alternative-{id}")`. Con `onSelect` nulo queda como solo lectura y conserva la marca de selección. El estado de corrección llega congelado desde el backend y no se recalcula |
 | `AttemptProgress` | `attempt: Attempt`, `answeredCount`, `totalQuestions`, `modifier` | Número de intento, chip «En progreso»/«Completado», barra de progreso y contador de preguntas respondidas | Deduce la finalización de `attempt.fechaFin == null` y normaliza el conteo para no salir del rango |
-| `AttemptQuestionCard` | `question: Question`, `alternatives`, `selectedAlternativeId`, `onSelectAlternative`, `modifier`, `questionNumber` (nullable), `isReadOnly`, `showCorrectness`, `enabled` | Enunciado, criterio de respuesta opcional y alternativas con `AnswerOption` | Mantiene la selección exclusiva delegando en la pantalla. En solo lectura desactiva las opciones; `showCorrectness` revela el resultado congelado de cada alternativa |
+| `AttemptQuestionCard` | `question: Question`, `alternatives`, `selectedAlternativeId`, `onSelectAlternative`, `modifier`, `questionNumber` (nullable), `isReadOnly`, `isLocked`, `showCorrectness`, `enabled` | Enunciado, criterio de respuesta opcional y alternativas con `AnswerOption` | Mantiene la selección exclusiva delegando en la pantalla. Agrupa las alternativas con `Modifier.selectableGroup()`. En solo lectura desactiva las opciones; `isLocked` marca una respuesta ya registrada y bloquea su cambio; `showCorrectness` revela el resultado congelado de cada alternativa |
 

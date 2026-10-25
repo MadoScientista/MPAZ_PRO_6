@@ -139,9 +139,7 @@ fun PedagogicalReportListScreen(
                                         ?: "Estudiante #${report.estudianteId}",
                                     unitName = unitTitles[report.unidadId]
                                         ?: "Unidad #${report.unidadId}",
-                                    onViewDetail = { onViewDetail(report) },
-                                    // Sin detalle todavía: no se ofrece una acción muerta.
-                                    showActions = false
+                                    onViewDetail = { onViewDetail(report) }
                                 )
                             }
                         }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,10 +39,11 @@ fun AttemptQuestionCard(
     modifier: Modifier = Modifier,
     questionNumber: Int? = null,
     isReadOnly: Boolean = false,
+    isLocked: Boolean = false,
     showCorrectness: Boolean = false,
     enabled: Boolean = true
 ) {
-    val canSelect = enabled && !isReadOnly
+    val canSelect = enabled && !isReadOnly && !isLocked
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -64,6 +66,14 @@ fun AttemptQuestionCard(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
+
+            if (isLocked && !showCorrectness) {
+                Text(
+                    text = "Respuesta ya registrada",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
 
             Text(
                 text = question.enunciado,
@@ -98,7 +108,9 @@ fun AttemptQuestionCard(
                 )
             } else {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectableGroup(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     alternatives.forEach { alternative ->

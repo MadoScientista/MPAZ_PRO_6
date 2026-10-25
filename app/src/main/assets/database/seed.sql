@@ -37,7 +37,7 @@ INSERT INTO asignatura (id, nombre) VALUES
     (4, 'Historia, Geografia y Ciencias Sociales');
 
 INSERT INTO unidad (id, asignatura_id, titulo, orden, estado, autorizada_por_id, fecha_autorizacion) VALUES
-    (1, 1, 'Lectura y comprehension de textos', 1, 'AUTORIZADO', 1, 1772442000000),
+    (1, 1, 'Lectura y comprehension de textos', 1, 'PUBLICADO', 1, 1772442000000),
     (2, 2, 'Numeros, operaciones y problemas', 1, 'AUTORIZADO', 1, 1772442300000),
     (3, 3, 'Materia y energia en los seres vivos', 1, 'PUBLICADO', 1, 1772442600000),
     (4, 4, 'Las sociedades en el tiempo y el espacio', 1, 'PUBLICADO', 1, 1772442900000),
@@ -133,7 +133,8 @@ INSERT INTO actividad (id, unidad_id, titulo, tipo, orden) VALUES
     (12, 4, 'Prueba final de Historia y Ciencias Sociales', 'PRUEBA_FINAL', 3);
 
 -- ---------------------------------------------------------------------
--- F) Preguntas y alternativas de la prueba final de la unidad 1
+-- F) Preguntas y alternativas de las actividades 1, 4, 7 y 10,
+--    y de la prueba final de la unidad 1 (actividad 3)
 -- ---------------------------------------------------------------------
 
 INSERT INTO pregunta (id, actividad_id, unidad_id, oa_id, enunciado, criterio_respuesta, dificultad, orden) VALUES
@@ -148,7 +149,23 @@ INSERT INTO pregunta (id, actividad_id, unidad_id, oa_id, enunciado, criterio_re
     (5, 3, 1, 1, 'Un texto explica que las plantas usan la luz para fabricar su alimento. De que tipo de texto se trata',
         'Responde indicando el tipo y una caracteristica que lo delate.', 'ALTA', 1),
     (6, 3, 1, 2, 'Dos personas leen el mismo texto pero sacan conclusiones distintas. Cual es la razon mas probable',
-        'Explica usando la idea de que los mensajes combinan texto e imagen.', 'ALTA', 2);
+        'Explica usando la idea de que los mensajes combinan texto e imagen.', 'ALTA', 2),
+    (7, 1, 1, 1, 'Cual es la idea principal de un texto informativo',
+        'Responde con una frase que resuma el tema.', 'BAJA', 1),
+    (8, 1, 1, 2, 'Que parte del texto anuncia de que se tratara',
+        'Marca una sola alternativa.', 'BAJA', 2),
+    (9, 4, 2, 3, 'Que operacion conviene para repartir una cantidad en partes iguales',
+        'Marca una sola alternativa.', 'BAJA', 1),
+    (10, 4, 2, 4, 'Que regla sigue una secuencia que repite un circulo cada cuatro figuras',
+        'Marca una sola alternativa.', 'MEDIA', 2),
+    (11, 7, 3, 5, 'Que cambio observable muestra que la materia cambia de forma',
+        'Marca una sola alternativa y justifica con un ejemplo.', 'BAJA', 1),
+    (12, 7, 3, 6, 'De donde obtienen energia las plantas',
+        'Marca una sola alternativa.', 'MEDIA', 2),
+    (13, 10, 4, 7, 'Que datos permiten ubicar un hecho en el tiempo y el espacio',
+        'Marca una sola alternativa.', 'BAJA', 1),
+    (14, 10, 4, 8, 'Como puede cambiar una actividad humana el ambiente de una comunidad',
+        'Marca una sola alternativa y menciona un efecto.', 'MEDIA', 2);
 
 INSERT INTO alternativa (id, pregunta_id, texto, es_correcta) VALUES
     (1, 1, 'las formas de empezar el dia', 0),
@@ -169,7 +186,31 @@ INSERT INTO alternativa (id, pregunta_id, texto, es_correcta) VALUES
     (16, 5, 'Un articulo de opinion, porque critica', 0),
     (17, 6, 'Leyeron partes distintas del mensaje completo', 1),
     (18, 6, 'El texto estaba mal escrito', 0),
-    (19, 6, 'No tenia imagenes', 0);
+    (19, 6, 'No tenia imagenes', 0),
+    (20, 7, 'De que trata el texto y cual es su idea principal', 1),
+    (21, 7, 'Cuantas palabras tiene el texto', 0),
+    (22, 7, 'Quien escribio el texto', 0),
+    (23, 8, 'El titulo', 1),
+    (24, 8, 'La ultima frase', 0),
+    (25, 8, 'Las letras grandes', 0),
+    (26, 9, 'Dividir', 1),
+    (27, 9, 'Sumar', 0),
+    (28, 9, 'Multiplicar', 0),
+    (29, 10, 'Se repite cada cuatro posiciones', 1),
+    (30, 10, 'Cambia de color en cada figura', 0),
+    (31, 10, 'No sigue ninguna regla', 0),
+    (32, 11, 'El hielo pasa de solido a liquido', 1),
+    (33, 11, 'El hielo deja de ser materia', 0),
+    (34, 11, 'El agua se convierte en otra sustancia', 0),
+    (35, 12, 'De la luz', 1),
+    (36, 12, 'De los insectos que come', 0),
+    (37, 12, 'No necesita energia', 0),
+    (38, 13, 'Cuando ocurrio y donde ocurrio', 1),
+    (39, 13, 'Solo el nombre del protagonista', 0),
+    (40, 13, 'El color del mapa', 0),
+    (41, 14, 'Construir puede cambiar el suelo y la vegetacion', 1),
+    (42, 14, 'Las actividades humanas no afectan el ambiente', 0),
+    (43, 14, 'Solo el clima cambia el ambiente', 0);
 
 -- ---------------------------------------------------------------------
 -- G) Asignaciones del docente
@@ -177,9 +218,9 @@ INSERT INTO alternativa (id, pregunta_id, texto, es_correcta) VALUES
 
 INSERT INTO asignacion (id, curso_id, unidad_id, docente_id, max_intentos, prueba_final_habilitada, fecha) VALUES
     (1, 1, 1, 2, 2, 1, 1775462400000),
-    (2, 1, 2, 2, 2, 1, 1775462700000),
-    (3, 1, 3, 2, 1, 1, 1775463000000),
-    (4, 1, 4, 2, 1, 1, 1775463300000);
+    (2, 1, 2, 2, 2, 0, 1775462700000),
+    (3, 1, 3, 2, 1, 0, 1775463000000),
+    (4, 1, 4, 2, 1, 0, 1775463300000);
 
 INSERT INTO asignacion_oa (asignacion_id, unidad_id, oa_id) VALUES
     (1, 1, 1),
@@ -193,17 +234,9 @@ INSERT INTO asignacion_oa (asignacion_id, unidad_id, oa_id) VALUES
 
 INSERT INTO asignacion_actividad (asignacion_id, unidad_id, actividad_id) VALUES
     (1, 1, 1),
-    (1, 1, 2),
-    (1, 1, 3),
     (2, 2, 4),
-    (2, 2, 5),
-    (2, 2, 6),
     (3, 3, 7),
-    (3, 3, 8),
-    (3, 3, 9),
-    (4, 4, 10),
-    (4, 4, 11),
-    (4, 4, 12);
+    (4, 4, 10);
 
 -- ---------------------------------------------------------------------
 -- H) Intentos y respuestas de ejemplo
@@ -245,6 +278,9 @@ INSERT INTO detalle_informe_oa (id, informe_id, oa_id, total_preguntas, correcta
     (2, 1, 2, 3, 1, 'REFUERZO');
 
 -- El SQL de referencia no incluye `estado` en contenidos ni recursos. La app
--- lo agrega con valor por defecto y lo alinea con las unidades publicadas.
-UPDATE contenido SET estado = 'AUTORIZADO';
-UPDATE recurso_contenido SET estado = 'AUTORIZADO';
+-- lo agrega con valor por defecto y lo alinea con el estado de su unidad:
+-- unidades 1, 3 y 4 publicadas; unidad 2 autorizada.
+UPDATE contenido SET estado = 'PUBLICADO' WHERE oa_id IN (1, 2, 5, 6, 7, 8);
+UPDATE contenido SET estado = 'AUTORIZADO' WHERE oa_id IN (3, 4);
+UPDATE recurso_contenido SET estado = 'PUBLICADO' WHERE contenido_id IN (1, 2, 5, 6, 7, 8);
+UPDATE recurso_contenido SET estado = 'AUTORIZADO' WHERE contenido_id IN (3, 4);

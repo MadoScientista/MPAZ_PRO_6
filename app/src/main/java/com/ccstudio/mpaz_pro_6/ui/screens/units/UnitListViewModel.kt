@@ -13,6 +13,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
@@ -20,17 +21,19 @@ import kotlinx.coroutines.launch
 /**
  * Estado del listado de unidades.
  *
- * El mismo listado sirve a los tres roles y cambia su contenido según el
- * `UserRole`: la UTP ve las unidades `BORRADOR` y `EN_REVISION` pendientes de
- * revisión, el docente las `AUTORIZADO` y `PUBLICADO`, y el estudiante solo las
- * `PUBLICADO`.
+ * Cambia su contenido según el `UserRole`: la UTP ve las unidades `BORRADOR` y
+ * `EN_REVISION` pendientes de revisión, el docente las `AUTORIZADO` y
+ * `PUBLICADO`, y el estudiante solo las `PUBLICADO` que además estén asignadas a
+ * su curso.
  *
  * La búsqueda por texto libre es **client-side**: el backend no la expone.
  */
 class UnitListViewModel(
     private val unitRepository: UnitRepository,
     private val subjectRepository: SubjectRepository,
-    private val rol: UserRole
+    private val assignmentRepository: AssignmentRepository,
+    private val rol: UserRole,
+    private val courseId: Int?
 ) : ViewModel() {
 
     /** Unidades visibles según el rol del usuario. */
@@ -39,6 +42,10 @@ class UnitListViewModel(
 
     /** Asignaturas, para resolver el nombre que la unidad solo trae por id. */
     var asignaturas by mutableStateOf<List<Subject>>(emptyList())
+        private set
+
+    /** `true` cuando el estudiante no tiene curso y no puede ver unidades. */
+    var sinCurso by mutableStateOf(false)
         private set
 
     /** Indica que el listado se está cargando. */
@@ -54,6 +61,16 @@ class UnitListViewModel(
         viewModelScope.launch {
             isLoading = true
             error = null
+            sinCurso = false
+
+            // Sin curso, el estudiante no tiene unidades asignadas que mostrar.
+            if (rol == UserRole.ESTUDIANTE && courseId == null) {
+                unidades = emptyList()
+                asignaturas = emptyList()
+                sinCurso = true
+                isLoading = false
+                return@launch
+            }
 
             val unidadesResult = unitRepository.list()
 
@@ -71,11 +88,29 @@ class UnitListViewModel(
                 return@launch
             }
 
+            val unidadesAsignadas: Set<Int>? = if (rol == UserRole.ESTUDIANTE) {
+                val asignacionesResult = assignmentRepository.list(courseId = courseId)
+
+                if (asignacionesResult.isFailure) {
+                    error = asignacionesResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                asignacionesResult.getOrDefault(emptyList())
+                    .map { it.unidadId }
+                    .toSet()
+            } else {
+                null
+            }
+
             unidades = unidadesResult.getOrDefault(emptyList())
-                .filter { esVisiblePara(it) }
+                .filter { unit ->
+                    esVisiblePara(unit) &&
+                            (unidadesAsignadas == null || unit.id in unidadesAsignadas)
+                }
 
             asignaturas = asignaturasResult.getOrDefault(emptyList())
-
             isLoading = false
         }
     }
@@ -96,10 +131,18 @@ class UnitListViewModel(
         fun factory(
             unitRepository: UnitRepository,
             subjectRepository: SubjectRepository,
-            rol: UserRole
+            assignmentRepository: AssignmentRepository,
+            rol: UserRole,
+            courseId: Int?
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                UnitListViewModel(unitRepository, subjectRepository, rol)
+                UnitListViewModel(
+                    unitRepository = unitRepository,
+                    subjectRepository = subjectRepository,
+                    assignmentRepository = assignmentRepository,
+                    rol = rol,
+                    courseId = courseId
+                )
             }
         }
     }

@@ -280,14 +280,21 @@ sesión. Logout y reset limpian la caché; el reset solo se muestra en debug.
 La **capa visual mantiene el vertical slice UTP**: `LoginScreen → HomeUTPScreen → UnitListScreen →
 UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. El
 docente aterriza en `HomeTeacherScreen`, con sus cursos, unidades asignadas, actividades e informes
-pendientes; el estudiante sigue en el listado filtrado por rol. El docente ya cuenta con una
-**barra de navegación inferior** (`AppBottomBar`) con cuatro destinos: Inicio, Unidades, Asignaciones
-e Informes. El UTP ya muestra Inicio, Unidades, Asignaturas y Cursos; Usuarios se suma en la última
-etapa. El estudiante todavía no la muestra: su Inicio aún es un esqueleto y hoy `home` renderiza el
-mismo listado que `units`. Todas las pantallas reales exponen el botón de tema claro/oscuro
+pendientes; el estudiante aterriza en `HomeStudentScreen` con sus unidades y actividades pendientes.
+El docente ya cuenta con una **barra de navegación inferior** (`AppBottomBar`) con cuatro destinos:
+Inicio, Unidades, Asignaciones e Informes. El UTP ya muestra sus cinco destinos: Inicio, Unidades,
+Asignaturas, Cursos y Usuarios, con CRUD completo en Asignaturas, Cursos y Usuarios (crear, editar y
+borrar con confirmación y explicación del `409 Conflict`). El estudiante tiene cuatro destinos:
+Inicio, Unidades, Actividades e Informes. Desde Inicio puede iniciar o continuar un intento y ver su
+resultado; en el detalle de una unidad ve sus objetivos, contenidos publicados y actividades
+asignadas, y puede abrir un contenido o resolver una actividad. En Actividades ve el estado de cada
+una y accede a su resultado; en Informes consulta sus informes pedagógicos y el detalle por objetivo
+de aprendizaje en modo lectura. Todas las pantallas reales exponen el botón de tema claro/oscuro
 (`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
 El resto de pantallas sigue como esqueleto documentado.
 
 Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las
 pruebas instrumentadas de Room cubren FK, únicos, PK compuesta, índice parcial, transacción y seed;
-requieren emulador o dispositivo y aún no se ejecutaron localmente.
+las pruebas de UI de Compose cubren el cambio de alternativa, el scroll del Inicio y las acciones de
+la tarjeta de informe. Todas las pruebas instrumentadas requieren emulador o dispositivo y todavía
+no se ejecutaron localmente.
