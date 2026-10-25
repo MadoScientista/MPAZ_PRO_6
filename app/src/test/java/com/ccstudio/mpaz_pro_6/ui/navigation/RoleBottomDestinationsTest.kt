@@ -14,7 +14,7 @@ import org.junit.Test
 class RoleBottomDestinationsTest {
 
     @Test
-    fun soloElDocenteTieneBarraEnElPiloto() {
+    fun docenteTieneLosCuatroDestinosSuperiores() {
         assertEquals(
             listOf(
                 AppRoutes.HOME,
@@ -24,7 +24,23 @@ class RoleBottomDestinationsTest {
             ),
             bottomDestinationsFor(UserRole.DOCENTE).map { it.route }
         )
-        assertTrue(bottomDestinationsFor(UserRole.UTP).isEmpty())
+    }
+
+    @Test
+    fun utpArrancaConInicioUnidadesAsignaturasYCursos() {
+        assertEquals(
+            listOf(
+                AppRoutes.HOME,
+                AppRoutes.UNITS,
+                AppRoutes.SUBJECTS,
+                AppRoutes.COURSES
+            ),
+            bottomDestinationsFor(UserRole.UTP).map { it.route }
+        )
+    }
+
+    @Test
+    fun estudianteAunNoTieneBarra() {
         assertTrue(bottomDestinationsFor(UserRole.ESTUDIANTE).isEmpty())
     }
 

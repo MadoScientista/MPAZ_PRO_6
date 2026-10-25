@@ -40,12 +40,16 @@ import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseListScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitDetailScreen
@@ -299,6 +303,51 @@ private fun AppNavHost(
                         onAuthorize = { unit ->
                             navController.navigate(AppRoutes.unitAuthorization(unit.id))
                         }
+                    )
+                }
+
+                composable(AppRoutes.SUBJECTS) {
+                    val viewModel: SubjectListViewModel = viewModel(
+                        factory = SubjectListViewModel.factory(
+                            subjectRepository = container.subjectRepository
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    SubjectListScreen(
+                        asignaturas = viewModel.asignaturas,
+                        onRetry = viewModel::cargar,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = onToggleTheme,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
+                    )
+                }
+
+                composable(AppRoutes.COURSES) {
+                    val viewModel: CourseListViewModel = viewModel(
+                        factory = CourseListViewModel.factory(
+                            courseRepository = container.courseRepository
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    CourseListScreen(
+                        cursos = viewModel.cursos,
+                        aniosDisponibles = viewModel.aniosDisponibles,
+                        anioSeleccionado = viewModel.anioSeleccionado,
+                        onSelectAnio = viewModel::seleccionarAnio,
+                        onRetry = viewModel::cargar,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = onToggleTheme,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
                     )
                 }
 

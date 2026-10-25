@@ -41,7 +41,7 @@ Ubicación: `ui/components/subject/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `SubjectCard` | `subject: Subject`, `onEdit`, `onDelete`, `modifier` | Nombre de la asignatura y botones «Editar» y «Eliminar» | Navega a la edición o pide el borrado. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla |
+| `SubjectCard` | `subject: Subject`, `onEdit`, `onDelete`, `modifier`, `showActions` | Nombre de la asignatura y botones «Editar» y «Eliminar» | Navega a la edición o pide el borrado. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla. Con `showActions = false` oculta las acciones para listados de solo lectura |
 
 ---
 
@@ -51,7 +51,7 @@ Ubicación: `ui/components/course/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `CourseCard` | `course: Course`, `onEdit`, `onDelete`, `modifier` | Nombre del curso, chip con el año y botones «Editar» y «Eliminar» | Delega la edición o el borrado. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla |
+| `CourseCard` | `course: Course`, `onEdit`, `onDelete`, `modifier`, `showActions` | Nombre del curso, chip con el año y botones «Editar» y «Eliminar» | Delega la edición o el borrado. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla. Con `showActions = false` oculta las acciones para listados de solo lectura |
 | `CourseForm` | `nombre`, `anio`, `onNombreChange`, `onAnioChange`, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error` | Campos de nombre y año con contador/ayuda y botones | Exige nombre (máx. 50) y año entre 2000 y 2100. En edición la pantalla envía solo lo modificado |
 
 ---

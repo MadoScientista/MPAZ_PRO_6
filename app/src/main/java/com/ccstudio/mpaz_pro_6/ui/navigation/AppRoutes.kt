@@ -27,6 +27,12 @@ object AppRoutes {
     /** Autorización y publicación de una unidad. */
     const val UNIT_AUTHORIZATION = "unitAuthorization/{unitId}"
 
+    /** Listado de asignaturas (UTP). */
+    const val SUBJECTS = "subjects"
+
+    /** Listado de cursos (UTP). */
+    const val COURSES = "courses"
+
     /** Lista de asignaciones (docente). */
     const val ASSIGNMENTS = "assignments"
 

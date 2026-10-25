@@ -282,9 +282,10 @@ UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y res
 docente aterriza en `HomeTeacherScreen`, con sus cursos, unidades asignadas, actividades e informes
 pendientes; el estudiante sigue en el listado filtrado por rol. El docente ya cuenta con una
 **barra de navegación inferior** (`AppBottomBar`) con cuatro destinos: Inicio, Unidades, Asignaciones
-e Informes. El UTP y el estudiante todavía no muestran la barra: se habilitará cuando sus secciones
-de nivel superior dejen de ser esqueletos. Todas las pantallas reales exponen el botón de tema
-claro/oscuro (`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
+e Informes. El UTP ya muestra Inicio, Unidades, Asignaturas y Cursos; Usuarios se suma en la última
+etapa. El estudiante todavía no la muestra: su Inicio aún es un esqueleto y hoy `home` renderiza el
+mismo listado que `units`. Todas las pantallas reales exponen el botón de tema claro/oscuro
+(`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
 El resto de pantallas sigue como esqueleto documentado.
 
 Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las
