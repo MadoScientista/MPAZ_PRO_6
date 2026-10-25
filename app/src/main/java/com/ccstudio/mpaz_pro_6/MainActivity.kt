@@ -4,21 +4,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import com.ccstudio.mpaz_pro_6.data.AppContainer
+import com.ccstudio.mpaz_pro_6.data.preferences.ThemeMode
 import com.ccstudio.mpaz_pro_6.ui.navigation.AppNavGraph
 import com.ccstudio.mpaz_pro_6.ui.theme.MPAZ_PRO_6Theme
+import kotlinx.coroutines.launch
 
 /**
  * Punto de entrada de la aplicación.
  *
  * El enrutado vive en `ui/navigation/AppNavGraph` y las dependencias en
- * `data/AppContainer`. Este archivo solo crea el contenedor y monta el grafo: cuando
- * exista el backend, se cambia la implementación de los repositorios en
- * `AppContainer` y ni la UI ni la navegación se tocan.
+ * `data/AppContainer`, creado una sola vez por `MpazApplication`.
  */
 class MainActivity : ComponentActivity() {
 
@@ -27,13 +29,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MPAZ_PRO_6Theme {
+            // El contenedor vive en la Application: sobrevive a la actividad.
+            val container = (application as MpazApplication).container
 
-                // Contenedor de dependencias: sobrevive a los cambios de configuración.
-                val container = remember { AppContainer() }
+            // `SYSTEM` es el valor inicial: mientras DataStore responde, la app
+            // sigue el modo del teléfono. Después manda la elección guardada.
+            val themeMode by container.themePreferenceStore.mode
+                .collectAsState(initial = ThemeMode.SYSTEM)
+            val isDarkTheme = themeMode.resolveDarkTheme(isSystemInDarkTheme())
+            val scope = rememberCoroutineScope()
 
+            MPAZ_PRO_6Theme(darkTheme = isDarkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavGraph(container = container)
+                    AppNavGraph(
+                        container = container,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = {
+                            scope.launch {
+                                container.themePreferenceStore.setMode(
+                                    themeMode.toggled(isDarkTheme)
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }

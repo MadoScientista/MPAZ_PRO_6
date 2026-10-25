@@ -20,6 +20,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
+import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitStatusChip
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 
@@ -39,14 +40,23 @@ fun UnitAuthorizationScreen(
     mensaje: String?,
     onAutorizar: () -> Unit,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         AppTopBar(
             title = "Autorización de unidad",
-            onNavigateBack = null
+            onNavigateBack = onNavigateBack,
+            actions = {
+                ThemeToggleButton(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
+                )
+            }
         )
 
         Column(
