@@ -46,7 +46,8 @@ fun AssignmentCard(
     onViewDetail: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showActions: Boolean = true
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -113,33 +114,35 @@ fun AssignmentCard(
             }
 
             // Acciones.
-            OutlinedButton(
-                onClick = onViewDetail,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Ver detalle")
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            if (showActions) {
                 OutlinedButton(
-                    onClick = onEdit,
-                    modifier = Modifier.weight(1f)
+                    onClick = onViewDetail,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Editar")
+                    Text("Ver detalle")
                 }
 
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Eliminar")
+                    OutlinedButton(
+                        onClick = onEdit,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Editar")
+                    }
+
+                    Button(
+                        onClick = onDelete,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text("Eliminar")
+                    }
                 }
             }
         }

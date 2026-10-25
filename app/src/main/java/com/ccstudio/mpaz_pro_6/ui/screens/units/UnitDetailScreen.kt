@@ -48,14 +48,15 @@ fun UnitDetailScreen(
     onRetry: () -> Unit,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         AppTopBar(
             title = "Detalle de la unidad",
-            onNavigateBack = null,
+            onNavigateBack = onNavigateBack,
             actions = {
                 ThemeToggleButton(
                     isDarkTheme = isDarkTheme,

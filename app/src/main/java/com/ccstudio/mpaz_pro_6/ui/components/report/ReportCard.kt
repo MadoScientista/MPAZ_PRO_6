@@ -37,7 +37,8 @@ fun ReportCard(
     studentName: String,
     unitName: String,
     onViewDetail: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showActions: Boolean = true
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -87,11 +88,13 @@ fun ReportCard(
             }
 
             // Acciones.
-            OutlinedButton(
-                onClick = onViewDetail,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Ver informe")
+            if (showActions) {
+                OutlinedButton(
+                    onClick = onViewDetail,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Ver informe")
+                }
             }
         }
     }

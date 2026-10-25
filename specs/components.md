@@ -19,6 +19,7 @@ Ubicación: `ui/components/common/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
+| `AppBottomBar` | `destinations: List<BottomDestination>`, `currentRoute: String?`, `onSelect: (BottomDestination) -> Unit`, `modifier` | Barra de navegación inferior con un ítem de icono y etiqueta por destino | Marca como seleccionado el destino vigente y emite el destino tocado; no conoce el rol ni el `NavController`, así que el llamador resuelve la navegación |
 | `AppButton` | `text`, `onClick`, `modifier`, `enabled`, `variant` (`PRIMARY`, `OUTLINED`, `TEXT`), `containerColor`, `contentColor` | Botón con el estilo del tema según la variante | Ejecuta `onClick`; ocupa todo el ancho disponible |
 | `AppTextField` | `value`, `onValueChange`, `label`, `modifier`, `placeholder`, `supportingText`, `isPassword`, `passwordVisible`, `singleLine`, `enabled`, `trailingIcon` | Campo `OutlinedTextField` con etiqueta y textos de apoyo | Emite cada cambio de texto; aplica el modo contraseña y el icono final opcional |
 | `AppTopBar` | `title`, `modifier`, `onNavigateBack` (nullable), `actions` (slot `RowScope`) | Barra superior con título y acciones | Muestra el botón de retroceso solo si `onNavigateBack` no es `null`; delega las acciones al slot |
@@ -121,7 +122,7 @@ Ubicación: `ui/components/report/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `ReportCard` | `report: PedagogicalReport`, `studentName`, `unitName`, `onViewDetail`, `modifier` | Estudiante, unidad, chip de estado, fechas de generación/validación y botón «Ver informe» | Abre el detalle del informe. Los nombres los resuelve la pantalla |
+| `ReportCard` | `report: PedagogicalReport`, `studentName`, `unitName`, `onViewDetail`, `modifier`, `showActions` | Estudiante, unidad, chip de estado, fechas de generación/validación y botón «Ver informe» | Abre el detalle del informe. Los nombres los resuelve la pantalla. Con `showActions = false` oculta el botón para listados de solo lectura |
 | `ReportObjectiveLevelCard` | `detail: ReportObjectiveDetail`, `modifier`, `objectiveCode` (nullable), `objectiveDescription` (nullable) | Código del OA, chip de nivel (`FORTALEZA`/`REFUERZO`), barra de progreso y correctas sobre total | Presenta el nivel ya calculado por el backend; con `total = 0` muestra «Sin preguntas respondidas» |
 
 ---
@@ -147,7 +148,7 @@ Ubicación: `ui/components/assignment/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `AssignmentCard` | `assignment: Assignment`, `courseName`, `unitTitle`, `teacherName`, `onViewDetail`, `onEdit`, `onDelete`, `modifier` | Chip del curso, título de la unidad, docente, fecha, chip de prueba final habilitada/deshabilitada, límite de intentos y botones «Ver detalle», «Editar» y «Eliminar» | Presenta la asignación y delega las acciones. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla |
+| `AssignmentCard` | `assignment: Assignment`, `courseName`, `unitTitle`, `teacherName`, `onViewDetail`, `onEdit`, `onDelete`, `modifier`, `showActions` | Chip del curso, título de la unidad, docente, fecha, chip de prueba final habilitada/deshabilitada, límite de intentos y botones «Ver detalle», «Editar» y «Eliminar» | Presenta la asignación y delega las acciones. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla. Con `showActions = false` oculta las acciones para listados de solo lectura |
 | `AssignmentForm` | `courses`, `units`, `teachers`, `cursoId`, `unidadId`, `docenteId`, `fecha`, `maxIntentos`, `pruebaFinalHabilitada`, callbacks de cada campo, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error` | Selectores de curso, unidad y docente, selector de fecha, campo de máximo de intentos, interruptor de prueba final y botones | Exige curso, unidad, docente y fecha; valida `maxIntentos` (> 0 cuando se escribe). En edición bloquea curso, unidad y docente porque el `PUT` no los admite. Solo ofrece docentes con rol `DOCENTE`. La fecha conserva la hora del valor actual |
 | `ActivitySelector` | `activities`, `associatedActivityIds: Set<Int>`, `onAssociationChange`, `modifier`, `isReadOnly`, `isSaving` | Lista con casilla por actividad, tipo, orden y chip de `PRUEBA_FINAL` | Emite el nuevo estado de asociación. Las `PRUEBA_FINAL` se muestran identificadas y con la casilla deshabilitada porque el backend las rechaza con `400 Bad Request` |
 | `ObjectiveSelector` | `objectives`, `associatedObjectiveIds: Set<Int>`, `onAssociationChange`, `modifier`, `isReadOnly`, `isSaving` | Lista con casilla por objetivo, código (o «Sin código»), descripción y eje | Emite el nuevo estado de asociación. La pantalla lo traduce a `POST` o `DELETE` en `/api/asignaciones/{id}/objetivos-aprendizaje/{oaId}` |

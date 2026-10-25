@@ -280,8 +280,11 @@ sesión. Logout y reset limpian la caché; el reset solo se muestra en debug.
 La **capa visual mantiene el vertical slice UTP**: `LoginScreen → HomeUTPScreen → UnitListScreen →
 UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. El
 docente aterriza en `HomeTeacherScreen`, con sus cursos, unidades asignadas, actividades e informes
-pendientes; el estudiante sigue en el listado filtrado por rol. Todas las pantallas reales exponen
-el botón de tema claro/oscuro (`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
+pendientes; el estudiante sigue en el listado filtrado por rol. El docente ya cuenta con una
+**barra de navegación inferior** (`AppBottomBar`) con cuatro destinos: Inicio, Unidades, Asignaciones
+e Informes. El UTP y el estudiante todavía no muestran la barra: se habilitará cuando sus secciones
+de nivel superior dejen de ser esqueletos. Todas las pantallas reales exponen el botón de tema
+claro/oscuro (`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
 El resto de pantallas sigue como esqueleto documentado.
 
 Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las

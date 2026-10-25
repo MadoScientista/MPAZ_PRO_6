@@ -27,6 +27,12 @@ object AppRoutes {
     /** Autorización y publicación de una unidad. */
     const val UNIT_AUTHORIZATION = "unitAuthorization/{unitId}"
 
+    /** Lista de asignaciones (docente). */
+    const val ASSIGNMENTS = "assignments"
+
+    /** Listado de informes pedagógicos (docente). */
+    const val REPORTS = "reports"
+
     /** Construye la ruta del detalle de una unidad. */
     fun unitDetail(unitId: Int): String = "unitDetail/$unitId"
 

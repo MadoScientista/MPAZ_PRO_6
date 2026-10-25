@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,12 +35,17 @@ import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.session.SessionState
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppBottomBar
+import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitDetailScreen
@@ -113,6 +119,13 @@ private fun AppNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
+    // Destinos de la barra inferior para el rol actual. La barra solo se muestra
+    // cuando la ruta vigente es uno de esos destinos de nivel superior: así queda
+    // oculta en login, detalle, autorización, formularios e intentos.
+    val bottomDestinations = remember(rol) { bottomDestinationsFor(rol) }
+    val topLevelRoutes = remember(rol) { bottomDestinations.map { it.route }.toSet() }
+    val showBottomBar = authenticated && currentRoute in topLevelRoutes
+
     // El login se dibuja a pantalla completa: el fondo llega hasta atrás de la
     // barra del sistema y el formulario queda centrado en el centro físico de la
     // pantalla. El `null` cubre el primer frame, antes de que el `NavHost`
@@ -123,10 +136,28 @@ private fun AppNavHost(
     // Shell de la app: el `Scaffold` reserva el inset inferior del sistema para
     // que el contenido no quede debajo de la barra de navegación. El inset
     // superior lo consume el `AppTopBar` de cada pantalla, por eso aquí solo se
-    // aplica el borde inferior. La barra de navegación por rol se agregará en
-    // este mismo `Scaffold`.
+    // aplica el borde inferior. La barra inferior aparece solo en los destinos
+    // de nivel superior del rol.
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom)
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom),
+        bottomBar = {
+            if (showBottomBar) {
+                AppBottomBar(
+                    destinations = bottomDestinations,
+                    currentRoute = currentRoute,
+                    onSelect = { destination ->
+                        navController.navigate(destination.route) {
+                            // Evita apilar tabs y conserva el estado de cada uno.
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -271,6 +302,64 @@ private fun AppNavHost(
                     )
                 }
 
+                composable(AppRoutes.ASSIGNMENTS) {
+                    val viewModel: AssignmentListViewModel = viewModel(
+                        factory = AssignmentListViewModel.factory(
+                            assignmentRepository = container.assignmentRepository,
+                            courseRepository = container.courseRepository,
+                            unitRepository = container.unitRepository,
+                            userRepository = container.userRepository,
+                            teacherId = user.id
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    AssignmentListScreen(
+                        asignaciones = viewModel.asignaciones,
+                        cursos = viewModel.cursos,
+                        unidades = viewModel.unidades,
+                        docentes = viewModel.docentes,
+                        // El detalle de la asignación llega con su pantalla.
+                        onViewDetail = {},
+                        onRetry = viewModel::cargar,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = onToggleTheme,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
+                    )
+                }
+
+                composable(AppRoutes.REPORTS) {
+                    val viewModel: PedagogicalReportListViewModel = viewModel(
+                        factory = PedagogicalReportListViewModel.factory(
+                            pedagogicalReportRepository = container.pedagogicalReportRepository,
+                            userRepository = container.userRepository,
+                            unitRepository = container.unitRepository,
+                            teacherId = user.id
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    PedagogicalReportListScreen(
+                        informes = viewModel.informes,
+                        usuarios = viewModel.usuarios,
+                        unidades = viewModel.unidades,
+                        // El detalle del informe llega con su pantalla.
+                        onViewDetail = {},
+                        onRetry = viewModel::cargar,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = onToggleTheme,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
+                    )
+                }
+
                 composable(
                     route = AppRoutes.UNIT_DETAIL,
                     arguments = listOf(navArgument("unitId") { type = NavType.IntType })
@@ -299,7 +388,8 @@ private fun AppNavHost(
                     onAutorizar = {
                         navController.navigate(AppRoutes.unitAuthorization(unitId))
                     },
-                    onRetry = viewModel::cargar
+                    onRetry = viewModel::cargar,
+                    onNavigateBack = { navController.popBackStack() }
                 )
                 }
 
@@ -337,7 +427,8 @@ private fun AppNavHost(
                             navController.popBackStack()
                         }
                     },
-                    onRetry = viewModel::cargar
+                    onRetry = viewModel::cargar,
+                    onNavigateBack = { navController.popBackStack() }
                 )
                 }
             }

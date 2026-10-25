@@ -42,14 +42,15 @@ fun UnitAuthorizationScreen(
     onRetry: () -> Unit,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         AppTopBar(
             title = "Autorización de unidad",
-            onNavigateBack = null,
+            onNavigateBack = onNavigateBack,
             actions = {
                 ThemeToggleButton(
                     isDarkTheme = isDarkTheme,
