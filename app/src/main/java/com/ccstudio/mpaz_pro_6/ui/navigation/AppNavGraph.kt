@@ -4,6 +4,14 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -26,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -156,6 +165,11 @@ private fun AppNavHost(
     val topLevelRoutes = remember(rol) { bottomDestinations.map { it.route }.toSet() }
     val showBottomBar = authenticated && currentRoute in topLevelRoutes
 
+    // Indica si la transición ocurre entre dos destinos de la barra inferior.
+    fun isTabChange(from: NavBackStackEntry, to: NavBackStackEntry): Boolean =
+        from.destination.route in topLevelRoutes &&
+                to.destination.route in topLevelRoutes
+
     // El login se dibuja a pantalla completa: el fondo llega hasta atrás de la
     // barra del sistema y el formulario queda centrado en el centro físico de la
     // pantalla. El `null` cubre el primer frame, antes de que el `NavHost`
@@ -192,7 +206,24 @@ private fun AppNavHost(
         NavHost(
             navController = navController,
             startDestination = if (authenticated) AppRoutes.HOME else AppRoutes.LOGIN,
-            modifier = if (isFullBleed) Modifier else Modifier.padding(innerPadding)
+            modifier = if (isFullBleed) Modifier else Modifier.padding(innerPadding),
+            // Pestañas (patrón "top level" de Material 3): la saliente se apaga y
+            // la entrante aparece con fundido y una escala breve. Nunca en
+            // horizontal: sugeriría que se puede deslizar entre pestañas.
+            enterTransition = {
+                if (isTabChange(initialState, targetState)) tabEnter() else detailEnter()
+            },
+            exitTransition = {
+                if (isTabChange(initialState, targetState)) tabExit() else detailExit()
+            },
+            // Detalles, formularios e intentos ("forward and backward"): shared
+            // axis Z, escala más fundido. Al volver, la escala se invierte.
+            popEnterTransition = {
+                if (isTabChange(initialState, targetState)) tabEnter() else detailPopEnter()
+            },
+            popExitTransition = {
+                if (isTabChange(initialState, targetState)) tabExit() else detailPopExit()
+            }
         ) {
 
             composable(AppRoutes.LOGIN) {
@@ -1109,3 +1140,91 @@ private fun HomeStudentDestination(
 
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
+
+/** Duración total de las transiciones (token `motion.duration.long1` de M3). */
+private const val TRANSITION_MS = 450
+
+/** Primer 35 % de la transición: la pantalla saliente se apaga. */
+private const val TRANSITION_FADE_OUT_MS = 158
+
+/** 65 % restante: la pantalla entrante aparece (Material "fade through"). */
+private const val TRANSITION_FADE_IN_MS = 292
+
+/** Escala inicial de la pestaña entrante en el patrón "fade through". */
+private const val TAB_START_SCALE = 0.92f
+
+/** Escala inicial de un detalle al entrar (shared axis Z hacia adelante). */
+private const val DETAIL_ENTER_SCALE = 0.8f
+
+/** Escala final del listado al salir hacia un detalle (shared axis Z). */
+private const val DETAIL_EXIT_SCALE = 1.1f
+
+/** Easing "emphasized decelerate" de Material 3, para lo que entra. */
+private val EmphasizedEnter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+
+/** Easing "emphasized accelerate" de Material 3, para lo que sale. */
+private val EmphasizedExit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+
+/**
+ * Entrada de una pestaña: "fade through" de Material 3.
+ *
+ * Solo escala la pantalla entrante; la saliente únicamente se apaga, como en
+ * `MaterialFadeThrough`.
+ */
+private fun tabEnter(): EnterTransition =
+    fadeIn(
+        tween(
+            TRANSITION_FADE_IN_MS,
+            delayMillis = TRANSITION_FADE_OUT_MS,
+            easing = EmphasizedEnter
+        )
+    ) + scaleIn(
+        tween(TRANSITION_MS, easing = EmphasizedEnter),
+        initialScale = TAB_START_SCALE
+    )
+
+/** Salida de una pestaña: se apaga en el primer tramo de la transición. */
+private fun tabExit(): ExitTransition =
+    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit))
+
+/** Entrada de un detalle: shared axis Z, la pantalla crece desde 0.8. */
+private fun detailEnter(): EnterTransition =
+    fadeIn(
+        tween(
+            TRANSITION_FADE_IN_MS,
+            delayMillis = TRANSITION_FADE_OUT_MS,
+            easing = EmphasizedEnter
+        )
+    ) + scaleIn(
+        tween(TRANSITION_MS, easing = EmphasizedEnter),
+        initialScale = DETAIL_ENTER_SCALE
+    )
+
+/** Salida del listado al abrir un detalle: se aleja hasta 1.1. */
+private fun detailExit(): ExitTransition =
+    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit)) +
+        scaleOut(
+            tween(TRANSITION_MS, easing = EmphasizedExit),
+            targetScale = DETAIL_EXIT_SCALE
+        )
+
+/** Vuelta desde un detalle: la pantalla anterior reaparece desde 1.1. */
+private fun detailPopEnter(): EnterTransition =
+    fadeIn(
+        tween(
+            TRANSITION_FADE_IN_MS,
+            delayMillis = TRANSITION_FADE_OUT_MS,
+            easing = EmphasizedEnter
+        )
+    ) + scaleIn(
+        tween(TRANSITION_MS, easing = EmphasizedEnter),
+        initialScale = DETAIL_EXIT_SCALE
+    )
+
+/** Vuelta desde un detalle: la pantalla actual se aleja hasta 0.8. */
+private fun detailPopExit(): ExitTransition =
+    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit)) +
+        scaleOut(
+            tween(TRANSITION_MS, easing = EmphasizedExit),
+            targetScale = DETAIL_ENTER_SCALE
+        )

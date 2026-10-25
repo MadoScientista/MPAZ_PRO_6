@@ -72,7 +72,7 @@ fun ContentDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando el contenido...")
+                isLoading && contenido == null -> LoadingState(message = "Cargando el contenido...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

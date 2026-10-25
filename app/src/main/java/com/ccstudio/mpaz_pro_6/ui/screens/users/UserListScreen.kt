@@ -98,7 +98,7 @@ fun UserListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando usuarios...")
+                isLoading && usuarios.isEmpty() -> LoadingState(message = "Cargando usuarios...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

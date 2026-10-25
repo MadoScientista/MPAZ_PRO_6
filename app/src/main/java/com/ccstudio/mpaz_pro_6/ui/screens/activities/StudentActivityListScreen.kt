@@ -79,7 +79,7 @@ fun StudentActivityListScreen(
         )
 
         when {
-            isLoading -> LoadingState(message = "Cargando actividades...")
+            isLoading && items.isEmpty() -> LoadingState(message = "Cargando actividades...")
 
             error != null -> ErrorState(error = error, onRetry = onRetry)
 

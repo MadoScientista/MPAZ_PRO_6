@@ -80,10 +80,12 @@ fun HomeTeacherScreen(
         )
 
         when {
-            isLoading -> LoadingState(
-                message = "Cargando tu panel...",
-                modifier = Modifier.padding(16.dp)
-            )
+            isLoading && cursos.isEmpty() && unidades.isEmpty() &&
+                asignaturas.isEmpty() && actividades == 0 && informesPendientes == 0 ->
+                LoadingState(
+                    message = "Cargando tu panel...",
+                    modifier = Modifier.padding(16.dp)
+                )
 
             error != null -> ErrorState(
                 error = error,

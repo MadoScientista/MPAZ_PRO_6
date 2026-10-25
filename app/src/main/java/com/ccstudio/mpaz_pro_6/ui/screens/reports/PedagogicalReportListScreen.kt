@@ -87,7 +87,7 @@ fun PedagogicalReportListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando informes...")
+                isLoading && informes.isEmpty() -> LoadingState(message = "Cargando informes...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

@@ -93,7 +93,7 @@ fun CourseListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando cursos...")
+                isLoading && cursos.isEmpty() -> LoadingState(message = "Cargando cursos...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

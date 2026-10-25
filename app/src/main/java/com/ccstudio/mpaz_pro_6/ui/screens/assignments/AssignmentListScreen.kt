@@ -92,7 +92,7 @@ fun AssignmentListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando asignaciones...")
+                isLoading && asignaciones.isEmpty() -> LoadingState(message = "Cargando asignaciones...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

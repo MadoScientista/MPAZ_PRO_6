@@ -75,7 +75,8 @@ fun HomeUTPScreen(
             )
 
             when {
-                isLoading -> LoadingState(message = "Cargando el resumen...")
+                isLoading && unidadesPendientes == 0 && totalCursos == 0 && totalAsignaturas == 0 ->
+                    LoadingState(message = "Cargando el resumen...")
 
                 error != null -> ErrorState(error = error, onRetry = onCargar)
 

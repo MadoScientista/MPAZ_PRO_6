@@ -76,7 +76,7 @@ fun PedagogicalReportDetailScreen(
         )
 
         when {
-            isLoading -> LoadingState(message = "Cargando el informe...")
+            isLoading && report == null -> LoadingState(message = "Cargando el informe...")
 
             error != null -> ErrorState(error = error, onRetry = onRetry)
 

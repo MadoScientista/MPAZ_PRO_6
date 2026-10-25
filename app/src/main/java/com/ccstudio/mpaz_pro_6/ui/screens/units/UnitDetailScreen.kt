@@ -90,7 +90,7 @@ fun UnitDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando la unidad...")
+                isLoading && unidad == null -> LoadingState(message = "Cargando la unidad...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

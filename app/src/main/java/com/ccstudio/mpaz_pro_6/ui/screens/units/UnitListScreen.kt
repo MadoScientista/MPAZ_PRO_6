@@ -109,7 +109,7 @@ fun UnitListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando unidades...")
+                isLoading && unidades.isEmpty() -> LoadingState(message = "Cargando unidades...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

@@ -85,7 +85,7 @@ fun SubjectListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando asignaturas...")
+                isLoading && asignaturas.isEmpty() -> LoadingState(message = "Cargando asignaturas...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

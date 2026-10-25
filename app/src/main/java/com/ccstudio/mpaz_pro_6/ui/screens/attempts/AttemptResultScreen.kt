@@ -73,7 +73,7 @@ fun AttemptResultScreen(
         )
 
         when {
-            isLoading -> LoadingState(message = "Cargando el resultado...")
+            isLoading && attempt == null -> LoadingState(message = "Cargando el resultado...")
 
             error != null -> ErrorState(error = error, onRetry = onRetry)
 

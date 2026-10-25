@@ -81,7 +81,7 @@ fun ActivityAttemptScreen(
         )
 
         when {
-            isLoading -> LoadingState(message = "Cargando la actividad...")
+            isLoading && activity == null -> LoadingState(message = "Cargando la actividad...")
 
             error != null -> ErrorState(error = error, onRetry = onRetry)
 
