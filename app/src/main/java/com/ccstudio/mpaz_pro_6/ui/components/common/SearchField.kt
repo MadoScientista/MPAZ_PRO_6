@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
 
 /**
  * Campo de búsqueda.
@@ -35,6 +36,7 @@ fun SearchField(
         placeholder = { Text(text = placeholder) },
         modifier = modifier.fillMaxWidth(),
         singleLine = true,
+        shape = TextFieldShape,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         leadingIcon = {
             Icon(

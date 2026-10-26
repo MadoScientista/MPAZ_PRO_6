@@ -22,13 +22,11 @@ import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import com.ccstudio.mpaz_pro_6.data.model.User
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SearchField
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.report.ReportCard
 
 /**
@@ -47,8 +45,6 @@ fun PedagogicalReportListScreen(
     unidades: List<LearningUnit>,
     onViewDetail: (PedagogicalReport) -> Unit,
     onRetry: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -70,16 +66,6 @@ fun PedagogicalReportListScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        AppTopBar(
-            title = "Informes pedagógicos",
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -87,7 +73,7 @@ fun PedagogicalReportListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando informes...")
+                isLoading && informes.isEmpty() -> LoadingState(message = "Cargando informes...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

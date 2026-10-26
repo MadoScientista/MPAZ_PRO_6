@@ -25,21 +25,27 @@ data class BottomDestination(
 /**
  * Barra de navegación inferior de la app.
  *
- * Recibe solo los destinos del rol actual y la ruta vigente; no conoce el
- * `NavController` ni el rol. Así el mismo componente sirve a los tres roles y
- * puede probarse con una lista cualquiera.
+ * Recibe solo los destinos del rol actual y la ruta que debe aparecer
+ * seleccionada; no conoce el `NavController` ni el rol. En un detalle hijo, la
+ * ruta seleccionada es la pestaña padre, para que la sección siga marcada. Así
+ * el mismo componente sirve a los tres roles y puede probarse con una lista
+ * cualquiera.
+ *
+ * Usa los colores neutros del tema (`surfaceContainer`, `secondaryContainer`),
+ * igual en modo claro y oscuro: la inversión de marca queda solo en la barra
+ * superior.
  */
 @Composable
 fun AppBottomBar(
     destinations: List<BottomDestination>,
-    currentRoute: String?,
+    selectedRoute: String?,
     onSelect: (BottomDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavigationBar(modifier = modifier) {
         destinations.forEach { destination ->
             NavigationBarItem(
-                selected = currentRoute == destination.route,
+                selected = selectedRoute == destination.route,
                 onClick = { onSelect(destination) },
                 icon = {
                     Icon(

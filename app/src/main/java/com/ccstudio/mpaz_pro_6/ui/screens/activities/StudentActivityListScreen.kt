@@ -23,14 +23,12 @@ import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.ui.components.activity.StudentActivityCard
 import com.ccstudio.mpaz_pro_6.ui.components.activity.StudentActivityStatus
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 
 /**
  * Listado de actividades del estudiante.
@@ -46,8 +44,6 @@ fun StudentActivityListScreen(
     onOpenActivity: (Activity) -> Unit,
     onViewResult: (Int) -> Unit,
     onRetry: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -68,18 +64,8 @@ fun StudentActivityListScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        AppTopBar(
-            title = "Actividades",
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-        )
-
         when {
-            isLoading -> LoadingState(message = "Cargando actividades...")
+            isLoading && items.isEmpty() -> LoadingState(message = "Cargando actividades...")
 
             error != null -> ErrorState(error = error, onRetry = onRetry)
 

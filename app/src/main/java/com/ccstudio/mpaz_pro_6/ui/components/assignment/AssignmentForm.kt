@@ -33,6 +33,7 @@ import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
+import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -331,6 +332,7 @@ private fun AssignmentDropdownField(
             value = selectedLabel,
             onValueChange = {},
             readOnly = true,
+            shape = TextFieldShape,
             label = { Text(text = label) },
             placeholder = { Text(text = placeholder) },
             supportingText = { Text(text = supportingText) },
@@ -345,7 +347,9 @@ private fun AssignmentDropdownField(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            shape = TextFieldShape,
+            shadowElevation = 0.dp
         ) {
             if (options.isEmpty()) {
                 DropdownMenuItem(

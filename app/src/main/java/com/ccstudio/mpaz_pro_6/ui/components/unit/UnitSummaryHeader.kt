@@ -32,11 +32,7 @@ fun UnitSummaryHeader(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = subjectName,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary
-        )
+        SubjectLabel(subjectName = subjectName)
 
         Text(
             text = unit.titulo,

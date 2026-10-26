@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.ConfirmDialog
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
@@ -33,7 +32,6 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SearchField
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.course.CourseCard
 
 /**
@@ -55,8 +53,6 @@ fun CourseListScreen(
     mensajeOperacion: String?,
     onDismissMensaje: () -> Unit,
     onRetry: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -76,16 +72,6 @@ fun CourseListScreen(
     val selectedAnioLabel = anioSeleccionado?.toString() ?: "Todos"
 
     Column(modifier = modifier.fillMaxSize()) {
-        AppTopBar(
-            title = "Cursos",
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,7 +79,7 @@ fun CourseListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             when {
-                isLoading -> LoadingState(message = "Cargando cursos...")
+                isLoading && cursos.isEmpty() -> LoadingState(message = "Cargando cursos...")
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 

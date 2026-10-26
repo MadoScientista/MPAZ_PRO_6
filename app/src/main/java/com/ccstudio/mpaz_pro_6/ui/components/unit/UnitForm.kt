@@ -26,6 +26,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
 import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
+import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
 
 /**
  * Formulario de unidad.
@@ -95,6 +96,7 @@ fun UnitForm(
                 value = selectedSubjectLabel,
                 onValueChange = {},
                 readOnly = true,
+                shape = TextFieldShape,
                 label = { Text(text = "Asignatura") },
                 placeholder = { Text(text = "Seleccionar asignatura") },
                 supportingText = {
@@ -121,7 +123,9 @@ fun UnitForm(
 
             ExposedDropdownMenu(
                 expanded = subjectMenuExpanded,
-                onDismissRequest = { subjectMenuExpanded = false }
+                onDismissRequest = { subjectMenuExpanded = false },
+                shape = TextFieldShape,
+                shadowElevation = 0.dp
             ) {
                 subjects.forEach { subject ->
                     DropdownMenuItem(

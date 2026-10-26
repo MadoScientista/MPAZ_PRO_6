@@ -5,11 +5,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Chip del tipo de actividad.
@@ -24,17 +24,18 @@ fun ActivityTypeChip(
     activityType: ActivityType,
     modifier: Modifier = Modifier
 ) {
-    val color = when (activityType) {
-        ActivityType.ACTIVITY -> MaterialTheme.colorScheme.secondaryContainer
-        ActivityType.CHALLENGE -> MaterialTheme.colorScheme.tertiaryContainer
-        ActivityType.FINAL_TEST -> MaterialTheme.colorScheme.errorContainer
+    val appColors = LocalAppColors.current
+    val colors = when (activityType) {
+        ActivityType.ACTIVITY -> appColors.info
+        ActivityType.CHALLENGE -> appColors.accent
+        ActivityType.FINAL_TEST -> appColors.danger
     }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = activityType.wireValue,

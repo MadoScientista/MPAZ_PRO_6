@@ -30,7 +30,7 @@ class AttemptQuestionCardTest {
     @Test
     fun permiteCambiarLaAlternativaSeleccionada() {
         rule.setContent {
-            MPAZ_PRO_6Theme(dynamicColor = false) {
+            MPAZ_PRO_6Theme {
                 var selected by remember { mutableStateOf<Int?>(null) }
 
                 AttemptQuestionCard(

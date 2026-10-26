@@ -9,12 +9,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ContentResourceType
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Tarjeta de un recurso de contenido.
@@ -43,10 +42,7 @@ fun ContentResourceCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -125,16 +121,17 @@ private fun ResourceTypeChip(
     type: ContentResourceType,
     modifier: Modifier = Modifier
 ) {
-    val color = when (type) {
-        ContentResourceType.IMAGE -> MaterialTheme.colorScheme.secondaryContainer
-        ContentResourceType.AUDIO -> MaterialTheme.colorScheme.tertiaryContainer
+    val appColors = LocalAppColors.current
+    val colors = when (type) {
+        ContentResourceType.IMAGE -> appColors.info
+        ContentResourceType.AUDIO -> appColors.accent
     }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = type.wireValue,

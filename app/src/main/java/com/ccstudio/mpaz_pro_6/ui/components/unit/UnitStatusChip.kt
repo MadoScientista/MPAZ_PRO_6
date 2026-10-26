@@ -5,11 +5,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Chip del estado de una unidad.
@@ -22,18 +22,19 @@ fun UnitStatusChip(
     status: ContentStatus,
     modifier: Modifier = Modifier
 ) {
-    val color = when (status) {
-        ContentStatus.DRAFT -> MaterialTheme.colorScheme.surfaceVariant
-        ContentStatus.IN_REVIEW -> MaterialTheme.colorScheme.tertiaryContainer
-        ContentStatus.AUTHORIZED -> MaterialTheme.colorScheme.secondaryContainer
-        ContentStatus.PUBLISHED -> MaterialTheme.colorScheme.primaryContainer
+    val appColors = LocalAppColors.current
+    val colors = when (status) {
+        ContentStatus.DRAFT -> appColors.neutral
+        ContentStatus.IN_REVIEW -> appColors.warning
+        ContentStatus.AUTHORIZED -> appColors.info
+        ContentStatus.PUBLISHED -> appColors.success
     }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = status.wireValue,

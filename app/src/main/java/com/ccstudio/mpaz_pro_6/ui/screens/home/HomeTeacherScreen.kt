@@ -11,23 +11,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.course.CourseList
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
 
@@ -45,7 +41,6 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  */
 @Composable
 fun HomeTeacherScreen(
-    userName: String,
     cursos: List<Course>,
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
@@ -53,10 +48,7 @@ fun HomeTeacherScreen(
     informesPendientes: Int,
     onViewUnit: (LearningUnit) -> Unit,
     onVerUnidades: () -> Unit,
-    onCerrarSesion: () -> Unit,
     onCargar: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -66,24 +58,13 @@ fun HomeTeacherScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        AppTopBar(
-            title = "Panel del docente",
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-                TextButton(onClick = onCerrarSesion) {
-                    Text(text = "Salir")
-                }
-            }
-        )
-
         when {
-            isLoading -> LoadingState(
-                message = "Cargando tu panel...",
-                modifier = Modifier.padding(16.dp)
-            )
+            isLoading && cursos.isEmpty() && unidades.isEmpty() &&
+                asignaturas.isEmpty() && actividades == 0 && informesPendientes == 0 ->
+                LoadingState(
+                    message = "Cargando tu panel...",
+                    modifier = Modifier.padding(16.dp)
+                )
 
             error != null -> ErrorState(
                 error = error,
@@ -96,14 +77,6 @@ fun HomeTeacherScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    Text(
-                        text = if (userName.isBlank()) "Hola" else "Hola, $userName",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
                 item {
                     SectionHeader(title = "Resumen")
                 }
@@ -126,7 +99,7 @@ fun HomeTeacherScreen(
                         )
 
                         CounterCard(
-                            titulo = "Informes pendientes",
+                            titulo = "Informes",
                             valor = informesPendientes,
                             modifier = Modifier.weight(1f)
                         )

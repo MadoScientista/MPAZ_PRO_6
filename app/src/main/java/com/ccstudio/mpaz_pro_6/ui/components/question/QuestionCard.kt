@@ -9,12 +9,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.Difficulty
 import com.ccstudio.mpaz_pro_6.data.model.Question
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Tarjeta de una pregunta.
@@ -43,10 +42,7 @@ fun QuestionCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -149,17 +145,18 @@ private fun QuestionDifficultyChip(
     difficulty: Difficulty,
     modifier: Modifier = Modifier
 ) {
-    val color = when (difficulty) {
-        Difficulty.LOW -> MaterialTheme.colorScheme.surfaceVariant
-        Difficulty.MEDIUM -> MaterialTheme.colorScheme.tertiaryContainer
-        Difficulty.HIGH -> MaterialTheme.colorScheme.errorContainer
+    val appColors = LocalAppColors.current
+    val colors = when (difficulty) {
+        Difficulty.LOW -> appColors.success
+        Difficulty.MEDIUM -> appColors.warning
+        Difficulty.HIGH -> appColors.danger
     }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = difficulty.wireValue,
