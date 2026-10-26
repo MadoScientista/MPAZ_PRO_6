@@ -121,7 +121,8 @@ fun UnitForm(
 
             ExposedDropdownMenu(
                 expanded = subjectMenuExpanded,
-                onDismissRequest = { subjectMenuExpanded = false }
+                onDismissRequest = { subjectMenuExpanded = false },
+                shadowElevation = 0.dp
             ) {
                 subjects.forEach { subject ->
                     DropdownMenuItem(

@@ -174,7 +174,8 @@ fun UserForm(
 
                 ExposedDropdownMenu(
                     expanded = courseMenuExpanded,
-                    onDismissRequest = { courseMenuExpanded = false }
+                    onDismissRequest = { courseMenuExpanded = false },
+                    shadowElevation = 0.dp
                 ) {
                     DropdownMenuItem(
                         text = { Text(text = "Sin curso") },

@@ -345,7 +345,8 @@ private fun AssignmentDropdownField(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            shadowElevation = 0.dp
         ) {
             if (options.isEmpty()) {
                 DropdownMenuItem(
