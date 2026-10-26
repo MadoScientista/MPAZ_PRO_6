@@ -19,7 +19,7 @@ Ubicación: `ui/components/common/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `AppBottomBar` | `destinations: List<BottomDestination>`, `currentRoute: String?`, `onSelect: (BottomDestination) -> Unit`, `modifier` | Barra de navegación inferior con un ítem de icono y etiqueta por destino | Marca como seleccionado el destino vigente y emite el destino tocado; no conoce el rol ni el `NavController`, así que el llamador resuelve la navegación |
+| `AppBottomBar` | `destinations: List<BottomDestination>`, `selectedRoute: String?`, `onSelect: (BottomDestination) -> Unit`, `modifier` | Barra de navegación inferior con un ítem de icono y etiqueta por destino | Marca como seleccionado el destino indicado y emite el destino tocado; no conoce el rol ni el `NavController`, así que el llamador resuelve la navegación. En un detalle hijo, el llamador pasa la ruta de la pestaña padre para que la sección siga marcada |
 | `AppButton` | `text`, `onClick`, `modifier`, `enabled`, `variant` (`PRIMARY`, `OUTLINED`, `TEXT`), `containerColor`, `contentColor` | Botón con el estilo del tema según la variante | Ejecuta `onClick`; ocupa todo el ancho disponible |
 | `AppTextField` | `value`, `onValueChange`, `label`, `modifier`, `placeholder`, `supportingText`, `isPassword`, `passwordVisible`, `singleLine`, `enabled`, `trailingIcon` | Campo `OutlinedTextField` con etiqueta y textos de apoyo | Emite cada cambio de texto; aplica el modo contraseña y el icono final opcional |
 | `AppTopBar` | `title`, `modifier`, `onNavigateBack` (nullable), `actions` (slot `RowScope`) | Barra superior con título y acciones | Muestra el botón de retroceso solo si `onNavigateBack` no es `null`; delega las acciones al slot |

@@ -158,12 +158,19 @@ private fun AppNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Destinos de la barra inferior para el rol actual. La barra solo se muestra
-    // cuando la ruta vigente es uno de esos destinos de nivel superior: así queda
-    // oculta en login, detalle, autorización, formularios e intentos.
+    // Destinos de la barra inferior para el rol actual. La barra se muestra en
+    // los destinos de nivel superior y en los detalles hijos de una pestaña
+    // (unidad, contenido e informe). Queda oculta en login, autorización,
+    // formularios, intentos y resultado, que son pantallas con acciones propias.
     val bottomDestinations = remember(rol) { bottomDestinationsFor(rol) }
     val topLevelRoutes = remember(rol) { bottomDestinations.map { it.route }.toSet() }
-    val showBottomBar = authenticated && currentRoute in topLevelRoutes
+
+    // Pestaña a la que pertenece el detalle vigente, solo si el rol la tiene.
+    val parentTab = CHILD_ROUTE_PARENT_TAB[currentRoute]?.takeIf { it in topLevelRoutes }
+    val showBottomBar = authenticated && (currentRoute in topLevelRoutes || parentTab != null)
+
+    // En un detalle la barra marca su pestaña padre; en una pestaña, la vigente.
+    val selectedRoute = parentTab ?: currentRoute
 
     // Indica si la transición ocurre entre dos destinos de la barra inferior.
     fun isTabChange(from: NavBackStackEntry, to: NavBackStackEntry): Boolean =
@@ -180,15 +187,15 @@ private fun AppNavHost(
     // Shell de la app: el `Scaffold` reserva el inset inferior del sistema para
     // que el contenido no quede debajo de la barra de navegación. El inset
     // superior lo consume el `AppTopBar` de cada pantalla, por eso aquí solo se
-    // aplica el borde inferior. La barra inferior aparece solo en los destinos
-    // de nivel superior del rol.
+    // aplica el borde inferior. La barra se mantiene en las pestañas y en sus
+    // detalles para que el área de contenido no cambie al navegar.
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom),
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(
                     destinations = bottomDestinations,
-                    currentRoute = currentRoute,
+                    selectedRoute = selectedRoute,
                     onSelect = { destination ->
                         navController.navigate(destination.route) {
                             // Evita apilar tabs y conserva el estado de cada uno.
@@ -1140,6 +1147,20 @@ private fun HomeStudentDestination(
 
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
+
+/**
+ * Detalles que conservan la barra inferior y la pestaña que representan.
+ *
+ * Son vistas hijas de una pestaña, no tareas modales: mantener la barra evita
+ * que el `Scaffold` cambie su padding al navegar y deja a mano la sección de
+ * origen. Formularios, intentos y autorización quedan fuera: tienen acciones
+ * propias y la barra podría descartar lo que se está editando.
+ */
+private val CHILD_ROUTE_PARENT_TAB = mapOf(
+    AppRoutes.UNIT_DETAIL to AppRoutes.UNITS,
+    AppRoutes.CONTENT_DETAIL to AppRoutes.UNITS,
+    AppRoutes.REPORT_DETAIL to AppRoutes.REPORTS
+)
 
 /** Duración total de las transiciones (token `motion.duration.long1` de M3). */
 private const val TRANSITION_MS = 450
