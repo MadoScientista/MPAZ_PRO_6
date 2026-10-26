@@ -65,11 +65,12 @@ private val LightColors = lightColorScheme(
 /**
  * Esquema oscuro de MPAZ.
  *
- * El equivalente de las cards blancas es `#1C1C1E`: `#111111` sobre negro queda
- * prácticamente invisible. La escala de azul de los containers se mantiene con
- * tintes oscuros y texto claro: `primaryContainer` es el azul profundo de
- * publicado, mientras que `primary` sigue siendo el acento brillante de botones,
- * spinner y bordes de selección.
+ * El fondo es un azul casi negro (`#0F151D`) y las superficies — cards, barras y
+ * menús — un navy más claro (`#212D3B`), derivados ambos del tono de la marca.
+ * Así las cards se separan del fondo sin sombras. La escala de azul de los
+ * containers se mantiene con tintes oscuros y texto claro: `primaryContainer` es
+ * el azul profundo de publicado, mientras que `primary` sigue siendo el acento
+ * brillante de botones, spinner y bordes de selección.
  */
 private val DarkColors = darkColorScheme(
     primary = BlueDark,
@@ -101,7 +102,7 @@ private val DarkColors = darkColorScheme(
     outline = BorderDark,
     outlineVariant = BorderSoftDark,
     scrim = Black,
-    surfaceBright = NeutralDark,
+    surfaceBright = SurfaceBrightDark,
     surfaceDim = CanvasDark,
     surfaceContainerLowest = CanvasDark,
     surfaceContainerLow = SurfaceLowDark,

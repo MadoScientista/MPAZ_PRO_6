@@ -99,7 +99,7 @@ fun HomeTeacherScreen(
                         )
 
                         CounterCard(
-                            titulo = "Informes pendientes",
+                            titulo = "Informes",
                             valor = informesPendientes,
                             modifier = Modifier.weight(1f)
                         )

@@ -23,16 +23,17 @@ val NeutralLight = Color(0xFFE9E9EB)
 val BorderLight = Color(0xFF6B6B70)
 val BorderSoftLight = Color(0xFFC7C7CC)
 
-// Neutros del modo oscuro.
-val CanvasDark = Color(0xFF000000)
-val SurfaceDark = Color(0xFF1C1C1E)
-val SurfaceLowDark = Color(0xFF141416)
-val SurfaceHighDark = Color(0xFF242426)
-val NeutralDark = Color(0xFF2C2C2E)
+// Neutros del modo oscuro: fondo azul muy profundo y superficies navy.
+val CanvasDark = Color(0xFF0F151D)
+val SurfaceDark = Color(0xFF212D3B)
+val SurfaceLowDark = Color(0xFF1A242F)
+val SurfaceHighDark = Color(0xFF253243)
+val SurfaceBrightDark = Color(0xFF314359)
+val NeutralDark = Color(0xFF29384C)
 val InkDark = Color(0xFFF2F2F2)
 val InkMutedDark = Color(0xFFA1A1A6)
 val BorderDark = Color(0xFF8E8E93)
-val BorderSoftDark = Color(0xFF3A3A3C)
+val BorderSoftDark = Color(0xFF323C49)
 
 // Azul de marca: el claro es más oscuro para cumplir contraste como texto.
 val BlueLight = Color(0xFF0062CC)
