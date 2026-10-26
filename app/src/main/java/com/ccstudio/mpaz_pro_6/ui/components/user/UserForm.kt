@@ -31,6 +31,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
 import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
+import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
 
 /**
  * Formulario de usuario.
@@ -158,6 +159,7 @@ fun UserForm(
                     value = selectedCourseLabel,
                     onValueChange = {},
                     readOnly = true,
+                    shape = TextFieldShape,
                     label = { Text(text = "Curso") },
                     placeholder = { Text(text = "Seleccionar curso") },
                     supportingText = { Text(text = "Solo para estudiantes") },
@@ -175,6 +177,7 @@ fun UserForm(
                 ExposedDropdownMenu(
                     expanded = courseMenuExpanded,
                     onDismissRequest = { courseMenuExpanded = false },
+                    shape = TextFieldShape,
                     shadowElevation = 0.dp
                 ) {
                     DropdownMenuItem(

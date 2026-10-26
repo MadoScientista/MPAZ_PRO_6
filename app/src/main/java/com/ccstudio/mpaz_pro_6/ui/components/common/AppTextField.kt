@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
 
 /**
  * Campo de texto con etiqueta.
@@ -39,6 +40,7 @@ fun AppTextField(
         singleLine = singleLine,
         enabled = enabled,
         trailingIcon = trailingIcon,
+        shape = TextFieldShape,
         visualTransformation = if (isPassword && !passwordVisible) {
             PasswordVisualTransformation()
         } else {
