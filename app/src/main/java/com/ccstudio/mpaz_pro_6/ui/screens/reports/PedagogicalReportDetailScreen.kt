@@ -24,12 +24,10 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import com.ccstudio.mpaz_pro_6.data.model.ReportObjectiveDetail
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.report.ReportObjectiveLevelCard
 import com.ccstudio.mpaz_pro_6.ui.components.report.ReportStatusChip
 import java.time.Instant
@@ -52,9 +50,6 @@ fun PedagogicalReportDetailScreen(
     isLoading: Boolean,
     error: ApiError?,
     onRetry: () -> Unit,
-    onNavigateBack: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     canValidate: Boolean = false,
     isValidating: Boolean = false,
@@ -63,17 +58,6 @@ fun PedagogicalReportDetailScreen(
     onDismissMensaje: () -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        AppTopBar(
-            title = "Informe pedagógico",
-            onNavigateBack = onNavigateBack,
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-        )
-
         when {
             isLoading && report == null -> LoadingState(message = "Cargando el informe...")
 

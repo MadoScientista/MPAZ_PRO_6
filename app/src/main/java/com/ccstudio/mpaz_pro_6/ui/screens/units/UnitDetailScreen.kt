@@ -24,14 +24,12 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.content.ContentCard
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 
@@ -60,10 +58,7 @@ fun UnitDetailScreen(
     onViewContent: (Content) -> Unit,
     onOpenActivity: (Activity) -> Unit,
     onAutorizar: () -> Unit,
-    onNavigateBack: () -> Unit,
     onRetry: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     puedeAutorizar: Boolean = false,
     puedeResolverActividades: Boolean = false
@@ -71,17 +66,6 @@ fun UnitDetailScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        AppTopBar(
-            title = "Detalle de la unidad",
-            onNavigateBack = onNavigateBack,
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()

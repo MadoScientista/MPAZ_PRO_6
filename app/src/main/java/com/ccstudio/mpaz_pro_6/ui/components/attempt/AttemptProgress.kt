@@ -11,13 +11,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.model.Attempt
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Barra de progreso de un intento.
@@ -104,17 +104,18 @@ private fun AttemptStatusChip(
     isCompleted: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val color = if (isCompleted) {
-        MaterialTheme.colorScheme.primaryContainer
+    val appColors = LocalAppColors.current
+    val colors = if (isCompleted) {
+        appColors.success
     } else {
-        MaterialTheme.colorScheme.tertiaryContainer
+        appColors.warning
     }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = if (isCompleted) "Completado" else "En progreso",

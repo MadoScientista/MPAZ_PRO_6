@@ -30,6 +30,10 @@ data class BottomDestination(
  * ruta seleccionada es la pestaña padre, para que la sección siga marcada. Así
  * el mismo componente sirve a los tres roles y puede probarse con una lista
  * cualquiera.
+ *
+ * Usa los colores neutros del tema (`surfaceContainer`, `secondaryContainer`),
+ * igual en modo claro y oscuro: la inversión de marca queda solo en la barra
+ * superior.
  */
 @Composable
 fun AppBottomBar(

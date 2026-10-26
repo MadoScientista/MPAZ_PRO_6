@@ -59,11 +59,9 @@ fun UnitCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = subjectName,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                SubjectLabel(
+                    subjectName = subjectName,
+                    modifier = Modifier.weight(1f)
                 )
 
                 UnitStatusChip(status = unit.estado)

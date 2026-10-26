@@ -11,7 +11,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ObjectiveLevel
 import com.ccstudio.mpaz_pro_6.data.model.ReportObjectiveDetail
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Tarjeta del nivel alcanzado en un objetivo de aprendizaje.
@@ -104,16 +104,17 @@ private fun ObjectiveLevelChip(
     level: ObjectiveLevel,
     modifier: Modifier = Modifier
 ) {
-    val color = when (level) {
-        ObjectiveLevel.STRENGTH -> MaterialTheme.colorScheme.primaryContainer
-        ObjectiveLevel.SUPPORT -> MaterialTheme.colorScheme.tertiaryContainer
+    val appColors = LocalAppColors.current
+    val colors = when (level) {
+        ObjectiveLevel.STRENGTH -> appColors.success
+        ObjectiveLevel.SUPPORT -> appColors.warning
     }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = level.wireValue,

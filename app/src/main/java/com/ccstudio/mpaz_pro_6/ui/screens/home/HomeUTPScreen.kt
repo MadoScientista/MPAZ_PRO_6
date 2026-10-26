@@ -8,19 +8,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 
 /**
  * Panel de inicio de la jefa de UTP.
@@ -33,15 +29,11 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
  */
 @Composable
 fun HomeUTPScreen(
-    userName: String,
     unidadesPendientes: Int,
     totalCursos: Int,
     totalAsignaturas: Int,
     onVerUnidades: () -> Unit,
-    onCerrarSesion: () -> Unit,
     onCargar: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -49,31 +41,12 @@ fun HomeUTPScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        AppTopBar(
-            title = "Panel de UTP",
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-                TextButton(onClick = onCerrarSesion) {
-                    Text(text = "Salir")
-                }
-            }
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = if (userName.isBlank()) "Hola" else "Hola, $userName",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
             when {
                 isLoading && unidadesPendientes == 0 && totalCursos == 0 && totalAsignaturas == 0 ->
                     LoadingState(message = "Cargando el resumen...")

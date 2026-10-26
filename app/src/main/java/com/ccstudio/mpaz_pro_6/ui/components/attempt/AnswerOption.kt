@@ -10,9 +10,9 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.model.Alternative
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Opción de respuesta de una pregunta.
@@ -44,17 +45,18 @@ fun AnswerOption(
     enabled: Boolean = true,
     onSelect: (() -> Unit)? = null
 ) {
-    val containerColor = when {
-        isCorrect == true -> MaterialTheme.colorScheme.primaryContainer
-        isCorrect == false && isSelected -> MaterialTheme.colorScheme.errorContainer
-        isSelected -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.surfaceVariant
+    val appColors = LocalAppColors.current
+    val colors = when {
+        isCorrect == true -> appColors.success
+        isCorrect == false && isSelected -> appColors.danger
+        isSelected -> appColors.info
+        else -> appColors.neutral
     }
 
     val borderColor = when {
-        isCorrect == true -> MaterialTheme.colorScheme.primary
-        isCorrect == false && isSelected -> MaterialTheme.colorScheme.error
-        isSelected -> MaterialTheme.colorScheme.primary
+        isCorrect == true -> appColors.success.content
+        isCorrect == false && isSelected -> appColors.danger.content
+        isSelected -> appColors.info.content
         else -> MaterialTheme.colorScheme.outlineVariant
     }
 
@@ -71,8 +73,8 @@ fun AnswerOption(
             )
             .testTag("alternative-${alternative.id}"),
         shape = RoundedCornerShape(12.dp),
-        color = containerColor,
-        contentColor = contentColorFor(containerColor),
+        color = colors.container,
+        contentColor = colors.content,
         border = BorderStroke(
             width = if (isSelected || isCorrect == true) 2.dp else 1.dp,
             color = borderColor
@@ -89,7 +91,11 @@ fun AnswerOption(
             RadioButton(
                 selected = isSelected,
                 onClick = null,
-                enabled = enabled
+                enabled = enabled,
+                colors = RadioButtonDefaults.colors(
+                    selectedColor = colors.content,
+                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
 
             Text(
@@ -112,15 +118,18 @@ private fun AnswerCorrectionChip(
     isCorrect: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val appColors = LocalAppColors.current
+    val contentColor = if (isCorrect) {
+        appColors.success.content
+    } else {
+        appColors.danger.content
+    }
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surface,
-        contentColor = if (isCorrect) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.error
-        }
+        contentColor = contentColor
     ) {
         Text(
             text = if (isCorrect) "Correcta" else "Incorrecta",

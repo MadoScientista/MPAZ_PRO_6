@@ -13,13 +13,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.model.Alternative
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Fila de alternativa dentro de una lista.
@@ -93,17 +93,14 @@ private fun CorrectionChip(
     isCorrect: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val color = if (isCorrect) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
+    val appColors = LocalAppColors.current
+    val colors = if (isCorrect) appColors.success else appColors.neutral
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = color,
-        contentColor = contentColorFor(color)
+        color = colors.container,
+        contentColor = colors.content
     ) {
         Text(
             text = if (isCorrect) "Correcta" else "Incorrecta",

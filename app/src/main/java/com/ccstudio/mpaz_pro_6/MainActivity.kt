@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,7 +41,12 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
 
             MPAZ_PRO_6Theme(darkTheme = isDarkTheme) {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                // La base usa el fondo del tema: el `Scaffold` pinta el mismo rol,
+                // así el `LoadingScreen` inicial y los huecos no quedan en blanco.
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     AppNavGraph(
                         container = container,
                         isDarkTheme = isDarkTheme,

@@ -36,7 +36,7 @@ class ReportCardTest {
     @Test
     fun muestraVerInformeConLasAccionesHabilitadas() {
         rule.setContent {
-            MPAZ_PRO_6Theme(dynamicColor = false) {
+            MPAZ_PRO_6Theme {
                 ReportCard(
                     report = report,
                     studentName = "Camila Rivas",
@@ -53,7 +53,7 @@ class ReportCardTest {
     @Test
     fun ocultaVerInformeCuandoLasAccionesEstanDeshabilitadas() {
         rule.setContent {
-            MPAZ_PRO_6Theme(dynamicColor = false) {
+            MPAZ_PRO_6Theme {
                 ReportCard(
                     report = report,
                     studentName = "Camila Rivas",
@@ -70,7 +70,7 @@ class ReportCardTest {
     @Test
     fun estudianteVeLaUnidadComoTituloYNoSuNombre() {
         rule.setContent {
-            MPAZ_PRO_6Theme(dynamicColor = false) {
+            MPAZ_PRO_6Theme {
                 ReportCard(
                     report = report,
                     studentName = "Camila Rivas",

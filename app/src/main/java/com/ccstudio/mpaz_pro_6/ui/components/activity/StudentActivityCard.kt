@@ -17,6 +17,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
+import com.ccstudio.mpaz_pro_6.ui.theme.SemanticColor
 
 /** Estado de una actividad para el estudiante. */
 enum class StudentActivityStatus {
@@ -71,7 +73,8 @@ fun StudentActivityCard(
 
                 StatusChip(
                     label = status.label,
-                    containerColor = status.containerColor()
+                    containerColor = status.colors().container,
+                    contentColor = status.colors().content
                 )
             }
 
@@ -131,10 +134,13 @@ private val StudentActivityStatus.actionLabel: String
         StudentActivityStatus.COMPLETED -> "Ver resultado"
     }
 
-/** Color del chip según el estado. */
+/** Colores del chip según el estado. */
 @Composable
-private fun StudentActivityStatus.containerColor() = when (this) {
-    StudentActivityStatus.PENDING -> MaterialTheme.colorScheme.surfaceVariant
-    StudentActivityStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiaryContainer
-    StudentActivityStatus.COMPLETED -> MaterialTheme.colorScheme.primaryContainer
+private fun StudentActivityStatus.colors(): SemanticColor {
+    val appColors = LocalAppColors.current
+    return when (this) {
+        StudentActivityStatus.PENDING -> appColors.neutral
+        StudentActivityStatus.IN_PROGRESS -> appColors.warning
+        StudentActivityStatus.COMPLETED -> appColors.success
+    }
 }

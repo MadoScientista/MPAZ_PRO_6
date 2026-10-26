@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,14 +25,12 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityTypeChip
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
 
 /**
@@ -46,7 +43,6 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  */
 @Composable
 fun HomeStudentScreen(
-    userName: String,
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
     actividadesPendientes: List<Activity>,
@@ -55,10 +51,7 @@ fun HomeStudentScreen(
     onViewUnit: (LearningUnit) -> Unit,
     onVerUnidades: () -> Unit,
     onResolveActivity: (Activity) -> Unit,
-    onCerrarSesion: () -> Unit,
     onCargar: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -67,19 +60,6 @@ fun HomeStudentScreen(
     val unitTitles = unidades.associate { it.id to it.titulo }
 
     Column(modifier = modifier.fillMaxSize()) {
-        AppTopBar(
-            title = "Mi panel",
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-                TextButton(onClick = onCerrarSesion) {
-                    Text(text = "Salir")
-                }
-            }
-        )
-
         when {
             isLoading && unidades.isEmpty() && actividadesPendientes.isEmpty() &&
                 totalInformes == 0 ->
@@ -107,14 +87,6 @@ fun HomeStudentScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    Text(
-                        text = if (userName.isBlank()) "Hola" else "Hola, $userName",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
                 item {
                     SectionHeader(title = "Resumen")
                 }

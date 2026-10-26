@@ -10,9 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.Course
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
-import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.components.user.UserForm
 
 /**
@@ -42,23 +40,9 @@ fun UserFormScreen(
     onCursoIdChange: (Int?) -> Unit,
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
-    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        AppTopBar(
-            title = if (isEditMode) "Editar usuario" else "Nuevo usuario",
-            onNavigateBack = onNavigateBack,
-            actions = {
-                ThemeToggleButton(
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-        )
-
         if (isLoading) {
             LoadingState(message = "Cargando el usuario...")
         } else {

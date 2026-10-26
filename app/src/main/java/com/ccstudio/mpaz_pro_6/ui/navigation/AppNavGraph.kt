@@ -19,8 +19,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -49,6 +55,9 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.session.SessionState
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppBottomBar
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
+import com.ccstudio.mpaz_pro_6.ui.components.common.ProfileHeader
+import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListScreen
@@ -184,13 +193,100 @@ private fun AppNavHost(
     val isFullBleed = currentRoute == AppRoutes.LOGIN ||
             (currentRoute == null && !authenticated)
 
-    // Shell de la app: el `Scaffold` reserva el inset inferior del sistema para
-    // que el contenido no quede debajo de la barra de navegación. El inset
-    // superior lo consume el `AppTopBar` de cada pantalla, por eso aquí solo se
-    // aplica el borde inferior. La barra se mantiene en las pestañas y en sus
-    // detalles para que el área de contenido no cambie al navegar.
+    // Modo edición de los formularios: el id llega en los argumentos de la
+    // entrada vigente. Los destinos sin esos argumentos devuelven el default.
+    val editingSubject = (backStackEntry?.arguments?.getInt("subjectId") ?: -1) > 0
+    val editingCourse = (backStackEntry?.arguments?.getInt("courseId") ?: -1) > 0
+    val editingUser = (backStackEntry?.arguments?.getInt("userId") ?: -1) > 0
+
+    // Título de la barra superior para los destinos profundos (detalles y
+    // formularios). Las pestañas muestran la identidad del usuario en su lugar:
+    // su contenido ya indica de qué pantalla se trata.
+    val topBarTitle = when (currentRoute) {
+        AppRoutes.UNITS -> "Unidades"
+        AppRoutes.SUBJECTS -> "Asignaturas"
+        AppRoutes.COURSES -> "Cursos"
+        AppRoutes.USERS -> "Usuarios"
+        AppRoutes.ACTIVITIES -> "Actividades"
+        AppRoutes.ASSIGNMENTS -> "Mis asignaciones"
+        AppRoutes.REPORTS -> if (rol == UserRole.ESTUDIANTE) {
+            "Informes"
+        } else {
+            "Informes pedagógicos"
+        }
+
+        AppRoutes.UNIT_DETAIL -> "Detalle de la unidad"
+        AppRoutes.CONTENT_DETAIL -> "Detalle del contenido"
+        AppRoutes.UNIT_AUTHORIZATION -> "Autorización de unidad"
+        AppRoutes.SUBJECT_FORM -> if (editingSubject) {
+            "Editar asignatura"
+        } else {
+            "Nueva asignatura"
+        }
+
+        AppRoutes.COURSE_FORM -> if (editingCourse) "Editar curso" else "Nuevo curso"
+        AppRoutes.USER_FORM -> if (editingUser) "Editar usuario" else "Nuevo usuario"
+        AppRoutes.ACTIVITY_ATTEMPT -> "Resolver actividad"
+        AppRoutes.ATTEMPT_RESULT -> "Resultado del intento"
+        AppRoutes.REPORT_DETAIL -> "Informe pedagógico"
+        else -> ""
+    }
+
+    // El login se dibuja a pantalla completa y sin barra superior.
+    val showTopBar = authenticated &&
+            currentRoute != null &&
+            currentRoute != AppRoutes.LOGIN
+
+    // Shell de la app: el `Scaffold` reserva los insets del sistema para que el
+    // contenido no quede debajo de las barras. La superior la monta el propio
+    // `Scaffold` (queda fija entre destinos) y la inferior se mantiene en las
+    // pestañas y en sus detalles para que el área de contenido no cambie.
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom),
+        topBar = {
+            if (showTopBar) {
+                AppTopBar(
+                    title = {
+                        if (currentRoute in topLevelRoutes) {
+                            ProfileHeader(
+                                userName = user?.nombre.orEmpty(),
+                                role = rol
+                            )
+                        } else {
+                            Text(
+                                text = topBarTitle,
+                                style = MaterialTheme.typography.titleLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    },
+                    onNavigateBack = if (currentRoute in ROUTES_WITH_BACK) {
+                        { navController.popBackStack() }
+                    } else {
+                        null
+                    },
+                    actions = {
+                        ThemeToggleButton(
+                            isDarkTheme = isDarkTheme,
+                            onToggleTheme = onToggleTheme
+                        )
+
+                        // El cierre de sesión solo aplica al panel de inicio.
+                        if (currentRoute == AppRoutes.HOME) {
+                            TextButton(
+                                onClick = container::logout,
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = LocalContentColor.current
+                                )
+                            ) {
+                                Text(text = "Salir")
+                            }
+                        }
+                    }
+                )
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(
@@ -285,17 +381,13 @@ private fun AppNavHost(
                             }
 
                             HomeUTPScreen(
-                                userName = user.nombre,
                                 unidadesPendientes = viewModel.unidadesPendientes,
                                 totalCursos = viewModel.totalCursos,
                                 totalAsignaturas = viewModel.totalAsignaturas,
                                 isLoading = viewModel.isLoading,
                                 error = viewModel.error,
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                                onCerrarSesion = container::logout,
                                 onCargar = viewModel::cargar,
-                                isDarkTheme = isDarkTheme,
-                                onToggleTheme = onToggleTheme
                             )
                         }
 
@@ -317,7 +409,6 @@ private fun AppNavHost(
                             }
 
                             HomeTeacherScreen(
-                                userName = user.nombre,
                                 cursos = viewModel.cursos,
                                 unidades = viewModel.unidades,
                                 asignaturas = viewModel.asignaturas,
@@ -329,10 +420,7 @@ private fun AppNavHost(
                                     navController.navigate(AppRoutes.unitDetail(unit.id))
                                 },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                                onCerrarSesion = container::logout,
                                 onCargar = viewModel::cargar,
-                                isDarkTheme = isDarkTheme,
-                                onToggleTheme = onToggleTheme
                             )
                         }
 
@@ -341,8 +429,6 @@ private fun AppNavHost(
                                 container = container,
                                 navController = navController,
                                 user = user,
-                                isDarkTheme = isDarkTheme,
-                                onToggleTheme = onToggleTheme,
                                 onViewUnit = { unit ->
                                     navController.navigate(AppRoutes.unitDetail(unit.id))
                                 },
@@ -360,8 +446,6 @@ private fun AppNavHost(
                         navController = navController,
                         rol = rol,
                         courseId = user.cursoId,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         onViewDetail = { unit ->
                             navController.navigate(AppRoutes.unitDetail(unit.id))
                         },
@@ -420,9 +504,6 @@ private fun AppNavHost(
                         },
                         onRetry = viewModel::cargar,
                         onDismissMensaje = viewModel::limpiarMensaje,
-                        onNavigateBack = { navController.popBackStack() },
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme
                     )
                 }
 
@@ -461,9 +542,6 @@ private fun AppNavHost(
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
                         onRetry = viewModel::cargar,
-                        onNavigateBack = { navController.popBackStack() },
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme
                     )
                 }
 
@@ -493,8 +571,6 @@ private fun AppNavHost(
                             navController.navigate(AppRoutes.attemptResult(attemptId))
                         },
                         onRetry = viewModel::cargar,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
                     )
@@ -525,8 +601,6 @@ private fun AppNavHost(
                         mensajeOperacion = viewModel.mensajeOperacion,
                         onDismissMensaje = viewModel::limpiarMensaje,
                         onRetry = viewModel::cargar,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
                     )
@@ -569,9 +643,6 @@ private fun AppNavHost(
                             }
                         },
                         onCancel = { navController.popBackStack() },
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
-                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
@@ -603,8 +674,6 @@ private fun AppNavHost(
                         mensajeOperacion = viewModel.mensajeOperacion,
                         onDismissMensaje = viewModel::limpiarMensaje,
                         onRetry = viewModel::cargar,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
                     )
@@ -649,9 +718,6 @@ private fun AppNavHost(
                             }
                         },
                         onCancel = { navController.popBackStack() },
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
-                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
@@ -682,8 +748,6 @@ private fun AppNavHost(
                         mensajeOperacion = viewModel.mensajeOperacion,
                         onDismissMensaje = viewModel::limpiarMensaje,
                         onRetry = viewModel::cargar,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
                     )
@@ -736,9 +800,6 @@ private fun AppNavHost(
                             }
                         },
                         onCancel = { navController.popBackStack() },
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
-                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
@@ -765,8 +826,6 @@ private fun AppNavHost(
                         // El detalle de la asignación llega con su pantalla.
                         onViewDetail = {},
                         onRetry = viewModel::cargar,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
                     )
@@ -793,8 +852,6 @@ private fun AppNavHost(
                                 navController.navigate(AppRoutes.reportDetail(report.id))
                             },
                             onRetry = viewModel::cargar,
-                            isDarkTheme = isDarkTheme,
-                            onToggleTheme = onToggleTheme,
                             isLoading = viewModel.isLoading,
                             error = viewModel.error
                         )
@@ -820,8 +877,6 @@ private fun AppNavHost(
                                 navController.navigate(AppRoutes.reportDetail(report.id))
                             },
                             onRetry = viewModel::cargar,
-                            isDarkTheme = isDarkTheme,
-                            onToggleTheme = onToggleTheme,
                             isLoading = viewModel.isLoading,
                             error = viewModel.error
                         )
@@ -855,9 +910,6 @@ private fun AppNavHost(
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
                         onRetry = viewModel::cargar,
-                        onNavigateBack = { navController.popBackStack() },
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme,
                         canValidate = rol == UserRole.DOCENTE,
                         isValidating = viewModel.isValidating,
                         mensaje = viewModel.mensaje,
@@ -911,10 +963,7 @@ private fun AppNavHost(
                     onAutorizar = {
                         navController.navigate(AppRoutes.unitAuthorization(unitId))
                     },
-                    onNavigateBack = { navController.popBackStack() },
                     onRetry = viewModel::cargar,
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme,
                     puedeAutorizar = rol == UserRole.UTP,
                     puedeResolverActividades = rol == UserRole.ESTUDIANTE
                 )
@@ -960,10 +1009,7 @@ private fun AppNavHost(
                                 ).show()
                             }
                         },
-                        onNavigateBack = { navController.popBackStack() },
                         onRetry = viewModel::cargar,
-                        isDarkTheme = isDarkTheme,
-                        onToggleTheme = onToggleTheme
                     )
                 }
 
@@ -989,8 +1035,6 @@ private fun AppNavHost(
                     isLoading = viewModel.isLoading,
                     error = viewModel.error,
                     mensaje = viewModel.mensaje,
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme,
                     onAutorizar = {
                         viewModel.autorizar(user.id) {
                             // Avisa al listado de atrás que tiene que recargar.
@@ -1002,7 +1046,6 @@ private fun AppNavHost(
                         }
                     },
                     onRetry = viewModel::cargar,
-                    onNavigateBack = { navController.popBackStack() }
                 )
                 }
             }
@@ -1022,8 +1065,6 @@ private fun UnitListDestination(
     navController: NavHostController,
     rol: UserRole,
     courseId: Int?,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     onViewDetail: (LearningUnit) -> Unit,
     onAuthorize: (LearningUnit) -> Unit
 ) {
@@ -1074,8 +1115,6 @@ private fun UnitListDestination(
         asignaturas = viewModel.asignaturas,
         isLoading = viewModel.isLoading,
         error = viewModel.error,
-        isDarkTheme = isDarkTheme,
-        onToggleTheme = onToggleTheme,
         onViewDetail = { unit -> onViewDetail(unit) },
         // Solo la UTP autoriza; docente y estudiante no ven ese botón.
         onAuthorize = if (rol == UserRole.UTP) {
@@ -1102,8 +1141,6 @@ private fun HomeStudentDestination(
     container: AppContainer,
     navController: NavHostController,
     user: User,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     onViewUnit: (LearningUnit) -> Unit,
     onVerUnidades: () -> Unit
 ) {
@@ -1125,7 +1162,6 @@ private fun HomeStudentDestination(
     }
 
     HomeStudentScreen(
-        userName = user.nombre,
         unidades = viewModel.unidades,
         asignaturas = viewModel.asignaturas,
         actividadesPendientes = viewModel.actividadesPendientes,
@@ -1136,10 +1172,7 @@ private fun HomeStudentDestination(
         onResolveActivity = { activity ->
             navController.navigate(AppRoutes.activityAttempt(activity.id))
         },
-        onCerrarSesion = container::logout,
         onCargar = viewModel::cargar,
-        isDarkTheme = isDarkTheme,
-        onToggleTheme = onToggleTheme,
         isLoading = viewModel.isLoading,
         error = viewModel.error
     )
@@ -1147,6 +1180,19 @@ private fun HomeStudentDestination(
 
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
+
+/** Rutas hijas que muestran la flecha de retroceso en la barra superior. */
+private val ROUTES_WITH_BACK = setOf(
+    AppRoutes.UNIT_DETAIL,
+    AppRoutes.CONTENT_DETAIL,
+    AppRoutes.UNIT_AUTHORIZATION,
+    AppRoutes.SUBJECT_FORM,
+    AppRoutes.COURSE_FORM,
+    AppRoutes.USER_FORM,
+    AppRoutes.ACTIVITY_ATTEMPT,
+    AppRoutes.ATTEMPT_RESULT,
+    AppRoutes.REPORT_DETAIL
+)
 
 /**
  * Detalles que conservan la barra inferior y la pestaña que representan.

@@ -48,9 +48,8 @@ class HomeStudentScreenTest {
     @Test
     fun scrolleaSinColisionDeClavesEntreUnidadYActividad() {
         rule.setContent {
-            MPAZ_PRO_6Theme(dynamicColor = false) {
+            MPAZ_PRO_6Theme {
                 HomeStudentScreen(
-                    userName = "Camila",
                     unidades = listOf(unit),
                     asignaturas = listOf(Subject(id = 1, nombre = "Lengua")),
                     actividadesPendientes = listOf(activity),
@@ -59,10 +58,7 @@ class HomeStudentScreenTest {
                     onViewUnit = {},
                     onVerUnidades = {},
                     onResolveActivity = {},
-                    onCerrarSesion = {},
-                    onCargar = {},
-                    isDarkTheme = false,
-                    onToggleTheme = {}
+                    onCargar = {}
                 )
             }
         }
