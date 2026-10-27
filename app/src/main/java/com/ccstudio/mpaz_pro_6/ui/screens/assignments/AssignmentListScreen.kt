@@ -136,8 +136,9 @@ fun AssignmentListScreen(
                                     // La edición y el borrado llegan con sus formularios.
                                     onEdit = {},
                                     onDelete = {},
-                                    // Sin detalle todavía: no se ofrecen acciones muertas.
-                                    showActions = false
+                                    // Sin acciones visibles, toda la tarjeta abre el detalle.
+                                    showActions = false,
+                                    onClick = { onViewDetail(assignment) }
                                 )
                             }
                         }

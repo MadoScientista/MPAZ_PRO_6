@@ -14,11 +14,12 @@ import org.junit.Test
 class RoleBottomDestinationsTest {
 
     @Test
-    fun docenteTieneLosCuatroDestinosSuperiores() {
+    fun docenteTieneLosCincoDestinosSuperiores() {
         assertEquals(
             listOf(
                 AppRoutes.HOME,
                 AppRoutes.UNITS,
+                AppRoutes.COURSES,
                 AppRoutes.ASSIGNMENTS,
                 AppRoutes.REPORTS
             ),

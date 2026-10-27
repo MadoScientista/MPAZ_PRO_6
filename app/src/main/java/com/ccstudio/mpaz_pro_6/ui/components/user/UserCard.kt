@@ -1,33 +1,43 @@
 package com.ccstudio.mpaz_pro_6.ui.components.user
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.User
-import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 /**
  * Tarjeta de usuario.
  *
- * Muestra el nombre, el nombre de usuario y el rol (`UserRole`), con acceso a la
- * edición y al borrado. El curso solo se muestra para estudiantes y su nombre lo
- * resuelve la pantalla que lista, igual que `UnitCard` con la asignatura.
+ * Reutiliza la estructura de `CourseCard`: badge, nombre, un subtítulo con el
+ * usuario, el rol y, para estudiantes, el curso; e iconos de editar y eliminar.
+ * No tiene botón de detalle porque no existe una pantalla de detalle de usuario.
+ *
+ * El curso solo se muestra para estudiantes y su nombre lo resuelve la pantalla
+ * que lista, igual que `UnitCard` con la asignatura.
  */
 @Composable
 fun UserCard(
@@ -38,100 +48,85 @@ fun UserCard(
     courseName: String? = null,
     showActions: Boolean = true
 ) {
+    val subtitle = buildString {
+        append("@").append(user.username)
+        append(" · ").append(roleLabel(user.rol))
+
+        if (user.rol == UserRole.ESTUDIANTE && !courseName.isNullOrBlank()) {
+            append(" · ").append(courseName)
+        }
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Nombre.
-            Text(
-                text = user.nombre,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            // Usuario.
-            Text(
-                text = user.username,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Rol y, si corresponde, curso.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
             ) {
-                UserRoleChip(role = user.rol)
-
-                if (user.rol == UserRole.ESTUDIANTE && courseName != null) {
-                    Text(
-                        text = courseName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(26.dp)
+                )
             }
 
-            // Acciones.
-            if (showActions) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onEdit,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Editar")
-                    }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = user.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-                    Button(
-                        onClick = onDelete,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text("Eliminar")
-                    }
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            if (showActions) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Editar usuario"
+                    )
+                }
+
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Eliminar usuario",
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
     }
 }
 
-/** Chip del rol del usuario, con el color del tema que le corresponde. */
-@Composable
-private fun UserRoleChip(
-    role: UserRole,
-    modifier: Modifier = Modifier
-) {
-    val appColors = LocalAppColors.current
-    val colors = when (role) {
-        UserRole.UTP -> appColors.info
-        UserRole.DOCENTE -> appColors.accent
-        UserRole.ESTUDIANTE -> appColors.neutral
-    }
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = colors.container,
-        contentColor = colors.content
-    ) {
-        Text(
-            text = role.wireValue,
-            modifier = Modifier.padding(
-                horizontal = 10.dp,
-                vertical = 5.dp
-            ),
-            style = MaterialTheme.typography.labelLarge
-        )
-    }
+/** Nombre visible del rol. */
+private fun roleLabel(role: UserRole): String = when (role) {
+    UserRole.UTP -> "Jefe de UTP"
+    UserRole.DOCENTE -> "Docente"
+    UserRole.ESTUDIANTE -> "Estudiante"
 }

@@ -60,6 +60,10 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.ProfileHeader
 import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentDetailScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.attempts.ActivityAttemptScreen
@@ -70,6 +74,8 @@ import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentDetailScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentDetailViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseDetailScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseDetailViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseFormScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseListScreen
@@ -86,6 +92,8 @@ import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.StudentReportListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.StudentReportListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectDetailScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectDetailViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectFormScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListScreen
@@ -216,6 +224,8 @@ private fun AppNavHost(
         }
 
         AppRoutes.UNIT_DETAIL -> "Detalle de la unidad"
+        AppRoutes.COURSE_DETAIL -> "Curso"
+        AppRoutes.SUBJECT_DETAIL -> "Asignatura"
         AppRoutes.CONTENT_DETAIL -> "Detalle del contenido"
         AppRoutes.UNIT_AUTHORIZATION -> "Autorización de unidad"
         AppRoutes.SUBJECT_FORM -> if (editingSubject) {
@@ -229,6 +239,8 @@ private fun AppNavHost(
         AppRoutes.ACTIVITY_ATTEMPT -> "Resolver actividad"
         AppRoutes.ATTEMPT_RESULT -> "Resultado del intento"
         AppRoutes.REPORT_DETAIL -> "Informe pedagógico"
+        AppRoutes.ASSIGNMENT_DETAIL -> "Detalle de la asignación"
+        AppRoutes.ASSIGNMENT_FORM -> "Editar asignación"
         else -> ""
     }
 
@@ -293,13 +305,31 @@ private fun AppNavHost(
                     destinations = bottomDestinations,
                     selectedRoute = selectedRoute,
                     onSelect = { destination ->
-                        navController.navigate(destination.route) {
-                            // Evita apilar tabs y conserva el estado de cada uno.
-                            popUpTo(navController.graph.findStartDestination().id) {
+                        if (destination.route == AppRoutes.HOME) {
+                            // Home siempre vuelve a su raíz. Si se navegara con
+                            // restoreState, Navigation restauraría la pila
+                            // guardada de Home y podría reabrir el detalle que
+                            // se abrió desde una card.
+                            val popped = navController.popBackStack(
+                                route = AppRoutes.HOME,
+                                inclusive = false,
                                 saveState = true
+                            )
+
+                            if (!popped && currentRoute != AppRoutes.HOME) {
+                                navController.navigate(AppRoutes.HOME) {
+                                    launchSingleTop = true
+                                }
                             }
-                            launchSingleTop = true
-                            restoreState = true
+                        } else {
+                            navController.navigate(destination.route) {
+                                // Evita apilar tabs y conserva el estado de cada uno.
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     }
                 )
@@ -365,14 +395,15 @@ private fun AppNavHost(
         }
 
             if (user != null) {
-                composable(AppRoutes.HOME) {
+                composable(AppRoutes.HOME) { entry ->
                     when (rol) {
                         UserRole.UTP -> {
                             val viewModel: HomeUTPViewModel = viewModel(
                                 factory = HomeUTPViewModel.factory(
                                     unitRepository = container.unitRepository,
                                     courseRepository = container.courseRepository,
-                                    subjectRepository = container.subjectRepository
+                                    subjectRepository = container.subjectRepository,
+                                    userRepository = container.userRepository
                                 )
                             )
 
@@ -382,12 +413,25 @@ private fun AppNavHost(
 
                             HomeUTPScreen(
                                 unidadesPendientes = viewModel.unidadesPendientes,
-                                totalCursos = viewModel.totalCursos,
-                                totalAsignaturas = viewModel.totalAsignaturas,
+                                cursos = viewModel.cursos,
+                                asignaturas = viewModel.asignaturas,
+                                unidadesPorAsignatura = viewModel.unidadesPorAsignatura,
+                                estudiantesPorCurso = viewModel.estudiantesPorCurso,
                                 isLoading = viewModel.isLoading,
                                 error = viewModel.error,
+                                onViewUnit = { unit ->
+                                    navController.navigate(AppRoutes.unitDetail(unit.id))
+                                },
+                                onViewSubject = { subject ->
+                                    navController.navigate(AppRoutes.subjectDetail(subject.id))
+                                },
+                                onViewCourse = { course ->
+                                    navController.navigate(AppRoutes.courseDetail(course.id))
+                                },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                                onCargar = viewModel::cargar,
+                                onVerCursos = { navController.navigate(AppRoutes.COURSES) },
+                                onVerAsignaturas = { navController.navigate(AppRoutes.SUBJECTS) },
+                                onCargar = { viewModel.cargar() }
                             )
                         }
 
@@ -408,18 +452,52 @@ private fun AppNavHost(
                                 viewModel.cargar()
                             }
 
+                            val refresh by entry.savedStateHandle
+                                .getStateFlow(REFRESH_ASSIGNMENTS_KEY, false)
+                                .collectAsState()
+
+                            LaunchedEffect(refresh) {
+                                if (refresh) {
+                                    viewModel.cargar()
+                                    entry.savedStateHandle
+                                        .set(REFRESH_ASSIGNMENTS_KEY, false)
+                                }
+                            }
+
                             HomeTeacherScreen(
                                 cursos = viewModel.cursos,
                                 unidades = viewModel.unidades,
                                 asignaturas = viewModel.asignaturas,
-                                actividades = viewModel.actividades,
+                                asignaciones = viewModel.asignaciones,
                                 informesPendientes = viewModel.informesPendientes,
+                                estudiantes = viewModel.estudiantes,
+                                actividades = viewModel.actividades,
                                 isLoading = viewModel.isLoading,
                                 error = viewModel.error,
                                 onViewUnit = { unit ->
                                     navController.navigate(AppRoutes.unitDetail(unit.id))
                                 },
+                                onViewCourse = { course ->
+                                    navController.navigate(
+                                        AppRoutes.courseDetail(course.id)
+                                    )
+                                },
+                                onViewAssignment = { assignment ->
+                                    navController.navigate(
+                                        AppRoutes.assignmentDetail(assignment.id)
+                                    )
+                                },
+                                onViewReport = { report ->
+                                    navController.navigate(
+                                        AppRoutes.reportDetail(report.id)
+                                    )
+                                },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
+                                onVerCursos = { navController.navigate(AppRoutes.COURSES) },
+                                onVerAsignaciones = {
+                                    navController.navigate(AppRoutes.ASSIGNMENTS)
+                                },
+                                onVerInformes = { navController.navigate(AppRoutes.REPORTS) },
                                 onCargar = viewModel::cargar,
                             )
                         }
@@ -434,6 +512,9 @@ private fun AppNavHost(
                                 },
                                 onVerUnidades = {
                                     navController.navigate(AppRoutes.UNITS)
+                                },
+                                onVerActividades = {
+                                    navController.navigate(AppRoutes.ACTIVITIES)
                                 }
                             )
                         }
@@ -576,10 +657,44 @@ private fun AppNavHost(
                     )
                 }
 
+                composable(
+                    route = AppRoutes.SUBJECT_DETAIL,
+                    arguments = listOf(navArgument("subjectId") { type = NavType.IntType })
+                ) { entry ->
+                    val subjectId = entry.arguments?.getInt("subjectId") ?: 0
+
+                    val viewModel: SubjectDetailViewModel = viewModel(
+                        factory = SubjectDetailViewModel.factory(
+                            subjectRepository = container.subjectRepository,
+                            unitRepository = container.unitRepository,
+                            subjectId = subjectId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    SubjectDetailScreen(
+                        subject = viewModel.subject,
+                        unidades = viewModel.unidades,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error,
+                        onViewUnit = { unit ->
+                            navController.navigate(AppRoutes.unitDetail(unit.id))
+                        },
+                        onAuthorize = { unit ->
+                            navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                        },
+                        onRetry = viewModel::cargar
+                    )
+                }
+
                 composable(AppRoutes.SUBJECTS) {
                     val viewModel: SubjectListViewModel = viewModel(
                         factory = SubjectListViewModel.factory(
-                            subjectRepository = container.subjectRepository
+                            subjectRepository = container.subjectRepository,
+                            unitRepository = container.unitRepository
                         )
                     )
 
@@ -589,8 +704,12 @@ private fun AppNavHost(
 
                     SubjectListScreen(
                         asignaturas = viewModel.asignaturas,
+                        estadisticasPorAsignatura = viewModel.estadisticasPorAsignatura,
                         onCreate = {
                             navController.navigate(AppRoutes.subjectForm())
+                        },
+                        onViewDetail = { subject ->
+                            navController.navigate(AppRoutes.subjectDetail(subject.id))
                         },
                         onEdit = { subject ->
                             navController.navigate(AppRoutes.subjectForm(subject.id))
@@ -649,7 +768,9 @@ private fun AppNavHost(
                 composable(AppRoutes.COURSES) {
                     val viewModel: CourseListViewModel = viewModel(
                         factory = CourseListViewModel.factory(
-                            courseRepository = container.courseRepository
+                            courseRepository = container.courseRepository,
+                            userRepository = container.userRepository,
+                            teacherId = user.id.takeIf { rol == UserRole.DOCENTE }
                         )
                     )
 
@@ -661,21 +782,59 @@ private fun AppNavHost(
                         cursos = viewModel.cursos,
                         aniosDisponibles = viewModel.aniosDisponibles,
                         anioSeleccionado = viewModel.anioSeleccionado,
+                        estudiantesPorCurso = viewModel.estudiantesPorCurso,
                         onSelectAnio = viewModel::seleccionarAnio,
                         onCreate = {
-                            navController.navigate(AppRoutes.courseForm())
+                            if (rol == UserRole.UTP) {
+                                navController.navigate(AppRoutes.courseForm())
+                            }
+                        },
+                        onViewDetail = { course ->
+                            navController.navigate(AppRoutes.courseDetail(course.id))
                         },
                         onEdit = { course ->
-                            navController.navigate(AppRoutes.courseForm(course.id))
+                            if (rol == UserRole.UTP) {
+                                navController.navigate(AppRoutes.courseForm(course.id))
+                            }
                         },
                         onDelete = { course ->
-                            viewModel.eliminar(course.id)
+                            if (rol == UserRole.UTP) {
+                                viewModel.eliminar(course.id)
+                            }
                         },
                         mensajeOperacion = viewModel.mensajeOperacion,
                         onDismissMensaje = viewModel::limpiarMensaje,
                         onRetry = viewModel::cargar,
                         isLoading = viewModel.isLoading,
-                        error = viewModel.error
+                        error = viewModel.error,
+                        canManage = rol == UserRole.UTP
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.COURSE_DETAIL,
+                    arguments = listOf(navArgument("courseId") { type = NavType.IntType })
+                ) { entry ->
+                    val courseId = entry.arguments?.getInt("courseId") ?: 0
+
+                    val viewModel: CourseDetailViewModel = viewModel(
+                        factory = CourseDetailViewModel.factory(
+                            courseRepository = container.courseRepository,
+                            userRepository = container.userRepository,
+                            courseId = courseId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    CourseDetailScreen(
+                        course = viewModel.course,
+                        estudiantes = viewModel.estudiantes,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error,
+                        onRetry = viewModel::cargar
                     )
                 }
 
@@ -803,7 +962,7 @@ private fun AppNavHost(
                     )
                 }
 
-                composable(AppRoutes.ASSIGNMENTS) {
+                composable(AppRoutes.ASSIGNMENTS) { entry ->
                     val viewModel: AssignmentListViewModel = viewModel(
                         factory = AssignmentListViewModel.factory(
                             assignmentRepository = container.assignmentRepository,
@@ -818,16 +977,172 @@ private fun AppNavHost(
                         viewModel.cargar()
                     }
 
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_ASSIGNMENTS_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle.set(REFRESH_ASSIGNMENTS_KEY, false)
+                        }
+                    }
+
                     AssignmentListScreen(
                         asignaciones = viewModel.asignaciones,
                         cursos = viewModel.cursos,
                         unidades = viewModel.unidades,
                         docentes = viewModel.docentes,
-                        // El detalle de la asignación llega con su pantalla.
-                        onViewDetail = {},
+                        onViewDetail = { assignment ->
+                            navController.navigate(
+                                AppRoutes.assignmentDetail(assignment.id)
+                            )
+                        },
                         onRetry = viewModel::cargar,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ASSIGNMENT_DETAIL,
+                    arguments = listOf(
+                        navArgument("assignmentId") { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    val assignmentId = entry.arguments?.getInt("assignmentId") ?: 0
+
+                    val viewModel: AssignmentDetailViewModel = viewModel(
+                        factory = AssignmentDetailViewModel.factory(
+                            assignmentRepository = container.assignmentRepository,
+                            courseRepository = container.courseRepository,
+                            unitRepository = container.unitRepository,
+                            userRepository = container.userRepository,
+                            learningObjectiveRepository = container.learningObjectiveRepository,
+                            activityRepository = container.activityRepository,
+                            assignmentId = assignmentId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_ASSIGNMENT_DETAIL_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle
+                                .set(REFRESH_ASSIGNMENT_DETAIL_KEY, false)
+                            // Las pestañas Home y Asignación también deben
+                            // reflejar los cambios de reglas.
+                            markAssignmentsChanged(navController)
+                        }
+                    }
+
+                    AssignmentDetailScreen(
+                        assignment = viewModel.assignment,
+                        courseName = viewModel.courseName,
+                        unitTitle = viewModel.unitTitle,
+                        teacherName = viewModel.teacherName,
+                        objectives = viewModel.objectives,
+                        activities = viewModel.activities,
+                        associatedObjectiveIds = viewModel.associatedObjectiveIds,
+                        associatedActivityIds = viewModel.associatedActivityIds,
+                        canManage = rol == UserRole.DOCENTE,
+                        isDeleting = viewModel.isDeleting,
+                        isSavingObjectives = viewModel.isSavingObjectives,
+                        isSavingActivities = viewModel.isSavingActivities,
+                        mensajeOperacion = viewModel.mensajeOperacion,
+                        onViewUnit = {
+                            viewModel.assignment?.let { assignment ->
+                                navController.navigate(
+                                    AppRoutes.unitDetail(assignment.unidadId)
+                                )
+                            }
+                        },
+                        onViewCourse = {
+                            viewModel.assignment?.let { assignment ->
+                                navController.navigate(
+                                    AppRoutes.courseDetail(assignment.cursoId)
+                                )
+                            }
+                        },
+                        onEdit = {
+                            navController.navigate(
+                                AppRoutes.assignmentForm(assignmentId)
+                            )
+                        },
+                        onDelete = {
+                            viewModel.eliminar {
+                                markAssignmentsChanged(navController)
+                                navController.popBackStack()
+                            }
+                        },
+                        onObjectiveAssociationChange = viewModel::alternarObjetivo,
+                        onActivityAssociationChange = viewModel::alternarActividad,
+                        onDismissMensaje = viewModel::limpiarMensaje,
+                        onRetry = viewModel::cargar,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ASSIGNMENT_FORM,
+                    arguments = listOf(
+                        navArgument("assignmentId") { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    val assignmentId = entry.arguments?.getInt("assignmentId") ?: 0
+
+                    val viewModel: AssignmentFormViewModel = viewModel(
+                        factory = AssignmentFormViewModel.factory(
+                            assignmentRepository = container.assignmentRepository,
+                            courseRepository = container.courseRepository,
+                            unitRepository = container.unitRepository,
+                            userRepository = container.userRepository,
+                            assignmentId = assignmentId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    AssignmentFormScreen(
+                        courses = viewModel.courses,
+                        units = viewModel.units,
+                        teachers = viewModel.teachers,
+                        cursoId = viewModel.cursoId,
+                        unidadId = viewModel.unidadId,
+                        docenteId = viewModel.docenteId,
+                        fecha = viewModel.fecha,
+                        maxIntentos = viewModel.maxIntentos,
+                        pruebaFinalHabilitada = viewModel.pruebaFinalHabilitada,
+                        isEditMode = viewModel.isEditMode,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        error = viewModel.error,
+                        onCursoIdChange = {},
+                        onUnidadIdChange = {},
+                        onDocenteIdChange = {},
+                        onFechaChange = viewModel::onFechaChange,
+                        onMaxIntentosChange = viewModel::onMaxIntentosChange,
+                        onPruebaFinalHabilitadaChange =
+                            viewModel::onPruebaFinalHabilitadaChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_ASSIGNMENT_DETAIL_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() }
                     )
                 }
 
@@ -1142,7 +1457,8 @@ private fun HomeStudentDestination(
     navController: NavHostController,
     user: User,
     onViewUnit: (LearningUnit) -> Unit,
-    onVerUnidades: () -> Unit
+    onVerUnidades: () -> Unit,
+    onVerActividades: () -> Unit
 ) {
     val viewModel: HomeStudentViewModel = viewModel(
         factory = HomeStudentViewModel.factory(
@@ -1165,10 +1481,12 @@ private fun HomeStudentDestination(
         unidades = viewModel.unidades,
         asignaturas = viewModel.asignaturas,
         actividadesPendientes = viewModel.actividadesPendientes,
+        actividadesEnProgreso = viewModel.actividadesEnProgreso,
         totalInformes = viewModel.totalInformes,
         sinCurso = viewModel.sinCurso,
         onViewUnit = { unit -> onViewUnit(unit) },
         onVerUnidades = onVerUnidades,
+        onVerActividades = onVerActividades,
         onResolveActivity = { activity ->
             navController.navigate(AppRoutes.activityAttempt(activity.id))
         },
@@ -1181,9 +1499,32 @@ private fun HomeStudentDestination(
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
 
+/** Clave con la que el detalle de una asignación recibe el aviso de recarga. */
+private const val REFRESH_ASSIGNMENT_DETAIL_KEY = "refrescarAsignacion"
+
+/** Clave con la que el Home y el listado de asignaciones reciben el aviso de recarga. */
+private const val REFRESH_ASSIGNMENTS_KEY = "refrescarAsignaciones"
+
+/**
+ * Marca el Home y el listado de asignaciones para que recarguen.
+ *
+ * La pantalla de origen puede ser cualquiera de las dos; se usa `runCatching`
+ * porque una pestaña puede no estar en la pila en ese momento.
+ */
+private fun markAssignmentsChanged(navController: NavHostController) {
+    listOf(AppRoutes.HOME, AppRoutes.ASSIGNMENTS).forEach { route ->
+        runCatching {
+            navController.getBackStackEntry(route).savedStateHandle
+                .set(REFRESH_ASSIGNMENTS_KEY, true)
+        }
+    }
+}
+
 /** Rutas hijas que muestran la flecha de retroceso en la barra superior. */
 private val ROUTES_WITH_BACK = setOf(
     AppRoutes.UNIT_DETAIL,
+    AppRoutes.SUBJECT_DETAIL,
+    AppRoutes.COURSE_DETAIL,
     AppRoutes.CONTENT_DETAIL,
     AppRoutes.UNIT_AUTHORIZATION,
     AppRoutes.SUBJECT_FORM,
@@ -1191,7 +1532,9 @@ private val ROUTES_WITH_BACK = setOf(
     AppRoutes.USER_FORM,
     AppRoutes.ACTIVITY_ATTEMPT,
     AppRoutes.ATTEMPT_RESULT,
-    AppRoutes.REPORT_DETAIL
+    AppRoutes.REPORT_DETAIL,
+    AppRoutes.ASSIGNMENT_DETAIL,
+    AppRoutes.ASSIGNMENT_FORM
 )
 
 /**
@@ -1204,8 +1547,11 @@ private val ROUTES_WITH_BACK = setOf(
  */
 private val CHILD_ROUTE_PARENT_TAB = mapOf(
     AppRoutes.UNIT_DETAIL to AppRoutes.UNITS,
+    AppRoutes.SUBJECT_DETAIL to AppRoutes.SUBJECTS,
+    AppRoutes.COURSE_DETAIL to AppRoutes.COURSES,
     AppRoutes.CONTENT_DETAIL to AppRoutes.UNITS,
-    AppRoutes.REPORT_DETAIL to AppRoutes.REPORTS
+    AppRoutes.REPORT_DETAIL to AppRoutes.REPORTS,
+    AppRoutes.ASSIGNMENT_DETAIL to AppRoutes.ASSIGNMENTS
 )
 
 /** Duración total de las transiciones (token `motion.duration.long1` de M3). */

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 
 /**
  * Un destino de la barra de navegación inferior.
@@ -53,7 +54,14 @@ fun AppBottomBar(
                         contentDescription = destination.label
                     )
                 },
-                label = { Text(text = destination.label) }
+                label = {
+                    Text(
+                        text = destination.label,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             )
         }
     }

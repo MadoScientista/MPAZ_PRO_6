@@ -35,6 +35,10 @@ import java.time.format.DateTimeFormatter
  *
  * El borrado siempre se ofrece; si la asignación tiene objetivos, actividades o
  * intentos asociados, el backend responde `409 Conflict` y la pantalla lo explica.
+ *
+ * Con [onClick] no nulo, toda la tarjeta abre el detalle. Es el modo que usa el
+ * listado, que oculta las acciones con [showActions] y deja el toque como única
+ * entrada al detalle.
  */
 @Composable
 fun AssignmentCard(
@@ -46,99 +50,143 @@ fun AssignmentCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
-    showActions: Boolean = true
+    showActions: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            // Curso.
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ) {
-                Text(
-                    text = courseName,
-                    modifier = Modifier.padding(
-                        horizontal = 10.dp,
-                        vertical = 5.dp
-                    ),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-
-            // Unidad asignada.
-            Text(
-                text = unitTitle,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+            AssignmentCardContent(
+                assignment = assignment,
+                courseName = courseName,
+                unitTitle = unitTitle,
+                teacherName = teacherName,
+                onViewDetail = onViewDetail,
+                onEdit = onEdit,
+                onDelete = onDelete,
+                showActions = showActions
             )
-
-            // Docente y fecha.
-            Text(
-                text = "Docente: $teacherName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    } else {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            AssignmentCardContent(
+                assignment = assignment,
+                courseName = courseName,
+                unitTitle = unitTitle,
+                teacherName = teacherName,
+                onViewDetail = onViewDetail,
+                onEdit = onEdit,
+                onDelete = onDelete,
+                showActions = showActions
             )
+        }
+    }
+}
+
+/** Contenido compartido entre la tarjeta normal y la tocable. */
+@Composable
+private fun AssignmentCardContent(
+    assignment: Assignment,
+    courseName: String,
+    unitTitle: String,
+    teacherName: String,
+    onViewDetail: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    showActions: Boolean
+) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Curso.
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ) {
+            Text(
+                text = courseName,
+                modifier = Modifier.padding(
+                    horizontal = 10.dp,
+                    vertical = 5.dp
+                ),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+
+        // Unidad asignada.
+        Text(
+            text = unitTitle,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        // Docente y fecha.
+        Text(
+            text = "Docente: $teacherName",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Text(
+            text = "Fecha: ${formatInstant(assignment.fecha)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        // Reglas de la prueba final.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FinalTestStatusChip(enabled = assignment.pruebaFinalHabilitada)
 
             Text(
-                text = "Fecha: ${formatInstant(assignment.fecha)}",
+                text = maxAttemptsLabel(assignment.maxIntentos),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
 
-            // Reglas de la prueba final.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        // Acciones.
+        if (showActions) {
+            OutlinedButton(
+                onClick = onViewDetail,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                FinalTestStatusChip(enabled = assignment.pruebaFinalHabilitada)
-
-                Text(
-                    text = maxAttemptsLabel(assignment.maxIntentos),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Ver detalle")
             }
 
-            // Acciones.
-            if (showActions) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedButton(
-                    onClick = onViewDetail,
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("Ver detalle")
+                    Text("Editar")
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Button(
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
                 ) {
-                    OutlinedButton(
-                        onClick = onEdit,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Editar")
-                    }
-
-                    Button(
-                        onClick = onDelete,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text("Eliminar")
-                    }
+                    Text("Eliminar")
                 }
             }
         }

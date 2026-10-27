@@ -30,11 +30,17 @@ object AppRoutes {
     /** Listado de asignaturas (UTP). */
     const val SUBJECTS = "subjects"
 
+    /** Detalle de una asignatura con sus unidades. */
+    const val SUBJECT_DETAIL = "subjectDetail/{subjectId}"
+
     /** Formulario de asignatura; sin `subjectId` crea, con id edita. */
     const val SUBJECT_FORM = "subjectForm?subjectId={subjectId}"
 
     /** Listado de cursos (UTP). */
     const val COURSES = "courses"
+
+    /** Detalle de un curso con sus estudiantes. */
+    const val COURSE_DETAIL = "courseDetail/{courseId}"
 
     /** Formulario de curso; sin `courseId` crea, con id edita. */
     const val COURSE_FORM = "courseForm?courseId={courseId}"
@@ -63,6 +69,12 @@ object AppRoutes {
     /** Lista de asignaciones (docente). */
     const val ASSIGNMENTS = "assignments"
 
+    /** Detalle de una asignación. */
+    const val ASSIGNMENT_DETAIL = "assignmentDetail/{assignmentId}"
+
+    /** Edición de una asignación. */
+    const val ASSIGNMENT_FORM = "assignmentForm/{assignmentId}"
+
     /** Listado de informes pedagógicos (docente). */
     const val REPORTS = "reports"
 
@@ -76,9 +88,15 @@ object AppRoutes {
     fun subjectForm(subjectId: Int? = null): String =
         if (subjectId == null) "subjectForm" else "subjectForm?subjectId=$subjectId"
 
+    /** Construye la ruta del detalle de una asignatura. */
+    fun subjectDetail(subjectId: Int): String = "subjectDetail/$subjectId"
+
     /** Construye la ruta del formulario de curso. */
     fun courseForm(courseId: Int? = null): String =
         if (courseId == null) "courseForm" else "courseForm?courseId=$courseId"
+
+    /** Construye la ruta del detalle de un curso. */
+    fun courseDetail(courseId: Int): String = "courseDetail/$courseId"
 
     /** Construye la ruta del formulario de usuario. */
     fun userForm(userId: Int? = null): String =
@@ -95,4 +113,10 @@ object AppRoutes {
 
     /** Construye la ruta del detalle de un informe. */
     fun reportDetail(reportId: Int): String = "reportDetail/$reportId"
+
+    /** Construye la ruta del detalle de una asignación. */
+    fun assignmentDetail(assignmentId: Int): String = "assignmentDetail/$assignmentId"
+
+    /** Construye la ruta de edición de una asignación. */
+    fun assignmentForm(assignmentId: Int): String = "assignmentForm/$assignmentId"
 }
