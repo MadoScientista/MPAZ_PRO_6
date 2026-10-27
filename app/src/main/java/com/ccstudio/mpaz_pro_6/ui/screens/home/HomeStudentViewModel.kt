@@ -60,6 +60,10 @@ class HomeStudentViewModel(
     var actividadesPendientes by mutableStateOf<List<Activity>>(emptyList())
         private set
 
+    /** Actividades que tienen un intento en progreso. */
+    var actividadesEnProgreso by mutableStateOf<Set<Int>>(emptySet())
+        private set
+
     /** Cantidad de informes del estudiante. */
     var totalInformes by mutableIntStateOf(0)
         private set
@@ -87,6 +91,7 @@ class HomeStudentViewModel(
                 unidades = emptyList()
                 asignaturas = emptyList()
                 actividadesPendientes = emptyList()
+                actividadesEnProgreso = emptySet()
                 totalInformes = 0
                 sinCurso = true
                 isLoading = false
@@ -170,7 +175,7 @@ class HomeStudentViewModel(
                 .filter { it.fechaFin != null }
                 .map { it.actividadId }
                 .toSet()
-            val actividadesEnProgreso = intentos
+            val idsEnProgreso = intentos
                 .filter { it.fechaFin == null }
                 .map { it.actividadId }
                 .toSet()
@@ -192,7 +197,7 @@ class HomeStudentViewModel(
             actividadesPendientes = todasLasActividades.filter { activity ->
                 activity.unidadId in unidadesVisiblesIds && when {
                     activity.id !in actividadesAsignadas -> false
-                    activity.id in actividadesEnProgreso -> true
+                    activity.id in idsEnProgreso -> true
                     activity.id in actividadesCompletadas -> false
                     else -> {
                         val maxIntentos = asignacionDePruebaFinal[activity.id]?.maxIntentos
@@ -201,6 +206,7 @@ class HomeStudentViewModel(
                     }
                 }
             }
+            actividadesEnProgreso = idsEnProgreso
 
             // Dato de apoyo: un fallo de informes no oculta unidades ni actividades.
             totalInformes = pedagogicalReportRepository

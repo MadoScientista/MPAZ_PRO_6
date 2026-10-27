@@ -10,10 +10,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ReportStatus
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
+import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.PedagogicalReportRepository
@@ -56,6 +60,10 @@ class HomeTeacherViewModel(
     var cursos by mutableStateOf<List<Course>>(emptyList())
         private set
 
+    /** Asignaciones del docente, de la más reciente a la más antigua. */
+    var asignaciones by mutableStateOf<List<Assignment>>(emptyList())
+        private set
+
     /** Unidades en las que el docente tiene alguna asignación. */
     var unidades by mutableStateOf<List<LearningUnit>>(emptyList())
         private set
@@ -68,8 +76,12 @@ class HomeTeacherViewModel(
     var actividades by mutableIntStateOf(0)
         private set
 
-    /** Informes del docente que esperan validación. */
-    var informesPendientes by mutableIntStateOf(0)
+    /** Informes del docente pendientes de validación, del más antiguo al más reciente. */
+    var informesPendientes by mutableStateOf<List<PedagogicalReport>>(emptyList())
+        private set
+
+    /** Estudiantes, para resolver el nombre que el informe solo trae por id. */
+    var estudiantes by mutableStateOf<List<User>>(emptyList())
         private set
 
     /** Carga los datos del panel. */
@@ -90,6 +102,14 @@ class HomeTeacherViewModel(
 
             if (cursosResult.isFailure) {
                 error = cursosResult.exceptionOrNull() as? ApiError
+                isLoading = false
+                return@launch
+            }
+
+            val usuariosResult = userRepository.list()
+
+            if (usuariosResult.isFailure) {
+                error = usuariosResult.exceptionOrNull() as? ApiError
                 isLoading = false
                 return@launch
             }
@@ -130,17 +150,22 @@ class HomeTeacherViewModel(
                 .map { it.unidadId }
                 .toSet()
 
+            asignaciones = asignacionesResult.getOrDefault(emptyList())
+                .sortedByDescending { it.fecha }
             cursos = cursosResult.getOrDefault(emptyList())
             unidades = unidadesResult.getOrDefault(emptyList())
                 .filter { it.id in unidadIdsAsignadas }
             asignaturas = asignaturasResult.getOrDefault(emptyList())
+            estudiantes = usuariosResult.getOrDefault(emptyList())
+                .filter { it.rol == UserRole.ESTUDIANTE }
             actividades = actividadesResult.getOrDefault(emptyList())
                 .count { it.unidadId in unidadIdsAsignadas }
             informesPendientes = informesResult.getOrDefault(emptyList())
-                .count {
+                .filter {
                     it.docenteId == teacherId &&
                         it.estado == ReportStatus.PENDING_VALIDATION
                 }
+                .sortedBy { it.fechaGeneracion }
 
             isLoading = false
         }

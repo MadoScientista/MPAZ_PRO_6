@@ -43,7 +43,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCard
 @Composable
 fun SubjectListScreen(
     asignaturas: List<Subject>,
+    estadisticasPorAsignatura: Map<Int, SubjectStats>,
     onCreate: () -> Unit,
+    onViewDetail: (Subject) -> Unit,
     onEdit: (Subject) -> Unit,
     onDelete: (Subject) -> Unit,
     mensajeOperacion: String?,
@@ -142,6 +144,9 @@ fun SubjectListScreen(
                             ) { subject ->
                                 SubjectCard(
                                     subject = subject,
+                                    unitCount = estadisticasPorAsignatura[subject.id]?.total ?: 0,
+                                    pendingCount = estadisticasPorAsignatura[subject.id]?.pending ?: 0,
+                                    onViewDetail = { onViewDetail(subject) },
                                     onEdit = { onEdit(subject) },
                                     onDelete = { pendienteEliminar = subject }
                                 )

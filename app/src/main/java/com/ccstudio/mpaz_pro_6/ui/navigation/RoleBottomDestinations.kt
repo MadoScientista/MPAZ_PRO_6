@@ -20,7 +20,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.BottomDestination
  * contenido quedan fuera de la barra y se alcanzan desde su listado.
  *
  * - UTP: Inicio, Unidades, Asignaturas, Cursos y Usuarios.
- * - Docente: Inicio, Unidades, Asignaciones e Informes.
+ * - Docente: Inicio, Unidades, Cursos, Asignaciones e Informes.
  * - Estudiante: Inicio, Unidades, Actividades e Informes.
  */
 fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role) {
@@ -64,8 +64,13 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
             icon = Icons.AutoMirrored.Filled.MenuBook
         ),
         BottomDestination(
+            route = AppRoutes.COURSES,
+            label = "Cursos",
+            icon = Icons.Filled.School
+        ),
+        BottomDestination(
             route = AppRoutes.ASSIGNMENTS,
-            label = "Asignaciones",
+            label = "Asignación",
             icon = Icons.AutoMirrored.Filled.Assignment
         ),
         BottomDestination(

@@ -2,54 +2,52 @@ package com.ccstudio.mpaz_pro_6.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
-import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityTypeChip
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
+import com.ccstudio.mpaz_pro_6.ui.components.activity.StudentActivityCarouselCard
+import com.ccstudio.mpaz_pro_6.ui.components.activity.StudentActivityStatus
+import com.ccstudio.mpaz_pro_6.ui.components.common.CardCarousel
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
-import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
+import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
 
 /**
  * Panel de inicio del estudiante.
  *
  * Muestra un resumen de sus unidades publicadas y asignadas, las actividades que
- * le quedan pendientes y la cantidad de informes. Al tocar una actividad pendiente
- * se abre su intento; el listado completo vive en la pestaña Actividades y los
- * informes en la pestaña Informes.
+ * le quedan pendientes y la cantidad de informes. Las unidades y las actividades
+ * usan el mismo carrusel que los paneles de UTP y docente; cada uno tiene un
+ * enlace «Ver todo» a su listado correspondiente.
+ *
+ * Las actividades en progreso se marcan con su estado y abren el intento para
+ * continuarlo; las pendientes abren un intento nuevo.
  */
 @Composable
 fun HomeStudentScreen(
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
     actividadesPendientes: List<Activity>,
+    actividadesEnProgreso: Set<Int>,
     totalInformes: Int,
     sinCurso: Boolean,
     onViewUnit: (LearningUnit) -> Unit,
     onVerUnidades: () -> Unit,
+    onVerActividades: () -> Unit,
     onResolveActivity: (Activity) -> Unit,
     onCargar: () -> Unit,
     modifier: Modifier = Modifier,
@@ -80,147 +78,80 @@ fun HomeStudentScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            else -> LazyColumn(
+            else -> Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 16.dp)
                     .testTag("home-student-list"),
-                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    SectionHeader(title = "Resumen")
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        CounterCard(
-                            titulo = "Unidades",
-                            valor = unidades.size,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        CounterCard(
-                            titulo = "Pendientes",
-                            valor = actividadesPendientes.size,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        CounterCard(
-                            titulo = "Informes",
-                            valor = totalInformes,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                item {
-                    SectionHeader(
-                        title = "Mis unidades",
-                        count = unidades.size
-                    )
-                }
-
-                if (unidades.isEmpty()) {
-                    item {
-                        EmptyState(
-                            message = "No tienes unidades publicadas asignadas.",
-                            description = "Cuando la UTP publique y asigne una unidad aparecerá aquí."
-                        )
-                    }
-                } else {
-                    items(
-                        items = unidades,
-                        key = { "unit-${it.id}" }
-                    ) { unit ->
-                        UnitCard(
-                            unit = unit,
-                            subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                            onViewDetail = { onViewUnit(unit) },
-                            onAuthorize = null
-                        )
-                    }
-                }
-
-                item {
-                    AppButton(
-                        text = "Ver todas mis unidades",
-                        onClick = onVerUnidades
-                    )
-                }
-
-                item {
-                    SectionHeader(
-                        title = "Actividades pendientes",
-                        count = actividadesPendientes.size
-                    )
-                }
-
-                if (actividadesPendientes.isEmpty()) {
-                    item {
-                        EmptyState(
-                            message = "No tienes actividades pendientes.",
-                            description = "Cuando tengas una actividad asignada aparecerá aquí."
-                        )
-                    }
-                } else {
-                    items(
-                        items = actividadesPendientes.take(3),
-                        key = { "activity-${it.id}" }
-                    ) { activity ->
-                        PendingActivityPreview(
-                            activity = activity,
-                            unitTitle = unitTitles[activity.unidadId] ?: "Sin unidad",
-                            onClick = { onResolveActivity(activity) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Vista previa de una actividad pendiente en el panel del estudiante.
- *
- * Es de solo lectura: la resolución de la actividad llega con su pantalla.
- */
-@Composable
-private fun PendingActivityPreview(
-    activity: Activity,
-    unitTitle: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ActivityTypeChip(activityType = activity.tipo)
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = activity.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                SectionHeader(
+                    title = "Resumen",
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
-                Text(
-                    text = unitTitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CounterCard(
+                        titulo = "Unidades",
+                        valor = unidades.size,
+                        modifier = Modifier.weight(1f)
+                    )
 
-            StatusChip(label = "Por resolver")
+                    CounterCard(
+                        titulo = "Pendientes",
+                        valor = actividadesPendientes.size,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    CounterCard(
+                        titulo = "Informes",
+                        valor = totalInformes,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                CardCarousel(
+                    title = "Mis unidades",
+                    itemCount = unidades.size,
+                    onSeeAll = onVerUnidades,
+                    emptyMessage = "No tienes unidades publicadas asignadas."
+                ) { index ->
+                    val unit = unidades[index]
+
+                    UnitCarouselCard(
+                        unit = unit,
+                        subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
+                        onClick = { onViewUnit(unit) }
+                    )
+                }
+
+                CardCarousel(
+                    title = "Actividades pendientes",
+                    itemCount = actividadesPendientes.size,
+                    onSeeAll = onVerActividades,
+                    emptyMessage = "No tienes actividades pendientes."
+                ) { index ->
+                    val activity = actividadesPendientes[index]
+                    val status = if (activity.id in actividadesEnProgreso) {
+                        StudentActivityStatus.IN_PROGRESS
+                    } else {
+                        StudentActivityStatus.PENDING
+                    }
+
+                    StudentActivityCarouselCard(
+                        activity = activity,
+                        unitTitle = unitTitles[activity.unidadId] ?: "Sin unidad",
+                        status = status,
+                        onClick = { onResolveActivity(activity) }
+                    )
+                }
+            }
         }
     }
 }

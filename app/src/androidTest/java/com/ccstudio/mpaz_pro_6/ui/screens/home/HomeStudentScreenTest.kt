@@ -1,11 +1,9 @@
 package com.ccstudio.mpaz_pro_6.ui.screens.home
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollTo
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.model.Activity
@@ -18,8 +16,8 @@ import org.junit.Test
 /**
  * Pruebas de regresión del panel del estudiante.
  *
- * La unidad y la actividad comparten id a propósito: el `LazyColumn` debe usar
- * claves distintas para ambos tipos de elemento.
+ * El carrusel de actividades queda debajo del de unidades; la prueba confirma
+ * que la pantalla puede desplazarse hasta la actividad.
  */
 class HomeStudentScreenTest {
 
@@ -46,26 +44,27 @@ class HomeStudentScreenTest {
     )
 
     @Test
-    fun scrolleaSinColisionDeClavesEntreUnidadYActividad() {
+    fun scrolleaHastaLaActividadPendiente() {
         rule.setContent {
             MPAZ_PRO_6Theme {
                 HomeStudentScreen(
                     unidades = listOf(unit),
                     asignaturas = listOf(Subject(id = 1, nombre = "Lengua")),
                     actividadesPendientes = listOf(activity),
+                    actividadesEnProgreso = emptySet(),
                     totalInformes = 1,
                     sinCurso = false,
                     onViewUnit = {},
                     onVerUnidades = {},
+                    onVerActividades = {},
                     onResolveActivity = {},
                     onCargar = {}
                 )
             }
         }
 
-        rule.onNodeWithTag("home-student-list")
-            .performScrollToNode(hasText(activity.titulo))
-
-        rule.onNodeWithText(activity.titulo).assertIsDisplayed()
+        rule.onNodeWithText(activity.titulo)
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 }

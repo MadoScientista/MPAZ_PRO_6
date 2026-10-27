@@ -11,7 +11,14 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
+import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
+
+/** Resumen de unidades de una asignatura para la tarjeta del listado. */
+data class SubjectStats(
+    val total: Int,
+    val pending: Int
+)
 
 /**
  * Estado del listado de asignaturas.
@@ -20,11 +27,16 @@ import kotlinx.coroutines.launch
  * client-side, tal como exige el contrato.
  */
 class SubjectListViewModel(
-    private val subjectRepository: SubjectRepository
+    private val subjectRepository: SubjectRepository,
+    private val unitRepository: UnitRepository
 ) : ViewModel() {
 
     /** Asignaturas ordenadas por nombre. */
     var asignaturas by mutableStateOf<List<Subject>>(emptyList())
+        private set
+
+    /** Total y pendientes de unidades por asignatura, para la tarjeta. */
+    var estadisticasPorAsignatura by mutableStateOf<Map<Int, SubjectStats>>(emptyMap())
         private set
 
     /** Indica que el listado se está cargando. */
@@ -45,15 +57,32 @@ class SubjectListViewModel(
             isLoading = true
             error = null
 
-            val result = subjectRepository.list()
+            val subjectsResult = subjectRepository.list()
 
-            if (result.isFailure) {
-                error = result.exceptionOrNull() as? ApiError
+            if (subjectsResult.isFailure) {
+                error = subjectsResult.exceptionOrNull() as? ApiError
                 isLoading = false
                 return@launch
             }
 
-            asignaturas = result.getOrDefault(emptyList())
+            val unitsResult = unitRepository.list()
+
+            if (unitsResult.isFailure) {
+                error = unitsResult.exceptionOrNull() as? ApiError
+                isLoading = false
+                return@launch
+            }
+
+            asignaturas = subjectsResult.getOrDefault(emptyList())
+            estadisticasPorAsignatura = unitsResult.getOrDefault(emptyList())
+                .groupBy { it.asignaturaId }
+                .mapValues { (_, units) ->
+                    SubjectStats(
+                        total = units.size,
+                        pending = units.count { it.estado.esPendienteDeRevision() }
+                    )
+                }
+
             isLoading = false
         }
     }
@@ -96,10 +125,14 @@ class SubjectListViewModel(
 
         /** Factoría del ViewModel con el repositorio de asignaturas. */
         fun factory(
-            subjectRepository: SubjectRepository
+            subjectRepository: SubjectRepository,
+            unitRepository: UnitRepository
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                SubjectListViewModel(subjectRepository = subjectRepository)
+                SubjectListViewModel(
+                    subjectRepository = subjectRepository,
+                    unitRepository = unitRepository
+                )
             }
         }
     }

@@ -2,37 +2,42 @@ package com.ccstudio.mpaz_pro_6.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
+import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import com.ccstudio.mpaz_pro_6.data.model.Subject
-import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
+import com.ccstudio.mpaz_pro_6.data.model.User
+import com.ccstudio.mpaz_pro_6.ui.components.assignment.AssignmentCarouselCard
+import com.ccstudio.mpaz_pro_6.ui.components.common.CardCarousel
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
-import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.course.CourseList
-import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
+import com.ccstudio.mpaz_pro_6.ui.components.course.CourseCarouselCard
+import com.ccstudio.mpaz_pro_6.ui.components.report.ReportCarouselCard
+import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
 
 
 /**
  * Panel de inicio del docente.
  *
- * Muestra las unidades en las que el docente tiene asignaciones, la cantidad de
- * actividades de esas unidades y los informes pedagógicos pendientes de validación.
+ * Muestra un resumen de sus cursos, las unidades que tiene asignadas, las
+ * asignaciones por curso y los informes que esperan su validación. El carrusel
+ * de cursos replica el del panel de UTP y enlaza con la pestaña Cursos. La
+ * cantidad de actividades y los informes pendientes se resuelven en el ViewModel.
  * Los cursos que maneja el docente los resuelve el ViewModel con
  * `GET /api/usuarios/{id}/cursos`.
  *
@@ -44,23 +49,39 @@ fun HomeTeacherScreen(
     cursos: List<Course>,
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
+    asignaciones: List<Assignment>,
+    informesPendientes: List<PedagogicalReport>,
+    estudiantes: List<User>,
     actividades: Int,
-    informesPendientes: Int,
     onViewUnit: (LearningUnit) -> Unit,
+    onViewCourse: (Course) -> Unit,
+    onViewAssignment: (Assignment) -> Unit,
+    onViewReport: (PedagogicalReport) -> Unit,
     onVerUnidades: () -> Unit,
+    onVerCursos: () -> Unit,
+    onVerAsignaciones: () -> Unit,
+    onVerInformes: () -> Unit,
     onCargar: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
 ) {
     val subjectNames = asignaturas.associate { it.id to it.nombre }
+    val unitTitles = unidades.associate { it.id to it.titulo }
+    val courseNames = cursos.associate { it.id to it.nombre }
+    val studentNames = estudiantes.associate { it.id to it.nombre }
+    val estudiantesPorCurso = estudiantes
+        .mapNotNull { it.cursoId }
+        .groupingBy { it }
+        .eachCount()
 
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         when {
             isLoading && cursos.isEmpty() && unidades.isEmpty() &&
-                asignaturas.isEmpty() && actividades == 0 && informesPendientes == 0 ->
+                asignaturas.isEmpty() && actividades == 0 &&
+                informesPendientes.isEmpty() ->
                 LoadingState(
                     message = "Cargando tu panel...",
                     modifier = Modifier.padding(16.dp)
@@ -72,92 +93,110 @@ fun HomeTeacherScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+            else -> Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    SectionHeader(title = "Resumen")
-                }
+                SectionHeader(
+                    title = "Resumen",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
 
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        CounterCard(
-                            titulo = "Unidades",
-                            valor = unidades.size,
-                            modifier = Modifier.weight(1f)
-                        )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CounterCard(
+                        titulo = "Unidades",
+                        valor = unidades.size,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                        CounterCard(
-                            titulo = "Actividades",
-                            valor = actividades,
-                            modifier = Modifier.weight(1f)
-                        )
+                    CounterCard(
+                        titulo = "Actividades",
+                        valor = actividades,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                        CounterCard(
-                            titulo = "Informes",
-                            valor = informesPendientes,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                item {
-                    Text(
-                        text = "Las actividades corresponden a tus unidades asignadas.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    CounterCard(
+                        titulo = "Informes",
+                        valor = informesPendientes.size,
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
-                item {
-                    SectionHeader(title = "Mis cursos", count = cursos.size)
+                Text(
+                    text = "Las actividades corresponden a tus unidades asignadas.",
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                CardCarousel(
+                    title = "Informes por validar",
+                    itemCount = informesPendientes.size,
+                    onSeeAll = onVerInformes,
+                    emptyMessage = "No tienes informes por validar."
+                ) { index ->
+                    val report = informesPendientes[index]
+
+                    ReportCarouselCard(
+                        report = report,
+                        studentName = studentNames[report.estudianteId]
+                            ?: "Sin estudiante",
+                        unitName = unitTitles[report.unidadId] ?: "Sin unidad",
+                        onClick = { onViewReport(report) }
+                    )
                 }
 
-                item {
-                    if (cursos.isEmpty()) {
-                        EmptyState(
-                            message = "No tienes cursos asignados.",
-                            description = "Cuando la UTP te asigne un curso aparecerá aquí."
-                        )
-                    } else {
-                        CourseList(cursos = cursos)
-                    }
+                CardCarousel(
+                    title = "Cursos",
+                    itemCount = cursos.size,
+                    onSeeAll = onVerCursos,
+                    emptyMessage = "Sin cursos"
+                ) { index ->
+                    val course = cursos[index]
+
+                    CourseCarouselCard(
+                        course = course,
+                        studentCount = estudiantesPorCurso[course.id] ?: 0,
+                        onClick = { onViewCourse(course) }
+                    )
                 }
 
-                item {
-                    SectionHeader(title = "Unidades asignadas", count = unidades.size)
+                CardCarousel(
+                    title = "Unidades asignadas",
+                    itemCount = unidades.size,
+                    onSeeAll = onVerUnidades,
+                    emptyMessage = "No tienes unidades asignadas."
+                ) { index ->
+                    val unit = unidades[index]
+
+                    UnitCarouselCard(
+                        unit = unit,
+                        subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
+                        onClick = { onViewUnit(unit) }
+                    )
                 }
 
-                if (unidades.isEmpty()) {
-                    item {
-                        EmptyState(
-                            message = "No tienes unidades asignadas.",
-                            description = "Cuando la UTP te asigne una unidad aparecerá aquí."
-                        )
-                    }
-                } else {
-                    items(
-                        items = unidades,
-                        key = { it.id }
-                    ) { unit ->
-                        UnitCard(
-                            unit = unit,
-                            subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                            onViewDetail = { onViewUnit(unit) },
-                            onAuthorize = null
-                        )
-                    }
-                }
+                CardCarousel(
+                    title = "Asignaciones",
+                    itemCount = asignaciones.size,
+                    onSeeAll = onVerAsignaciones,
+                    emptyMessage = "No tienes asignaciones."
+                ) { index ->
+                    val assignment = asignaciones[index]
 
-                item {
-                    AppButton(
-                        text = "Ver todas las unidades",
-                        onClick = onVerUnidades
+                    AssignmentCarouselCard(
+                        assignment = assignment,
+                        courseName = courseNames[assignment.cursoId] ?: "Sin curso",
+                        unitTitle = unitTitles[assignment.unidadId] ?: "Sin unidad",
+                        onClick = { onViewAssignment(assignment) }
                     )
                 }
             }

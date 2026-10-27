@@ -40,14 +40,19 @@ import com.ccstudio.mpaz_pro_6.ui.components.course.CourseCard
  * Consume `GET /api/cursos`. El filtro por año se envía al backend (`?anio`);
  * la búsqueda por nombre es client-side. Permite crear, editar y borrar; el
  * `409 Conflict` del borrado se explica con el mensaje del ViewModel.
+ *
+ * Con [canManage] en `false` queda en modo consulta: oculta «Nuevo curso» y las
+ * acciones de edición/borrado, para el listado de cursos del docente.
  */
 @Composable
 fun CourseListScreen(
     cursos: List<Course>,
     aniosDisponibles: List<Int>,
     anioSeleccionado: Int?,
+    estudiantesPorCurso: Map<Int, Int>,
     onSelectAnio: (Int?) -> Unit,
     onCreate: () -> Unit,
+    onViewDetail: (Course) -> Unit,
     onEdit: (Course) -> Unit,
     onDelete: (Course) -> Unit,
     mensajeOperacion: String?,
@@ -55,7 +60,8 @@ fun CourseListScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
-    error: ApiError? = null
+    error: ApiError? = null,
+    canManage: Boolean = true
 ) {
     var search by rememberSaveable { mutableStateOf("") }
     var pendienteEliminar by remember { mutableStateOf<Course?>(null) }
@@ -85,21 +91,31 @@ fun CourseListScreen(
 
                 else -> {
                     Text(
-                        text = "Cursos del establecimiento",
+                        text = if (canManage) {
+                            "Cursos del establecimiento"
+                        } else {
+                            "Mis cursos"
+                        },
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
-                        text = "${cursos.size} cursos",
+                        text = if (canManage) {
+                            "${cursos.size} cursos"
+                        } else {
+                            "${cursos.size} cursos asignados"
+                        },
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyMedium
                     )
 
-                    AppButton(
-                        text = "Nuevo curso",
-                        onClick = onCreate
-                    )
+                    if (canManage) {
+                        AppButton(
+                            text = "Nuevo curso",
+                            onClick = onCreate
+                        )
+                    }
 
                     if (mensajeOperacion != null) {
                         Row(
@@ -142,10 +158,13 @@ fun CourseListScreen(
 
                     if (filteredCourses.isEmpty()) {
                         EmptyState(
-                            message = if (cursos.isEmpty()) {
-                                "No hay cursos para este filtro."
-                            } else {
-                                "No se encontraron cursos."
+                            message = when {
+                                cursos.isEmpty() && !canManage ->
+                                    "No tienes cursos asignados."
+                                cursos.isEmpty() ->
+                                    "No hay cursos para este filtro."
+                                else ->
+                                    "No se encontraron cursos."
                             }
                         )
                     } else {
@@ -160,8 +179,11 @@ fun CourseListScreen(
                             ) { course ->
                                 CourseCard(
                                     course = course,
+                                    studentCount = estudiantesPorCurso[course.id] ?: 0,
+                                    onViewDetail = { onViewDetail(course) },
                                     onEdit = { onEdit(course) },
-                                    onDelete = { pendienteEliminar = course }
+                                    onDelete = { pendienteEliminar = course },
+                                    showActions = canManage
                                 )
                             }
                         }

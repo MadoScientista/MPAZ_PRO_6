@@ -8,9 +8,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
+import com.ccstudio.mpaz_pro_6.data.repository.UserRepository
 import kotlinx.coroutines.launch
 
 /**
@@ -19,9 +21,15 @@ import kotlinx.coroutines.launch
  * El filtro por año se delega al backend (`?anio`), porque así lo exige el
  * contrato. La lista de años disponibles se obtiene de la primera carga sin
  * filtro, para que el selector no pierda opciones al aplicar un año.
+ *
+ * Para el docente, [teacherId] no es nulo: el listado se limita a sus cursos y
+ * el filtro por año se aplica en cliente, porque el endpoint de cursos por
+ * usuario no recibe `?anio`.
  */
 class CourseListViewModel(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val userRepository: UserRepository,
+    private val teacherId: Int? = null
 ) : ViewModel() {
 
     /** Cursos del año seleccionado, o todos si no hay filtro. */
@@ -30,6 +38,10 @@ class CourseListViewModel(
 
     /** Años presentes en el catálogo, de mayor a menor. */
     var aniosDisponibles by mutableStateOf<List<Int>>(emptyList())
+        private set
+
+    /** Cantidad de estudiantes por curso, para la tarjeta. */
+    var estudiantesPorCurso by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
     /** Año seleccionado; `null` significa «Todos». */
@@ -63,6 +75,37 @@ class CourseListViewModel(
         viewModelScope.launch {
             isLoading = true
             error = null
+
+            val usersResult = userRepository.list()
+
+            if (usersResult.isFailure) {
+                error = usersResult.exceptionOrNull() as? ApiError
+                isLoading = false
+                return@launch
+            }
+
+            estudiantesPorCurso = usersResult.getOrDefault(emptyList())
+                .filter { it.rol == UserRole.ESTUDIANTE && it.cursoId != null }
+                .groupBy { it.cursoId!! }
+                .mapValues { (_, students) -> students.size }
+
+            if (teacherId != null) {
+                val cursosResult = userRepository.listCourses(teacherId)
+
+                if (cursosResult.isFailure) {
+                    error = cursosResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                val todos = cursosResult.getOrDefault(emptyList())
+                aniosDisponibles = todos.map { it.anio }.distinct().sortedDescending()
+                cursos = todos.filter { curso ->
+                    anioSeleccionado == null || curso.anio == anioSeleccionado
+                }
+                isLoading = false
+                return@launch
+            }
 
             if (!aniosCargados) {
                 val todosResult = courseRepository.list()
@@ -141,10 +184,16 @@ class CourseListViewModel(
 
         /** Factoría del ViewModel con el repositorio de cursos. */
         fun factory(
-            courseRepository: CourseRepository
+            courseRepository: CourseRepository,
+            userRepository: UserRepository,
+            teacherId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                CourseListViewModel(courseRepository = courseRepository)
+                CourseListViewModel(
+                    courseRepository = courseRepository,
+                    userRepository = userRepository,
+                    teacherId = teacherId
+                )
             }
         }
     }
