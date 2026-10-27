@@ -5,10 +5,10 @@ package com.ccstudio.mpaz_pro_6.data.enums
  *
  * Debe mapear 1:1 el enum `Dificultad` del backend: `BAJA`, `MEDIA` y `ALTA`.
  */
-enum class Difficulty(val wireValue: String) {
-    LOW("BAJA"),
-    MEDIUM("MEDIA"),
-    HIGH("ALTA");
+enum class Difficulty(val wireValue: String, val label: String) {
+    LOW("BAJA", "Baja"),
+    MEDIUM("MEDIA", "Media"),
+    HIGH("ALTA", "Alta");
 
     companion object {
         /**

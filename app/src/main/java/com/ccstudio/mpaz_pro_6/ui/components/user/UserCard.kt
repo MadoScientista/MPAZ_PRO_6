@@ -50,7 +50,7 @@ fun UserCard(
 ) {
     val subtitle = buildString {
         append("@").append(user.username)
-        append(" · ").append(roleLabel(user.rol))
+        append(" · ").append(user.rol.label)
 
         if (user.rol == UserRole.ESTUDIANTE && !courseName.isNullOrBlank()) {
             append(" · ").append(courseName)
@@ -122,11 +122,4 @@ fun UserCard(
             }
         }
     }
-}
-
-/** Nombre visible del rol. */
-private fun roleLabel(role: UserRole): String = when (role) {
-    UserRole.UTP -> "Jefe de UTP"
-    UserRole.DOCENTE -> "Docente"
-    UserRole.ESTUDIANTE -> "Estudiante"
 }

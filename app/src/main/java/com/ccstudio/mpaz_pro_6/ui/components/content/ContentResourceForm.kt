@@ -67,10 +67,11 @@ fun ContentResourceForm(
             )
 
             FilterChipRow(
-                options = ContentResourceType.entries.map { it.wireValue },
-                selected = tipo.wireValue,
-                onSelect = { wireValue ->
-                    val newType = ContentResourceType.fromWire(wireValue)
+                options = ContentResourceType.entries.map { it.label },
+                selected = tipo.label,
+                onSelect = { label ->
+                    val newType = ContentResourceType.entries
+                        .firstOrNull { it.label == label }
                     if (newType != null && !isReadOnly && !isSaving) {
                         onTipoChange(newType)
                     }
@@ -110,10 +111,11 @@ fun ContentResourceForm(
             )
 
             FilterChipRow(
-                options = ContentOrigin.entries.map { it.wireValue },
-                selected = origen.wireValue,
-                onSelect = { wireValue ->
-                    val newOrigin = ContentOrigin.fromWire(wireValue)
+                options = ContentOrigin.entries.map { it.label },
+                selected = origen.label,
+                onSelect = { label ->
+                    val newOrigin = ContentOrigin.entries
+                        .firstOrNull { it.label == label }
                     if (newOrigin != null && !isReadOnly && !isSaving) {
                         onOrigenChange(newOrigin)
                     }

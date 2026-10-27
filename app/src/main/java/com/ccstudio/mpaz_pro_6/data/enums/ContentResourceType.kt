@@ -5,9 +5,9 @@ package com.ccstudio.mpaz_pro_6.data.enums
  *
  * Debe mapear 1:1 el enum `TipoRecurso` del backend: `IMAGEN` y `AUDIO`.
  */
-enum class ContentResourceType(val wireValue: String) {
-    IMAGE("IMAGEN"),
-    AUDIO("AUDIO");
+enum class ContentResourceType(val wireValue: String, val label: String) {
+    IMAGE("IMAGEN", "Imagen"),
+    AUDIO("AUDIO", "Audio");
 
     companion object {
         /**

@@ -14,8 +14,8 @@ import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 /**
  * Chip del estado de una unidad.
  *
- * Traduce el `ContentStatus` a su valor wire (`BORRADOR`, `EN_REVISION`,
- * `AUTORIZADO`, `PUBLICADO`) y lo muestra con el color del tema que le corresponde.
+ * Traduce el `ContentStatus` a su etiqueta visible (`Borrador`, `En revisión`,
+ * `Autorizado`, `Publicado`) y la muestra con el color del tema que le corresponde.
  */
 @Composable
 fun UnitStatusChip(
@@ -37,7 +37,7 @@ fun UnitStatusChip(
         contentColor = colors.content
     ) {
         Text(
-            text = status.wireValue,
+            text = status.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp

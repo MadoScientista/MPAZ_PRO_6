@@ -162,8 +162,9 @@ com/ccstudio/mpaz_pro_6/
   campos obligatorios y `Update*Request` con **todos los campos opcionales** (`null` = "no enviar", porque
   el `PUT` es parcial).
 - `data/enums/` es el **único** lugar donde viven los enums del dominio. Cada enum expone
-  `wireValue` (el texto exacto que viaja al backend) y `fromWire(value)`, que devuelve `null`
-  ante un valor desconocido para que el mapper no lance excepciones.
+  `wireValue` (el texto exacto que viaja al backend), `label` (el texto visible en la UI) y
+  `fromWire(value)`, que devuelve `null` ante un valor desconocido para que el mapper no lance
+  excepciones. `wireValue` nunca se adapta para mostrar; la UI usa `label`.
 - `data/repository/` define una interfaz por recurso, con funciones `suspend` que devuelven `Result<T>`.
   El fallo **siempre** es un `ApiError` (`BadRequest`, `Unauthorized`, `NotFound`, `Conflict`,
   `Network`, `Unknown`). **La UI nunca conoce la implementación.**

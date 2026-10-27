@@ -14,8 +14,8 @@ import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 /**
  * Chip del tipo de actividad.
  *
- * Traduce el `ActivityType` a su valor wire (`ACTIVIDAD`, `DESAFIO`,
- * `PRUEBA_FINAL`) y aplica un color del tema por tipo. La `PRUEBA_FINAL` usa el
+ * Traduce el `ActivityType` a su etiqueta visible (`Actividad`, `Desafío`,
+ * `Prueba final`) y aplica un color del tema por tipo. La `PRUEBA_FINAL` usa el
  * color de error porque tiene reglas propias: solo se admite una por unidad y no
  * se puede asociar a una asignación.
  */
@@ -38,7 +38,7 @@ fun ActivityTypeChip(
         contentColor = colors.content
     ) {
         Text(
-            text = activityType.wireValue,
+            text = activityType.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp

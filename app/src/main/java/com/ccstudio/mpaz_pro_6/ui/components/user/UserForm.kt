@@ -128,10 +128,11 @@ fun UserForm(
         )
 
         FilterChipRow(
-            options = UserRole.entries.map { it.wireValue },
-            selected = rol.wireValue,
-            onSelect = { wireValue ->
-                val newRole = UserRole.fromWire(wireValue)
+            options = UserRole.entries.map { it.label },
+            selected = rol.label,
+            onSelect = { label ->
+                val newRole = UserRole.entries
+                    .firstOrNull { it.label == label }
                 if (newRole != null && !isReadOnly && !isSaving) {
                     onRolChange(newRole)
                     if (newRole != UserRole.ESTUDIANTE) {

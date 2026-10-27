@@ -89,7 +89,7 @@ fun ProfileHeader(
             )
 
             Text(
-                text = roleLabel(role),
+                text = role.label,
                 style = MaterialTheme.typography.bodySmall,
                 color = roleColor,
                 maxLines = 1,
@@ -97,11 +97,4 @@ fun ProfileHeader(
             )
         }
     }
-}
-
-/** Nombre visible del rol. */
-private fun roleLabel(role: UserRole): String = when (role) {
-    UserRole.UTP -> "Jefe de UTP"
-    UserRole.DOCENTE -> "Docente"
-    UserRole.ESTUDIANTE -> "Estudiante"
 }

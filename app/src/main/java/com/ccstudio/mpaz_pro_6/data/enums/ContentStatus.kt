@@ -12,11 +12,11 @@ package com.ccstudio.mpaz_pro_6.data.enums
  * `EN_REVISION` espera la revisión de la UTP, `AUTORIZADO` lo ven los docentes y
  * `PUBLICADO` lo ven los estudiantes y es de solo lectura.
  */
-enum class ContentStatus(val wireValue: String) {
-    DRAFT("BORRADOR"),
-    IN_REVIEW("EN_REVISION"),
-    AUTHORIZED("AUTORIZADO"),
-    PUBLISHED("PUBLICADO");
+enum class ContentStatus(val wireValue: String, val label: String) {
+    DRAFT("BORRADOR", "Borrador"),
+    IN_REVIEW("EN_REVISION", "En revisión"),
+    AUTHORIZED("AUTORIZADO", "Autorizado"),
+    PUBLISHED("PUBLICADO", "Publicado");
 
     /**
      * Indica si el material está pendiente de revisión de la UTP.

@@ -134,7 +134,7 @@ private fun ResourceTypeChip(
         contentColor = colors.content
     ) {
         Text(
-            text = type.wireValue,
+            text = type.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp

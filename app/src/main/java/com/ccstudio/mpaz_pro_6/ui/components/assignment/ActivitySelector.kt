@@ -92,7 +92,7 @@ fun ActivitySelector(
                         )
 
                         Text(
-                            text = "${activity.tipo.wireValue} · Orden ${activity.orden}",
+                            text = "${activity.tipo.label} · Orden ${activity.orden}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -127,7 +127,7 @@ private fun FinalTestChip(modifier: Modifier = Modifier) {
         contentColor = contentColorFor(color)
     ) {
         Text(
-            text = "PRUEBA_FINAL",
+            text = ActivityType.FINAL_TEST.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp

@@ -87,10 +87,11 @@ fun QuestionForm(
             )
 
             FilterChipRow(
-                options = Difficulty.entries.map { it.wireValue },
-                selected = dificultad.wireValue,
-                onSelect = { wireValue ->
-                    val newDifficulty = Difficulty.fromWire(wireValue)
+                options = Difficulty.entries.map { it.label },
+                selected = dificultad.label,
+                onSelect = { label ->
+                    val newDifficulty = Difficulty.entries
+                        .firstOrNull { it.label == label }
                     if (newDifficulty != null && !isReadOnly && !isSaving) {
                         onDificultadChange(newDifficulty)
                     }
