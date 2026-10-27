@@ -45,8 +45,8 @@ object AppRoutes {
     /** Formulario de usuario; sin `userId` crea, con id edita. */
     const val USER_FORM = "userForm?userId={userId}"
 
-    /** Resolución de una actividad por el estudiante. */
-    const val ACTIVITY_ATTEMPT = "activityAttempt/{activityId}"
+    /** Resolución de una actividad; con `preview=true`, vista previa sin intento. */
+    const val ACTIVITY_ATTEMPT = "activityAttempt/{activityId}?preview={preview}"
 
     /** Detalle de un contenido. */
     const val CONTENT_DETAIL = "contentDetail/{contentId}"
@@ -84,8 +84,18 @@ object AppRoutes {
     fun userForm(userId: Int? = null): String =
         if (userId == null) "userForm" else "userForm?userId=$userId"
 
-    /** Construye la ruta de resolución de una actividad. */
-    fun activityAttempt(activityId: Int): String = "activityAttempt/$activityId"
+    /**
+     * Construye la ruta de resolución de una actividad.
+     *
+     * @param preview `true` para abrir la vista previa de la UTP o el docente, que
+     *   no crea intentos ni guarda respuestas.
+     */
+    fun activityAttempt(activityId: Int, preview: Boolean = false): String =
+        if (preview) {
+            "activityAttempt/$activityId?preview=true"
+        } else {
+            "activityAttempt/$activityId"
+        }
 
     /** Construye la ruta de detalle de un contenido. */
     fun contentDetail(contentId: Int): String = "contentDetail/$contentId"

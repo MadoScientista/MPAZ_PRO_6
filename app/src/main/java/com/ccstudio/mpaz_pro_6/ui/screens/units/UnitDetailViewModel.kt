@@ -80,6 +80,10 @@ class UnitDetailViewModel(
     var recursosPorContenido by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
+    /** Cantidad de actividades visibles asociadas a cada contenido. */
+    var actividadesPorContenido by mutableStateOf<Map<Int, Int>>(emptyMap())
+        private set
+
     /** Indica que el detalle se está cargando. */
     var isLoading by mutableStateOf(false)
         private set
@@ -98,6 +102,7 @@ class UnitDetailViewModel(
             actividades = emptyList()
             preguntasPorActividad = emptyMap()
             recursosPorContenido = emptyMap()
+            actividadesPorContenido = emptyMap()
 
             val unitResult = unitRepository.getById(unitId)
 
@@ -148,7 +153,7 @@ class UnitDetailViewModel(
             }
 
             val allContents = contentsResult.getOrDefault(emptyList())
-                .filter { it.oaId in objectiveIds }
+                .filter { it.unidadId == unitId && it.oaId in objectiveIds }
 
             val visibleContents = if (rol == UserRole.ESTUDIANTE) {
                 allContents.filter { it.estado == ContentStatus.PUBLISHED }
@@ -207,6 +212,12 @@ class UnitDetailViewModel(
             } else {
                 emptyMap()
             }
+
+            // Solo se cuentan las actividades visibles para el rol.
+            actividadesPorContenido = actividades
+                .mapNotNull { it.contenidoId }
+                .groupingBy { it }
+                .eachCount()
 
             isLoading = false
         }

@@ -38,6 +38,10 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
  * muestra el progreso y las preguntas con sus alternativas; cada selección se
  * registra en el backend. Al completar, navega al resultado. Un intento ya
  * cerrado se presenta en modo de solo lectura con la corrección congelada.
+ *
+ * En **vista previa** (UTP y docente) no se crea ni se registra ningún intento:
+ * las preguntas se responden en memoria y el botón de comprobación revela el
+ * resultado solo en pantalla. Nada de lo respondido se guarda.
  */
 @Composable
 fun ActivityAttemptScreen(
@@ -59,7 +63,12 @@ fun ActivityAttemptScreen(
     onViewResult: (Int) -> Unit,
     onRetry: () -> Unit,
     onDismissMensaje: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    previewMode: Boolean = false,
+    previewCompleted: Boolean = false,
+    previewCorrectAnswers: Int = 0,
+    onCheckPreview: () -> Unit = {},
+    onRestartPreview: () -> Unit = {}
 ) {
     val isCompleted = attempt?.fechaFin != null
 
@@ -106,7 +115,86 @@ fun ActivityAttemptScreen(
                     }
                 }
 
-                if (attempt == null) {
+                if (previewMode) {
+                    if (questions.isEmpty()) {
+                        item {
+                            EmptyState(
+                                message = "La actividad no tiene preguntas.",
+                                description = "Todavía no se puede previsualizar."
+                            )
+                        }
+                    } else {
+                        item {
+                            Text(
+                                text = "Vista previa: responde la actividad para conocer cómo " +
+                                        "funciona. Las respuestas no se guardan.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        item {
+                            SectionHeader(
+                                title = "Preguntas",
+                                count = questions.size
+                            )
+                        }
+
+                        itemsIndexed(
+                            items = questions,
+                            key = { _, question -> question.id }
+                        ) { index, question ->
+                            AttemptQuestionCard(
+                                question = question,
+                                alternatives = alternativesByQuestion[question.id].orEmpty(),
+                                selectedAlternativeId = selectedAlternatives[question.id],
+                                onSelectAlternative = { alternativeId ->
+                                    onSelectAlternative(question.id, alternativeId)
+                                },
+                                questionNumber = index + 1,
+                                isReadOnly = previewCompleted,
+                                showCorrectness = previewCompleted,
+                                enabled = !previewCompleted
+                            )
+                        }
+
+                        item {
+                            Text(
+                                text = "$answeredCount de ${questions.size} preguntas respondidas",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            if (previewCompleted) {
+                                Text(
+                                    text = "Respuestas correctas: " +
+                                            "$previewCorrectAnswers de ${questions.size}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                AppButton(
+                                    text = "Reiniciar vista previa",
+                                    onClick = onRestartPreview
+                                )
+                            } else {
+                                AppButton(
+                                    text = "Comprobar respuestas",
+                                    onClick = onCheckPreview,
+                                    enabled = allAnswered
+                                )
+
+                                if (!allAnswered) {
+                                    Text(
+                                        text = "Responde todas las preguntas para comprobar.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else if (attempt == null) {
                     if (questions.isEmpty()) {
                         item {
                             EmptyState(

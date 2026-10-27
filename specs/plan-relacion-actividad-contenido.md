@@ -1,6 +1,6 @@
 # Plan de implementación — Relación actividad ↔ contenido
 
-**Estado:** pendiente de implementar.
+**Estado:** implementado. Pasan `./gradlew test`, la compilación y las pruebas instrumentadas en dispositivo.
 **Fuente de verdad del contrato:** `specs/endpoints` (secciones *Contenidos* y *Actividades*) y
 `specs/mpaz_pro_modelo_definifivo.md` (decisión 13 y tablas `contenido` / `actividad`).
 
@@ -313,8 +313,11 @@ Todo ocurre dentro de la transacción de Room; si un paso falla, se revierte y l
      renombre.
    - Copiar todas las filas con `contenido_id = NULL`. Es la única verdad disponible: v1 no tenía
      la relación, así que **no se infiere ninguna asociación**.
-   - `DROP TABLE actividad`, renombrar y recrear **todos** los índices, incluido
-     `ux_actividad_prueba_final_por_unidad`.
+   - `DROP TABLE actividad`, renombrar y recrear **todos** los índices declarados en
+     `2.json`. El índice parcial `ux_actividad_prueba_final_por_unidad` **no** se crea en la
+     migración: Room valida el esquema después de `migrate()` y un índice extra hace fallar la
+     validación. Se recrea en `SeedLoader.createIndexes` desde `RoomDatabase.Callback.onOpen`,
+     que corre después de la validación y antes de que la app use la base.
 
 4. Recrear las hijas con el SQL exacto que Room genera en `2.json`, en orden inverso:
    `recurso_contenido` → `pregunta` → `alternativa` → `asignacion_actividad` → `intento` →
@@ -343,9 +346,10 @@ a ejecutar `SeedCallback.onCreate`; la app quedaría con las tablas vacías hast
 
 **`data/local/MpazDatabase.kt`**
 
-Además de la versión y la migración, revisar que `SeedLoader.createIndexes` siga creando el índice
-parcial de `PRUEBA_FINAL` en bases nuevas. La migración debe crear el mismo índice para bases
-existentes.
+Además de la versión y la migración, `SeedLoader.createIndexes` debe seguir creando el índice
+parcial de `PRUEBA_FINAL` en bases nuevas y en cada apertura (`Callback.onOpen`), porque la
+migración no puede dejarlo creado: Room valida el esquema después de `migrate()` y un índice que no
+está declarado en la entidad hace fallar la validación.
 
 ### 4.5 Seed
 
@@ -653,18 +657,18 @@ Agregar a `MpazDatabaseInstrumentedTest`:
 
 ## 7. Criterios de aceptación
 
-- [ ] `Content` expone `unidadId` y `Activity` expone `contenidoId`.
-- [ ] `CreateActivityRequest` acepta `contenidoId` opcional.
-- [ ] `UpdateActivityRequest` distingue “no cambiar”, “asociar” y “desasociar”.
-- [ ] `ContentDto` y `ActivityDto` mapean los campos nuevos.
-- [ ] `GET /api/actividades` acepta `contenidoId` y `soloTransversales`.
-- [ ] Room tiene las FK compuestas y los índices necesarios.
-- [ ] La migración `1 → 2` conserva las filas y se prueba.
-- [ ] El seed asigna unidad a todos los contenidos y contenido a las actividades no transversales.
-- [ ] El modo local rechaza contenido de otra unidad y borrado de contenido en uso.
-- [ ] La UI permite elegir contenido y muestra “Transversal” cuando no lo hay.
-- [ ] `specs/components.md` e `specs/implementacion-sqlite.md` quedan actualizados.
-- [ ] Pasan `./gradlew test`, `compileDebugKotlin` y las pruebas instrumentadas.
+- [x] `Content` expone `unidadId` y `Activity` expone `contenidoId`.
+- [x] `CreateActivityRequest` acepta `contenidoId` opcional.
+- [x] `UpdateActivityRequest` distingue “no cambiar”, “asociar” y “desasociar”.
+- [x] `ContentDto` y `ActivityDto` mapean los campos nuevos.
+- [x] `GET /api/actividades` acepta `contenidoId` y `soloTransversales`.
+- [x] Room tiene las FK compuestas y los índices necesarios.
+- [x] La migración `1 → 2` conserva las filas y se prueba.
+- [x] El seed asigna unidad a todos los contenidos y contenido a las actividades no transversales.
+- [x] El modo local rechaza contenido de otra unidad y borrado de contenido en uso.
+- [x] La UI permite elegir contenido y muestra “Transversal” cuando no lo hay.
+- [x] `specs/components.md` e `specs/implementacion-sqlite.md` quedan actualizados.
+- [x] Pasan `./gradlew test`, `compileDebugKotlin` y las pruebas instrumentadas.
 
 ---
 

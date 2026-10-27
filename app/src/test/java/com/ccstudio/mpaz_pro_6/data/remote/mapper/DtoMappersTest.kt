@@ -1,15 +1,21 @@
 package com.ccstudio.mpaz_pro_6.data.remote.mapper
 
+import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentOrigin
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.model.ReportObjectiveDetail
+import com.ccstudio.mpaz_pro_6.data.model.requests.CreateActivityRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateAssignmentRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateContentRequest
+import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateActivityRequest
 import com.ccstudio.mpaz_pro_6.data.local.mapper.toEntity
+import com.ccstudio.mpaz_pro_6.data.remote.dto.ActivityDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.AssignmentDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.ContentDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.LearningUnitDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.ReportObjectiveDetailDto
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.time.Instant
@@ -132,5 +138,60 @@ class DtoMappersTest {
             com.ccstudio.mpaz_pro_6.data.enums.ObjectiveLevel.SUPPORT,
             dto.toDomain().nivel
         )
+    }
+
+    @Test
+    fun contenidoWireConservaLaUnidadDerivada() {
+        val dto = ContentDto(
+            id = 1,
+            oaId = 2,
+            unidadId = 7,
+            titulo = "Contenido",
+            explicacion = "Explicación",
+            origen = "PROPIO"
+        )
+
+        val content = dto.toDomain()
+
+        assertEquals(7, content.unidadId)
+        assertEquals(7, content.toEntity().unidadId)
+    }
+
+    @Test
+    fun actividadWireConservaContenidoYTransversalidad() {
+        val withContent = ActivityDto(
+            id = 1,
+            unidadId = 2,
+            contenidoId = 3,
+            titulo = "Actividad",
+            tipo = "ACTIVIDAD"
+        ).toDomain()
+
+        val transversal = ActivityDto(
+            id = 2,
+            unidadId = 2,
+            contenidoId = null,
+            titulo = "Prueba final",
+            tipo = "PRUEBA_FINAL"
+        ).toDomain()
+
+        assertEquals(3, withContent.contenidoId)
+        assertNull(transversal.contenidoId)
+    }
+
+    @Test
+    fun solicitudDeActividadMapeaContenidoYDesasociacion() {
+        val create = CreateActivityRequest(
+            unidadId = 1,
+            titulo = "Actividad",
+            tipo = ActivityType.ACTIVITY,
+            contenidoId = 4
+        ).toDto()
+
+        val update = UpdateActivityRequest(desasociarContenido = true).toDto()
+
+        assertEquals(4, create.contenidoId)
+        assertEquals(true, update.desasociarContenido)
+        assertNull(update.contenidoId)
     }
 }

@@ -9,12 +9,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
+import com.ccstudio.mpaz_pro_6.data.enums.ContentOrigin
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.ReportStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.local.entity.ActivityEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentObjectiveEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.ContentEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.CourseEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningObjectiveEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningUnitEntity
@@ -107,11 +109,11 @@ class MpazDatabaseInstrumentedTest {
     fun actividadConTituloDuplicadoEnLaMismaUnidadFalla() = runBlocking {
         crearUnidad()
         database.curriculumDao().upsertActivity(
-            ActivityEntity(1, 1, "Prueba", ActivityType.ACTIVITY, 1)
+            ActivityEntity(1, 1, null, "Prueba", ActivityType.ACTIVITY, 1)
         )
 
         assertThrows(SQLiteConstraintException::class.java) {
-            exec("INSERT INTO actividad VALUES (2, 1, 'Prueba', 'DESAFIO', 2)")
+            exec("INSERT INTO actividad VALUES (2, 1, NULL, 'Prueba', 'DESAFIO', 2)")
         }
         Unit
     }
@@ -120,12 +122,85 @@ class MpazDatabaseInstrumentedTest {
     fun indiceParcialPermiteUnaSolaPruebaFinalPorUnidad() {
         runBlocking { crearUnidad() }
         SeedLoader.createIndexes(database.openHelper.writableDatabase)
-        exec("INSERT INTO actividad VALUES (1, 1, 'Prueba final', 'PRUEBA_FINAL', 1)")
+        exec("INSERT INTO actividad VALUES (1, 1, NULL, 'Prueba final', 'PRUEBA_FINAL', 1)")
 
         assertThrows(SQLiteConstraintException::class.java) {
-            exec("INSERT INTO actividad VALUES (2, 1, 'Otra prueba final', 'PRUEBA_FINAL', 2)")
+            exec(
+                "INSERT INTO actividad VALUES " +
+                    "(2, 1, NULL, 'Otra prueba final', 'PRUEBA_FINAL', 2)"
+            )
         }
-        exec("INSERT INTO actividad VALUES (3, 1, 'Actividad normal', 'ACTIVIDAD', 3)")
+        exec("INSERT INTO actividad VALUES (3, 1, NULL, 'Actividad normal', 'ACTIVIDAD', 3)")
+    }
+
+    @Test
+    fun actividadTransversalSeGuardaSinContenido() = runBlocking {
+        crearBaseConContenido()
+        database.curriculumDao().upsertActivity(
+            ActivityEntity(1, 1, null, "Transversal", ActivityType.ACTIVITY, 1)
+        )
+
+        assertNull(database.curriculumDao().getActivityById(1)?.contenidoId)
+    }
+
+    @Test
+    fun actividadConContenidoDeLaMismaUnidadSeGuarda() = runBlocking {
+        crearBaseConContenido()
+        database.curriculumDao().upsertActivity(
+            ActivityEntity(1, 1, 1, "Con contenido", ActivityType.ACTIVITY, 1)
+        )
+
+        assertEquals(1, database.curriculumDao().getActivityById(1)?.contenidoId)
+    }
+
+    @Test
+    fun actividadConContenidoDeOtraUnidadViolaLaForeignKeyCompuesta() = runBlocking {
+        crearBaseConContenido()
+        crearUnidad(id = 2, titulo = "Otra unidad")
+
+        assertThrows(SQLiteConstraintException::class.java) {
+            exec(
+                "INSERT INTO actividad VALUES " +
+                    "(1, 2, 1, 'Contenido ajeno', 'ACTIVIDAD', 1)"
+            )
+        }
+        Unit
+    }
+
+    @Test
+    fun contenidoConUnidadDistintaAlObjetivoViolaLaForeignKeyCompuesta() = runBlocking {
+        crearUnidad()
+        database.curriculumDao().upsertObjective(
+            LearningObjectiveEntity(1, 1, "OA1", "Objetivo", "Números", null)
+        )
+
+        assertThrows(SQLiteConstraintException::class.java) {
+            exec(
+                """
+                INSERT INTO contenido (
+                    id, oa_id, unidad_id, titulo, explicacion, ejemplos,
+                    instrucciones, orden, origen, estado
+                ) VALUES (
+                    1, 1, 2, 'Contenido ajeno', 'Explicación', NULL, NULL,
+                    1, 'PROPIO', 'BORRADOR'
+                )
+                """.trimIndent()
+            )
+        }
+        Unit
+    }
+
+    @Test
+    fun contenidoConActividadesNoSePuedeBorrar() = runBlocking {
+        crearBaseConContenido()
+        database.curriculumDao().upsertActivity(
+            ActivityEntity(1, 1, 1, "Con contenido", ActivityType.ACTIVITY, 1)
+        )
+
+        assertThrows(SQLiteConstraintException::class.java) {
+            exec("DELETE FROM contenido WHERE id = 1")
+        }
+        Unit
     }
 
     @Test
@@ -165,6 +240,29 @@ class MpazDatabaseInstrumentedTest {
             assertTrue(seeded.unitDao().getUnits().isNotEmpty())
             assertTrue(seeded.curriculumDao().getActivities().isNotEmpty())
             assertNotNull(seeded.unitDao().getUnitById(1))
+
+            // Todo contenido deriva su unidad de un OA existente.
+            val contents = seeded.curriculumDao().getContents()
+            assertTrue(contents.isNotEmpty())
+            contents.forEach { content ->
+                val objective = seeded.curriculumDao().getObjectiveById(content.oaId)
+                assertNotNull(objective)
+                assertEquals(objective?.unidadId, content.unidadId)
+            }
+
+            // Las actividades asociadas apuntan a un contenido de su misma unidad.
+            val contentsById = contents.associateBy { it.id }
+            val activities = seeded.curriculumDao().getActivities()
+            activities.filter { it.contenidoId != null }.forEach { activity ->
+                val content = contentsById[activity.contenidoId]
+                assertNotNull(content)
+                assertEquals(activity.unidadId, content?.unidadId)
+            }
+            assertTrue(
+                activities.any {
+                    it.tipo == ActivityType.FINAL_TEST && it.contenidoId == null
+                }
+            )
         } finally {
             seeded.close()
         }
@@ -190,18 +288,42 @@ class MpazDatabaseInstrumentedTest {
         Unit
     }
 
-    private suspend fun crearUnidad() {
-        database.catalogDao().upsertSubject(SubjectEntity(1, "Matemática"))
+    private suspend fun crearUnidad(id: Int = 1, titulo: String = "Fracciones") {
+        if (database.catalogDao().getSubjectById(1) == null) {
+            database.catalogDao().upsertSubject(SubjectEntity(1, "Matemática"))
+        }
         database.unitDao().upsertUnit(
             LearningUnitEntity(
-                id = 1,
+                id = id,
                 asignaturaId = 1,
                 nivelEducativo = "Sexto Basico",
-                titulo = "Fracciones",
-                orden = 1,
+                titulo = titulo,
+                orden = id,
                 estado = ContentStatus.DRAFT,
                 autorizadaPorId = null,
                 fechaAutorizacion = null
+            )
+        )
+    }
+
+    /** Crea una unidad con un OA y un contenido para probar la relación. */
+    private suspend fun crearBaseConContenido() {
+        crearUnidad()
+        database.curriculumDao().upsertObjective(
+            LearningObjectiveEntity(1, 1, "OA1", "Objetivo", "Números", null)
+        )
+        database.curriculumDao().upsertContent(
+            ContentEntity(
+                id = 1,
+                oaId = 1,
+                unidadId = 1,
+                titulo = "Contenido",
+                explicacion = "Explicación",
+                ejemplos = null,
+                instrucciones = null,
+                orden = 1,
+                origen = ContentOrigin.OWN,
+                estado = ContentStatus.DRAFT
             )
         )
     }

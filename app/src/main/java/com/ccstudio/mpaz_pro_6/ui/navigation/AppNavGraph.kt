@@ -924,49 +924,48 @@ private fun AppNavHost(
                 ) { entry ->
                     val unitId = entry.arguments?.getInt("unitId") ?: 0
 
-                val viewModel: UnitDetailViewModel = viewModel(
-                    factory = UnitDetailViewModel.factory(
-                        unitRepository = container.unitRepository,
-                        subjectRepository = container.subjectRepository,
-                        learningObjectiveRepository = container.learningObjectiveRepository,
-                        contentRepository = container.contentRepository,
-                        contentResourceRepository = container.contentResourceRepository,
-                        activityRepository = container.activityRepository,
-                        questionRepository = container.questionRepository,
-                        assignmentRepository = container.assignmentRepository,
-                        rol = rol,
-                        courseId = user.cursoId,
-                        unitId = unitId
+                    val viewModel: UnitDetailViewModel = viewModel(
+                        factory = UnitDetailViewModel.factory(
+                            unitRepository = container.unitRepository,
+                            subjectRepository = container.subjectRepository,
+                            learningObjectiveRepository = container.learningObjectiveRepository,
+                            contentRepository = container.contentRepository,
+                            contentResourceRepository = container.contentResourceRepository,
+                            activityRepository = container.activityRepository,
+                            questionRepository = container.questionRepository,
+                            assignmentRepository = container.assignmentRepository,
+                            rol = rol,
+                            courseId = user.cursoId,
+                            unitId = unitId
+                        )
                     )
-                )
 
-                LaunchedEffect(Unit) {
-                    viewModel.cargar()
-                }
+                    LaunchedEffect(Unit) { viewModel.cargar() }
 
-                UnitDetailScreen(
-                    unidad = viewModel.unidad,
-                    asignatura = viewModel.asignatura,
-                    contenidos = viewModel.contenidos,
-                    objetivos = viewModel.objetivos,
-                    actividades = viewModel.actividades,
-                    recursosPorContenido = viewModel.recursosPorContenido,
-                    preguntasPorActividad = viewModel.preguntasPorActividad,
-                    isLoading = viewModel.isLoading,
-                    error = viewModel.error,
-                    onViewContent = { content ->
-                        navController.navigate(AppRoutes.contentDetail(content.id))
-                    },
-                    onOpenActivity = { activity ->
-                        navController.navigate(AppRoutes.activityAttempt(activity.id))
-                    },
-                    onAutorizar = {
-                        navController.navigate(AppRoutes.unitAuthorization(unitId))
-                    },
-                    onRetry = viewModel::cargar,
-                    puedeAutorizar = rol == UserRole.UTP,
-                    puedeResolverActividades = rol == UserRole.ESTUDIANTE
-                )
+                    UnitDetailScreen(
+                        unidad = viewModel.unidad,
+                        asignatura = viewModel.asignatura,
+                        contenidos = viewModel.contenidos,
+                        objetivos = viewModel.objetivos,
+                        actividades = viewModel.actividades,
+                        recursosPorContenido = viewModel.recursosPorContenido,
+                        preguntasPorActividad = viewModel.preguntasPorActividad,
+                        actividadesPorContenido = viewModel.actividadesPorContenido,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error,
+                        onViewContent = { content ->
+                            navController.navigate(AppRoutes.contentDetail(content.id))
+                        },
+                        onOpenActivity = { activity ->
+                            navController.navigate(AppRoutes.activityAttempt(activity.id))
+                        },
+                        onAutorizar = {
+                            navController.navigate(AppRoutes.unitAuthorization(unitId))
+                        },
+                        onRetry = viewModel::cargar,
+                        puedeAutorizar = rol == UserRole.UTP,
+                        puedeResolverActividades = rol == UserRole.ESTUDIANTE
+                    )
                 }
 
                 composable(
@@ -981,14 +980,16 @@ private fun AppNavHost(
                             contentRepository = container.contentRepository,
                             learningObjectiveRepository = container.learningObjectiveRepository,
                             contentResourceRepository = container.contentResourceRepository,
+                            activityRepository = container.activityRepository,
+                            questionRepository = container.questionRepository,
+                            assignmentRepository = container.assignmentRepository,
                             rol = rol,
+                            courseId = user.cursoId,
                             contentId = contentId
                         )
                     )
 
-                    LaunchedEffect(Unit) {
-                        viewModel.cargar()
-                    }
+                    LaunchedEffect(Unit) { viewModel.cargar() }
 
                     ContentDetailScreen(
                         contenido = viewModel.contenido,
@@ -998,18 +999,18 @@ private fun AppNavHost(
                         error = viewModel.error,
                         onOpenResource = { url ->
                             runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                )
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                             }.onFailure {
-                                Toast.makeText(
-                                    context,
-                                    "No se pudo abrir el recurso.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "No se pudo abrir el recurso.", Toast.LENGTH_SHORT).show()
                             }
                         },
                         onRetry = viewModel::cargar,
+                        actividades = viewModel.actividades,
+                        preguntasPorActividad = viewModel.preguntasPorActividad,
+                        onOpenActivity = { activity ->
+                            navController.navigate(AppRoutes.activityAttempt(activity.id))
+                        },
+                        activityActionLabel = if (rol == UserRole.ESTUDIANTE) "Resolver" else "Vista previa"
                     )
                 }
 

@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,11 +19,12 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 /**
  * Panel de inicio de la jefa de UTP.
  *
- * Muestra un resumen de la gestión: unidades `BORRADOR` pendientes de revisión,
+ * Muestra un resumen de la gestión: unidades `EN_REVISION` pendientes de revisión,
  * total de cursos y asignaturas, y accesos directos a la gestión de unidades.
  *
- * Las unidades pendientes se obtienen filtrando por `BORRADOR` o `EN_REVISION`
- * sobre `GET /api/unidades`, porque el backend no expone un listado dedicado.
+ * Las unidades pendientes se obtienen filtrando por `EN_REVISION` sobre
+ * `GET /api/unidades`, porque el backend no expone un listado dedicado. Los
+ * borradores no se cuentan: siguen siendo material de trabajo del docente.
  */
 @Composable
 fun HomeUTPScreen(

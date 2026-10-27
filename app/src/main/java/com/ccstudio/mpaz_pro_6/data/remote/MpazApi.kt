@@ -208,7 +208,11 @@ interface MpazApi {
     suspend fun deleteContentResource(@Path("id") id: Int): Response<Unit>
 
     @GET("api/actividades")
-    suspend fun getActivities(@Query("unidadId") unitId: Int? = null): List<ActivityDto>
+    suspend fun getActivities(
+        @Query("unidadId") unitId: Int? = null,
+        @Query("contenidoId") contentId: Int? = null,
+        @Query("soloTransversales") onlyTransversal: Boolean? = null
+    ): List<ActivityDto>
 
     @GET("api/actividades/{id}")
     suspend fun getActivity(@Path("id") id: Int): ActivityDto

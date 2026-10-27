@@ -32,6 +32,11 @@ import kotlinx.coroutines.launch
  *
  * Si se reanuda un intento con respuestas ya registradas, esas preguntas quedan
  * bloqueadas y solo se pueden responder las que faltan.
+ *
+ * En modo de **vista previa** (`previewMode = true`), pensado para la UTP y el
+ * docente, la actividad se carga igual pero no se consulta ni se escribe ningún
+ * intento: las selecciones viven solo en memoria y se pueden comprobar para
+ * conocer el funcionamiento de la actividad. Nada de lo respondido se guarda.
  */
 class ActivityAttemptViewModel(
     private val activityRepository: ActivityRepository,
@@ -40,7 +45,8 @@ class ActivityAttemptViewModel(
     private val attemptRepository: AttemptRepository,
     private val studentAnswerRepository: StudentAnswerRepository,
     private val studentId: Int,
-    private val activityId: Int
+    private val activityId: Int,
+    private val previewMode: Boolean = false
 ) : ViewModel() {
 
     /** Actividad que se está resolviendo. */
@@ -65,6 +71,10 @@ class ActivityAttemptViewModel(
 
     /** Selecciones locales, indexadas por id de pregunta. */
     var selectedAlternatives by mutableStateOf<Map<Int, Int>>(emptyMap())
+        private set
+
+    /** `true` cuando la vista previa ya comprobó sus respuestas. */
+    var previewCompleted by mutableStateOf(false)
         private set
 
     /** Indica que se están cargando los datos de la actividad. */
@@ -99,6 +109,16 @@ class ActivityAttemptViewModel(
     val registeredQuestionIds: Set<Int>
         get() = registeredAnswers.keys
 
+    /** Cantidad de respuestas correctas de la vista previa, calculada en local. */
+    val previewCorrectAnswers: Int
+        get() = questions.count { question ->
+            val selectedId = selectedAlternatives[question.id] ?: return@count false
+
+            alternativesByQuestion[question.id]
+                .orEmpty()
+                .any { it.id == selectedId && it.esCorrecta }
+        }
+
     /** Carga la actividad, sus preguntas, alternativas e intento vigente. */
     fun cargar() {
         viewModelScope.launch {
@@ -130,6 +150,25 @@ class ActivityAttemptViewModel(
                 return@launch
             }
 
+            val loadedQuestions = questionsResult.getOrDefault(emptyList())
+            val questionIds = loadedQuestions.map { it.id }.toSet()
+
+            activity = activityResult.getOrNull()
+            questions = loadedQuestions
+            alternativesByQuestion = alternativesResult.getOrDefault(emptyList())
+                .filter { it.preguntaId in questionIds }
+                .groupBy { it.preguntaId }
+
+            // La vista previa no consulta intentos ni respuestas del usuario.
+            if (previewMode) {
+                attempt = null
+                registeredAnswers = emptyMap()
+                selectedAlternatives = emptyMap()
+                previewCompleted = false
+                isLoading = false
+                return@launch
+            }
+
             val attemptsResult = attemptRepository.list(
                 studentId = studentId,
                 activityId = activityId
@@ -140,15 +179,6 @@ class ActivityAttemptViewModel(
                 isLoading = false
                 return@launch
             }
-
-            val loadedQuestions = questionsResult.getOrDefault(emptyList())
-            val questionIds = loadedQuestions.map { it.id }.toSet()
-
-            activity = activityResult.getOrNull()
-            questions = loadedQuestions
-            alternativesByQuestion = alternativesResult.getOrDefault(emptyList())
-                .filter { it.preguntaId in questionIds }
-                .groupBy { it.preguntaId }
 
             val inProgress = attemptsResult.getOrDefault(emptyList())
                 .filter { it.fechaFin == null }
@@ -182,7 +212,7 @@ class ActivityAttemptViewModel(
 
     /** Inicia un intento nuevo para el estudiante en esta actividad. */
     fun iniciarIntento() {
-        if (attempt != null || isSaving) return
+        if (previewMode || attempt != null || isSaving) return
 
         viewModelScope.launch {
             isSaving = true
@@ -217,6 +247,15 @@ class ActivityAttemptViewModel(
      * ya registradas no se pueden modificar.
      */
     fun seleccionar(questionId: Int, alternativeId: Int) {
+        // En vista previa no hay intento: la selección solo vive en memoria.
+        if (previewMode) {
+            if (previewCompleted) return
+
+            selectedAlternatives = selectedAlternatives + (questionId to alternativeId)
+            mensaje = null
+            return
+        }
+
         val currentAttempt = attempt ?: return
 
         if (currentAttempt.fechaFin != null || isSaving) return
@@ -233,6 +272,8 @@ class ActivityAttemptViewModel(
      * lo registrado y se avisa para que el estudiante reintente.
      */
     fun completar(onCompleted: (Int) -> Unit) {
+        if (previewMode) return
+
         val currentAttempt = attempt ?: return
 
         if (currentAttempt.fechaFin != null || !allAnswered || isSaving) return
@@ -286,6 +327,27 @@ class ActivityAttemptViewModel(
         }
     }
 
+    /**
+     * Comprueba las respuestas de la vista previa.
+     *
+     * No llama al backend: solo revela en pantalla cuántas alternativas coinciden
+     * con la correcta. Nada se registra como intento ni como respuesta.
+     */
+    fun comprobarVistaPrevia() {
+        if (!previewMode || previewCompleted || !allAnswered) return
+
+        previewCompleted = true
+    }
+
+    /** Reinicia las selecciones de la vista previa sin tocar datos persistidos. */
+    fun reiniciarVistaPrevia() {
+        if (!previewMode) return
+
+        selectedAlternatives = emptyMap()
+        previewCompleted = false
+        mensaje = null
+    }
+
     /** Oculta el aviso de la última operación. */
     fun limpiarMensaje() {
         mensaje = null
@@ -331,7 +393,8 @@ class ActivityAttemptViewModel(
             attemptRepository: AttemptRepository,
             studentAnswerRepository: StudentAnswerRepository,
             studentId: Int,
-            activityId: Int
+            activityId: Int,
+            previewMode: Boolean = false
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 ActivityAttemptViewModel(
@@ -341,7 +404,8 @@ class ActivityAttemptViewModel(
                     attemptRepository = attemptRepository,
                     studentAnswerRepository = studentAnswerRepository,
                     studentId = studentId,
-                    activityId = activityId
+                    activityId = activityId,
+                    previewMode = previewMode
                 )
             }
         }

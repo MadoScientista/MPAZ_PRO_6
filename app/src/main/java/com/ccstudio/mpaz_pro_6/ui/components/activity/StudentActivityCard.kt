@@ -35,9 +35,10 @@ enum class StudentActivityStatus {
 /**
  * Tarjeta de una actividad en el listado del estudiante.
  *
- * Muestra el tipo, el título, la unidad y el estado de realización. El texto de
- * acción cambia según el estado: resolver, continuar o ver el resultado. La
- * pantalla decide a dónde navegar; la tarjeta solo emite el toque.
+ * Muestra el tipo, el título, la unidad, el contenido opcional y el estado de
+ * realización. El texto de acción cambia según el estado: resolver, continuar o
+ * ver el resultado. La pantalla decide a dónde navegar; la tarjeta solo emite el
+ * toque.
  */
 @Composable
 fun StudentActivityCard(
@@ -46,7 +47,8 @@ fun StudentActivityCard(
     status: StudentActivityStatus,
     attemptsCount: Int,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentTitle: String? = null
 ) {
     Card(
         onClick = onClick,
@@ -91,6 +93,14 @@ fun StudentActivityCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            if (contentTitle != null) {
+                Text(
+                    text = "Contenido: $contentTitle",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

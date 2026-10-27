@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
+import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
@@ -27,12 +29,14 @@ import com.ccstudio.mpaz_pro_6.ui.components.content.ContentResourceCard
  * Detalle de un contenido.
  *
  * Pantalla de consulta para la revisión de la UTP: muestra el título (sin origen
- * ni orden), la explicación completa, los ejemplos, los recursos y las
- * instrucciones. No ofrece edición ni borrado.
+ * ni orden), la explicación completa, los ejemplos, los recursos, las
+ * instrucciones y las actividades asociadas. No ofrece edición ni borrado.
  *
- * El contenido y su objetivo llegan resueltos por el ViewModel. Los recursos se
- * abren por callback, para que la pantalla no dependa del `Context` ni de un
- * `Intent`.
+ * El contenido, su objetivo y sus actividades llegan resueltos por el ViewModel.
+ * Los recursos se abren por callback, para que la pantalla no dependa del
+ * `Context` ni de un `Intent`. Las actividades también se abren por callback: la
+ * UTP y el docente entran en modo de vista previa (sin guardar intentos) y el
+ * estudiante en modo de resolución normal.
  */
 @Composable
 fun ContentDetailScreen(
@@ -43,7 +47,11 @@ fun ContentDetailScreen(
     error: ApiError?,
     onOpenResource: (String) -> Unit,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actividades: List<Activity> = emptyList(),
+    preguntasPorActividad: Map<Int, Int> = emptyMap(),
+    onOpenActivity: ((Activity) -> Unit)? = null,
+    activityActionLabel: String = "Ver detalle"
 ) {
     Column(
         modifier = modifier.fillMaxSize()
@@ -140,6 +148,32 @@ fun ContentDetailScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
+                    }
+
+                    SectionHeader(
+                        title = "Actividades",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        count = actividades.size
+                    )
+
+                    if (actividades.isEmpty()) {
+                        EmptyState(
+                            message = "Este contenido no tiene actividades asociadas.",
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    } else {
+                        actividades.forEach { activity ->
+                            ActivityCard(
+                                activity = activity,
+                                questionsCount = preguntasPorActividad[activity.id] ?: 0,
+                                contentTitle = contenido.titulo,
+                                onViewDetail = onOpenActivity?.let { open ->
+                                    { open(activity) }
+                                },
+                                detailLabel = activityActionLabel,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
                     }
                 }
             }
