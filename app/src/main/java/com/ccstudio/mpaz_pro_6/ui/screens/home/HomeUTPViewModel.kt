@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
@@ -26,8 +27,9 @@ import kotlinx.coroutines.launch
  * Estado del panel de inicio de la jefa de UTP.
  *
  * El backend no expone un listado dedicado de unidades pendientes de revisión:
- * el panel expone las que están en `BORRADOR` o `EN_REVISION` sobre
- * `GET /api/unidades`, junto con todas las asignaturas y los contadores.
+ * el panel expone las que están en `EN_REVISION` sobre `GET /api/unidades`, junto
+ * con todas las asignaturas y los contadores. Los `BORRADOR` pertenecen al
+ * docente y no se muestran a la UTP.
  */
 class HomeUTPViewModel(
     private val unitRepository: UnitRepository,
@@ -45,7 +47,7 @@ class HomeUTPViewModel(
     var error by mutableStateOf<ApiError?>(null)
         private set
 
-    /** Unidades pendientes de revisión, para el carrusel del panel. */
+    /** Unidades en revisión, para el carrusel del panel. */
     var unidadesPendientes by mutableStateOf<List<LearningUnit>>(emptyList())
         private set
 
@@ -104,7 +106,7 @@ class HomeUTPViewModel(
 
         val allUnits = units.getOrDefault(emptyList())
 
-        unidadesPendientes = allUnits.filter { it.estado.esPendienteDeRevision() }
+        unidadesPendientes = allUnits.filter { it.estado == ContentStatus.IN_REVIEW }
         unidadesPorAsignatura = allUnits
             .groupingBy { it.asignaturaId }
             .eachCount()

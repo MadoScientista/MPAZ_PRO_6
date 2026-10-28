@@ -205,7 +205,8 @@ Estas reglas existen para que la app se comporte igual que el backend:
 2. **Crear y editar son formularios distintos.** El `PUT` es parcial: el spec dice *"aplicando solo los
    valores enviados"*. Los `*FormScreen` de edición deben enviar **únicamente los campos modificados**.
 3. **El estado de la unidad gobierna la visibilidad:**
-   `DRAFT` → editable por UTP, oculta al estudiante · `IN_REVIEW` → espera la revisión de la UTP ·
+   `DRAFT` → material de trabajo del docente, oculto a la UTP y al estudiante ·
+   `IN_REVIEW` → visible a la UTP, espera su revisión (el docente también la ve) ·
    `AUTHORIZED` → visible al docente, UTP puede publicar ·
    `PUBLISHED` → visible al estudiante, solo lectura.
    El backend usa el mismo enum (`ContentStatus`) para la unidad, el contenido y el
@@ -237,7 +238,7 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 | Gap | Consecuencia |
 |---|---|
 | Los endpoints `/api/auth/*` no aparecen en `specs/endpoints`; están descritos en `specs/implementacion-sqlite.md`. | La app usa login JWT, `/auth/me` y logout; si cambia el contrato, actualizar DTOs y `RemoteAuthRepository`. |
-| No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra por `DRAFT` o `EN_REVISION` en cliente. |
+| No hay endpoint de "unidades pendientes de revisión". | El listado UTP y su panel de inicio filtran por `EN_REVISION` en cliente; los `BORRADOR` solo los ve el docente. |
 | No hay listado de estudiantes por curso. | El docente ve el listado de usuarios completo. |
 | Las "reglas 1, 2, 4, 7, 9, 11" del modelo no están en el repo. | Los mensajes se apoyan solo en `specs/endpoints`. |
 | `InitialSync` descarga el catálogo completo sin distinguir rol. | Si el backend restringe algún endpoint, la sync falla y se conserva la caché anterior. |
@@ -289,7 +290,9 @@ borrar con confirmación y explicación del `409 Conflict`). El estudiante tiene
 Inicio, Unidades, Actividades e Informes. Desde Inicio puede iniciar o continuar un intento y ver su
 resultado; en el detalle de una unidad ve el resumen, los contenidos y las actividades. La UTP y el
 docente ven todo el material en modo lectura; el estudiante ve solo contenidos publicados y
-actividades asignadas, y puede resolverlas. La autorización solo se ofrece a la UTP en `EN_REVISION`
+actividades asignadas, y puede resolverlas. La UTP ve únicamente las unidades `EN_REVISION` y
+los borradores quedan reservados al docente, que los ve en su listado de Unidades junto con las
+autorizadas y publicadas. La autorización solo se ofrece a la UTP en `EN_REVISION`
 o `AUTORIZADO`. En Actividades ve el estado de cada una y accede a su resultado; en Informes consulta
 sus informes pedagógicos y el detalle por objetivo de aprendizaje en modo lectura. Todas las
 pantallas reales exponen el botón de tema claro/oscuro (`ThemeToggleButton`), cuya elección persiste

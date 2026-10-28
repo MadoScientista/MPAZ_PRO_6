@@ -8,9 +8,10 @@ package com.ccstudio.mpaz_pro_6.data.enums
  * aprendizaje, el contenido y el recurso de contenido, por eso la app lo modeliza
  * como un único `ContentStatus`.
  *
- * El estado gobierna la visibilidad y la edición: `BORRADOR` solo lo edita la UTP,
- * `EN_REVISION` espera la revisión de la UTP, `AUTORIZADO` lo ven los docentes y
- * `PUBLICADO` lo ven los estudiantes y es de solo lectura.
+ * El estado gobierna la visibilidad y la edición: `BORRADOR` es material de
+ * trabajo del docente y solo ese rol lo ve, `EN_REVISION` espera la revisión de
+ * la UTP, `AUTORIZADO` lo ven los docentes y `PUBLICADO` lo ven los estudiantes
+ * y es de solo lectura.
  */
 enum class ContentStatus(val wireValue: String, val label: String) {
     DRAFT("BORRADOR", "Borrador"),
@@ -19,10 +20,11 @@ enum class ContentStatus(val wireValue: String, val label: String) {
     PUBLISHED("PUBLICADO", "Publicado");
 
     /**
-     * Indica si el material está pendiente de revisión de la UTP.
+     * Indica si el material todavía admite cambios entre los estados iniciales.
      *
-     * El backend no expone un listado de unidades pendientes de revisión, así que
-     * la UTP las cuenta sobre el listado completo.
+     * Se usa para ofrecer el selector de estado en edición: `BORRADOR` y
+     * `EN_REVISION` todavía no están autorizados. La cola de revisión de la UTP
+     * solo considera las unidades `EN_REVISION`.
      */
     fun esPendienteDeRevision(): Boolean = this == DRAFT || this == IN_REVIEW
 

@@ -30,11 +30,12 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
  * Panel de inicio de la jefa de UTP.
  *
  * Muestra el resumen de la gestión (unidades pendientes, cursos y asignaturas) y
- * dos carruseles: las unidades `BORRADOR` o `EN_REVISION` y las asignaturas. Cada
- * carrusel tiene un enlace «Ver todo» a su listado correspondiente.
+ * dos carruseles: las unidades `EN_REVISION` y las asignaturas. Cada carrusel
+ * tiene un enlace «Ver todo» a su listado correspondiente.
  *
- * Las unidades pendientes se obtienen filtrando por `BORRADOR` o `EN_REVISION`
- * sobre `GET /api/unidades`, porque el backend no expone un listado dedicado.
+ * Las unidades pendientes se obtienen filtrando por `EN_REVISION` sobre
+ * `GET /api/unidades`, porque el backend no expone un listado dedicado. Los
+ * `BORRADOR` son material de trabajo del docente y no se muestran a la UTP.
  */
 @Composable
 fun HomeUTPScreen(

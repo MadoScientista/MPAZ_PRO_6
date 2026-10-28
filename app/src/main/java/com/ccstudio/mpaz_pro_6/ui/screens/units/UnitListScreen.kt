@@ -42,8 +42,8 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  *
  * El mismo listado sirve a los tres roles; cambia el contenido según el `UserRole`:
  * el UTP ve solo las unidades `EN_REVISION` pendientes de su revisión (un
- * `BORRADOR` pertenece al docente), el docente las unidades autorizadas y
- * publicadas, y el estudiante solo las `PUBLICADO`.
+ * `BORRADOR` pertenece al docente), el docente las unidades en borrador,
+ * autorizadas y publicadas, y el estudiante solo las `PUBLICADO`.
  */
 @Composable
 fun UnitListScreen(

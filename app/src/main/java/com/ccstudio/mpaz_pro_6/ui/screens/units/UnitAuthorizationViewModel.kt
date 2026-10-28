@@ -19,9 +19,12 @@ import java.time.Instant
 /**
  * Estado de la pantalla de autorización y publicación de una unidad.
  *
- * Permite pasar una unidad de `BORRADOR` a `AUTORIZADO` y de `AUTORIZADO` a
- * `PUBLISHED`. El backend exige un autorizante con rol `UTP` y una fecha de
- * autorización: una autorización incompleta devuelve `400 Bad Request`.
+ * Permite pasar una unidad de `EN_REVISION` a `AUTORIZADO` y de `AUTORIZADO`
+ * a `PUBLISHED`. Un `BORRADOR` pertenece al docente y no se autoriza desde esta
+ * pantalla: solo se autorizan unidades que ya fueron enviadas a revisión.
+ *
+ * El backend exige un autorizante con rol `UTP` y una fecha de autorización: una
+ * autorización incompleta devuelve `400 Bad Request`.
  */
 class UnitAuthorizationViewModel(
     private val unitRepository: UnitRepository,
@@ -65,20 +68,27 @@ class UnitAuthorizationViewModel(
     /**
      * Autoriza o publica la unidad.
      *
+     * Un `BORRADOR` no se autoriza: primero el docente debe enviarlo a revisión.
+     *
      * @param autorizanteId usuario con rol `UTP` que autoriza.
      */
     fun autorizar(autorizanteId: Int, onSuccess: () -> Unit = {}) {
         val unit = unidad ?: return
 
         val nuevoEstado = when (unit.estado) {
-            ContentStatus.DRAFT -> ContentStatus.AUTHORIZED
             ContentStatus.IN_REVIEW -> ContentStatus.AUTHORIZED
             ContentStatus.AUTHORIZED -> ContentStatus.PUBLISHED
-            ContentStatus.PUBLISHED -> null
+            ContentStatus.DRAFT, ContentStatus.PUBLISHED -> null
         }
 
         if (nuevoEstado == null) {
-            error = ApiError.BadRequest("La unidad ya está publicada.")
+            error = if (unit.estado == ContentStatus.DRAFT) {
+                ApiError.BadRequest(
+                    "La unidad está en borrador. Solo se autorizan unidades en revisión."
+                )
+            } else {
+                ApiError.BadRequest("La unidad ya está publicada.")
+            }
             return
         }
 

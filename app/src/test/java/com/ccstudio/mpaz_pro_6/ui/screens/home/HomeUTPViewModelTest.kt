@@ -20,7 +20,8 @@ import org.junit.Test
  * Pruebas del panel de inicio de la UTP.
  *
  * El panel entrega a la pantalla las listas que alimentan los carruseles: solo
- * las unidades pendientes de revisión y todas las asignaturas.
+ * las unidades en revisión (los borradores pertenecen al docente) y todas las
+ * asignaturas.
  */
 class HomeUTPViewModelTest {
 
@@ -40,17 +41,13 @@ class HomeUTPViewModelTest {
     }
 
     @Test
-    fun `expone solo las unidades pendientes de revision`() = runBlocking {
+    fun `expone solo las unidades en revision`() = runBlocking {
         viewModel.cargar().join()
 
         val pendientes = viewModel.unidadesPendientes
 
-        assertEquals(3, pendientes.size)
-        assertTrue(
-            pendientes.all {
-                it.estado == ContentStatus.DRAFT || it.estado == ContentStatus.IN_REVIEW
-            }
-        )
+        assertEquals(1, pendientes.size)
+        assertTrue(pendientes.all { it.estado == ContentStatus.IN_REVIEW })
     }
 
     @Test

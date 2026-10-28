@@ -44,7 +44,7 @@ Ubicación: `ui/components/subject/`.
 
 | Componente | Recibe | Muestra | Qué hace |
 |---|---|---|---|
-| `SubjectCard` | `subject: Subject`, `unitCount: Int`, `pendingCount: Int`, `onViewDetail`, `onEdit`, `onDelete`, `modifier`, `showActions` | Badge con el color de la materia, nombre, «N unidades», chip de pendientes y acciones de editar/eliminar | Toda la tarjeta abre el detalle de la asignatura. El chip es `warning` si hay pendientes y `success` si no. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla. Con `showActions = false` oculta los iconos de edición y borrado |
+| `SubjectCard` | `subject: Subject`, `unitCount: Int`, `pendingCount: Int`, `onViewDetail`, `onEdit`, `onDelete`, `modifier`, `showActions` | Badge con el color de la materia, nombre, «N unidades», chip de unidades en revisión y acciones de editar/eliminar | Toda la tarjeta abre el detalle de la asignatura. El chip es `warning` si hay unidades `EN_REVISION` y `success` si no. El borrado siempre se ofrece: un `409 Conflict` se explica en la pantalla. Con `showActions = false` oculta los iconos de edición y borrado |
 | `SubjectCarouselCard` | `subject: Subject`, `unitCount: Int`, `onClick`, `modifier` | Tarjeta compacta con badge circular del color de la materia, nombre, «N unidades» y chevron | Abre el listado de asignaturas al tocarla; se usa en el carrusel del panel de UTP. Con 0 unidades muestra «Sin unidades» |
 | `SubjectForm` | `nombre`, `onNombreChange`, `onSubmit`, `onCancel`, `modifier`, `isEditMode`, `isReadOnly`, `isSaving`, `error` | Campo de nombre con contador y botones «Crear/Guardar» y «Cancelar» | Exige nombre no vacío de hasta 100 caracteres. La pantalla arma el `CreateSubjectRequest` o el `UpdateSubjectRequest` |
 

@@ -51,7 +51,8 @@ Cursos y Usuarios**. Se oculta en detalles, formularios y autorización.
 Muestra:
 
 - Saludo con el nombre de la UTP.
-- Contador de **unidades pendientes**: `BORRADOR` o `EN_REVISION`.
+- Contador de **unidades pendientes**: solo `EN_REVISION`. Los `BORRADOR` son
+  material de trabajo del docente y no se muestran a la UTP.
 - Total de cursos.
 - Total de asignaturas.
 - Botón **Revisar unidades pendientes** → `units`.
@@ -62,8 +63,9 @@ Datos: `GET /api/unidades`, `GET /api/cursos`, `GET /api/asignaturas`.
 
 ## 4. Listado de unidades (`UnitListScreen`)
 
-La UTP ve las unidades en `BORRADOR` y `EN_REVISION`. La búsqueda por título o
-asignatura y el filtro por asignatura son **client-side**.
+La UTP ve únicamente las unidades en `EN_REVISION`. Los `BORRADOR` pertenecen al
+docente y no aparecen en la cola de revisión. La búsqueda por título o asignatura
+y el filtro por asignatura son **client-side**.
 
 Cada `UnitCard` muestra:
 
@@ -74,9 +76,9 @@ Cada `UnitCard` muestra:
 - Si la unidad tiene una `PRUEBA_FINAL`.
 - Acciones **Ver detalle** y **Autorizar**.
 
-La acción **Autorizar** solo se ofrece para unidades `EN_REVISION` o
-`AUTORIZADO`. Las unidades en `BORRADOR` se muestran para seguimiento, pero no
-ofrecen cambio de estado desde este flujo.
+La acción **Autorizar** se ofrece para unidades `EN_REVISION`. La pantalla de
+autorización también permite publicar una unidad `AUTORIZADO`, pero esa acción no
+se ofrece desde el listado.
 
 Los conteos se resuelven en cliente:
 
@@ -160,6 +162,9 @@ Datos: `GET /api/contenidos/{id}`, `GET /api/objetivos-aprendizaje/{id}`,
 
 - `EN_REVISION` → `AUTORIZADO`.
 - `AUTORIZADO` → `PUBLICADO`.
+- Un `BORRADOR` no se autoriza desde esta pantalla: pertenece al docente y debe
+  pasar primero a `EN_REVISION`. El botón aparece deshabilitado y la pantalla
+  explica el motivo.
 - El backend exige un autorizante con rol `UTP` y una `fechaAutorizacion`.
 - Si faltan datos, responde `400 Bad Request` y la pantalla muestra el motivo.
 - Una unidad ya publicada no admite más cambios de estado.
@@ -208,6 +213,7 @@ Los tres listados están implementados con:
 | Búsqueda libre client-side | `SearchField` y `FilterChipRow` filtran en memoria |
 | `409 Conflict` | Se muestra el motivo en la pantalla |
 | Solo UTP autoriza/publica | La acción y la pantalla de autorización se limitan a ese rol |
+| Borradores solo del docente | La UTP no ve unidades `BORRADOR` en su inicio, listado ni autorización |
 | Barra inferior | Solo en los cinco destinos raíz |
 | Tema | `ThemeToggleButton` en todas las pantallas reales |
 

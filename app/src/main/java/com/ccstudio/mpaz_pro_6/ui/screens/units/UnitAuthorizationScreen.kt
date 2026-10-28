@@ -25,10 +25,13 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 /**
  * Pantalla de autorización y publicación de una unidad.
  *
- * Permite pasar una unidad de `BORRADOR` o `EN_REVISION` a `AUTORIZADO`, y de
- * `AUTORIZADO` a `PUBLICADO`. El backend exige un autorizante con rol `UTP` y una
- * fecha de autorización: una autorización incompleta devuelve `400 Bad Request`, y
- * ese error se muestra en pantalla tal cual lo reporta el backend.
+ * Permite pasar una unidad de `EN_REVISION` a `AUTORIZADO`, y de
+ * `AUTORIZADO` a `PUBLICADO`. Un `BORRADOR` pertenece al docente y no se
+ * autoriza desde esta pantalla: solo se muestran unidades en revisión.
+ *
+ * El backend exige un autorizante con rol `UTP` y una fecha de autorización: una
+ * autorización incompleta devuelve `400 Bad Request`, y ese error se muestra en
+ * pantalla tal cual lo reporta el backend.
  */
 @Composable
 fun UnitAuthorizationScreen(
@@ -86,14 +89,14 @@ fun UnitAuthorizationScreen(
                         )
                     }
 
-                    val accionHabilitada = unidad.estado == ContentStatus.DRAFT ||
-                            unidad.estado == ContentStatus.IN_REVIEW ||
+                    val accionHabilitada = unidad.estado == ContentStatus.IN_REVIEW ||
                             unidad.estado == ContentStatus.AUTHORIZED
 
                     AppButton(
                         text = when (unidad.estado) {
-                            ContentStatus.DRAFT, ContentStatus.IN_REVIEW -> "Autorizar unidad"
+                            ContentStatus.IN_REVIEW -> "Autorizar unidad"
                             ContentStatus.AUTHORIZED -> "Publicar unidad"
+                            ContentStatus.DRAFT -> "Unidad en borrador"
                             ContentStatus.PUBLISHED -> "Unidad publicada"
                         },
                         onClick = onAutorizar,
@@ -113,7 +116,7 @@ fun UnitAuthorizationScreen(
  */
 private fun descripcionAccion(estado: ContentStatus): String = when (estado) {
     ContentStatus.DRAFT ->
-        "La unidad está en borrador. Al autorizarla podrá ser usada por el docente."
+        "La unidad está en borrador y pertenece al docente. Se podrá autorizar cuando la envíe a revisión."
 
     ContentStatus.IN_REVIEW ->
         "La unidad fue enviada a revisión. Al autorizarla podrá ser usada por el docente."
