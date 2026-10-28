@@ -26,8 +26,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  * Detalle de una asignatura.
  *
  * Muestra el nombre, la cantidad de unidades y el listado de sus unidades. Cada
- * unidad abre su detalle y, si está pendiente o autorizada, permite entrar a la
- * autorización. La barra superior la monta el `Scaffold` de `AppNavGraph`.
+ * unidad abre su detalle. La acción de autorización (`onAuthorize`) es opcional y
+ * solo se ofrece cuando el usuario tiene rol UTP para unidades en revisión o autorizadas.
+ * La barra superior la monta el `Scaffold` de `AppNavGraph`.
  */
 @Composable
 fun SubjectDetailScreen(
@@ -36,9 +37,9 @@ fun SubjectDetailScreen(
     isLoading: Boolean,
     error: ApiError?,
     onViewUnit: (LearningUnit) -> Unit,
-    onAuthorize: (LearningUnit) -> Unit,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAuthorize: ((LearningUnit) -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         when {
@@ -97,13 +98,14 @@ fun SubjectDetailScreen(
                             unit = unit,
                             subjectName = subject.nombre,
                             onViewDetail = { onViewUnit(unit) },
-                            onAuthorize = if (
-                                unit.estado == ContentStatus.IN_REVIEW ||
-                                unit.estado == ContentStatus.AUTHORIZED
-                            ) {
-                                { onAuthorize(unit) }
-                            } else {
-                                null
+                            onAuthorize = onAuthorize?.let { authorize ->
+                                if (unit.estado == ContentStatus.IN_REVIEW ||
+                                    unit.estado == ContentStatus.AUTHORIZED
+                                ) {
+                                    { authorize(unit) }
+                                } else {
+                                    null
+                                }
                             }
                         )
                     }

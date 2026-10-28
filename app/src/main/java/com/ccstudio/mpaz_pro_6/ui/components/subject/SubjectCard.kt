@@ -51,7 +51,8 @@ fun SubjectCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
-    showActions: Boolean = true
+    showActions: Boolean = true,
+    showPendingChip: Boolean = true
 ) {
     val accent = subjectAccent(subject.nombre) ?: MaterialTheme.colorScheme.primary
     val appColors = LocalAppColors.current
@@ -123,11 +124,13 @@ fun SubjectCard(
                 }
             }
 
-            StatusChip(
-                label = pendingLabel(pendingCount),
-                containerColor = pendingColors.container,
-                contentColor = pendingColors.content
-            )
+            if (showPendingChip) {
+                StatusChip(
+                    label = pendingLabel(pendingCount),
+                    containerColor = pendingColors.container,
+                    contentColor = pendingColors.content
+                )
+            }
         }
     }
 }

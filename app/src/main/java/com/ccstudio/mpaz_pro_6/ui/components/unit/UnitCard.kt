@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
 
@@ -128,7 +129,7 @@ fun UnitCard(
                         onClick = onAuthorize,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Autorizar")
+                        Text(if (unit.estado == ContentStatus.AUTHORIZED) "Publicar" else "Autorizar")
                     }
                 }
             }

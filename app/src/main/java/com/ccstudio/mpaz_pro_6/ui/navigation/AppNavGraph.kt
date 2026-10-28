@@ -487,6 +487,11 @@ private fun AppNavHost(
                                         AppRoutes.courseDetail(course.id)
                                     )
                                 },
+                                onViewSubject = { subject ->
+                                    navController.navigate(
+                                        AppRoutes.subjectDetail(subject.id)
+                                    )
+                                },
                                 onViewReport = { report ->
                                     navController.navigate(
                                         AppRoutes.reportDetail(report.id)
@@ -494,6 +499,7 @@ private fun AppNavHost(
                                 },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
                                 onVerCursos = { navController.navigate(AppRoutes.COURSES) },
+                                onVerAsignaturas = { navController.navigate(AppRoutes.SUBJECTS) },
                                 onVerInformes = { navController.navigate(AppRoutes.REPORTS) },
                                 onCargar = viewModel::cargar,
                             )
@@ -680,8 +686,10 @@ private fun AppNavHost(
                         onViewUnit = { unit ->
                             navController.navigate(AppRoutes.unitDetail(unit.id))
                         },
-                        onAuthorize = { unit ->
-                            navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                        onAuthorize = if (rol == UserRole.UTP) {
+                            { unit -> navController.navigate(AppRoutes.unitAuthorization(unit.id)) }
+                        } else {
+                            null
                         },
                         onRetry = viewModel::cargar
                     )
@@ -818,6 +826,9 @@ private fun AppNavHost(
                         factory = CourseDetailViewModel.factory(
                             courseRepository = container.courseRepository,
                             userRepository = container.userRepository,
+                            assignmentRepository = container.assignmentRepository,
+                            unitRepository = container.unitRepository,
+                            subjectRepository = container.subjectRepository,
                             courseId = courseId
                         )
                     )
@@ -828,10 +839,15 @@ private fun AppNavHost(
 
                     CourseDetailScreen(
                         course = viewModel.course,
+                        asignaturas = viewModel.asignaturas,
+                        unidadesPorAsignatura = viewModel.unidadesPorAsignatura,
                         estudiantes = viewModel.estudiantes,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
-                        onRetry = viewModel::cargar
+                        onRetry = viewModel::cargar,
+                        onViewSubject = { subject ->
+                            navController.navigate(AppRoutes.subjectDetail(subject.id))
+                        }
                     )
                 }
 
@@ -1587,7 +1603,7 @@ private fun UnitListDestination(
         isLoading = viewModel.isLoading,
         error = viewModel.error,
         onViewDetail = { unit -> onViewDetail(unit) },
-        // Solo la UTP autoriza; docente y estudiante no ven ese botón.
+        // Solo la UTP puede autorizar y publicar unidades.
         onAuthorize = if (rol == UserRole.UTP) {
             { unit -> onAuthorize(unit) }
         } else {
