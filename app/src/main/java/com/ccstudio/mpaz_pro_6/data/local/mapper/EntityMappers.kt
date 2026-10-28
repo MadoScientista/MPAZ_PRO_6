@@ -1,5 +1,6 @@
 package com.ccstudio.mpaz_pro_6.data.local.mapper
 
+import com.ccstudio.mpaz_pro_6.data.local.dao.DocenciaWithNames
 import com.ccstudio.mpaz_pro_6.data.local.entity.ActivityEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AlternativeEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentActivityEntity
@@ -9,6 +10,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.AttemptEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.ContentEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.ContentResourceEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.CourseEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.DocenciaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningObjectiveEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningUnitEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.PedagogicalReportEntity
@@ -26,6 +28,7 @@ import com.ccstudio.mpaz_pro_6.data.model.Attempt
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.Docencia
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
@@ -161,6 +164,7 @@ fun ContentResource.toEntity() = ContentResourceEntity(
 fun ActivityEntity.toDomain() = Activity(
     id = id,
     unidadId = unidadId,
+    contenidoId = contenidoId,
     titulo = titulo,
     tipo = tipo,
     orden = orden
@@ -170,6 +174,7 @@ fun ActivityEntity.toDomain() = Activity(
 fun Activity.toEntity() = ActivityEntity(
     id = id,
     unidadId = unidadId,
+    contenidoId = contenidoId,
     titulo = titulo,
     tipo = tipo,
     orden = orden
@@ -220,7 +225,6 @@ fun AssignmentEntity.toDomain() = Assignment(
     id = id,
     cursoId = cursoId,
     unidadId = unidadId,
-    docenteId = docenteId,
     maxIntentos = maxIntentos,
     pruebaFinalHabilitada = pruebaFinalHabilitada,
     fecha = fecha
@@ -231,10 +235,28 @@ fun Assignment.toEntity() = AssignmentEntity(
     id = id,
     cursoId = cursoId,
     unidadId = unidadId,
-    docenteId = docenteId,
     maxIntentos = maxIntentos,
     pruebaFinalHabilitada = pruebaFinalHabilitada,
     fecha = fecha
+)
+
+/** Convierte una docencia cacheada con nombres en modelo de dominio. */
+fun DocenciaWithNames.toDomain() = Docencia(
+    id = id,
+    docenteId = docenteId,
+    docenteNombre = docenteNombre,
+    cursoId = cursoId,
+    cursoNombre = cursoNombre,
+    asignaturaId = asignaturaId,
+    asignaturaNombre = asignaturaNombre
+)
+
+/** Convierte una docencia de dominio en entidad Room. */
+fun Docencia.toEntity() = DocenciaEntity(
+    id = id,
+    docenteId = docenteId,
+    cursoId = cursoId,
+    asignaturaId = asignaturaId
 )
 
 /** Convierte una asociación asignación-objetivo en modelo de dominio. */
@@ -297,7 +319,11 @@ fun PedagogicalReportEntity.toDomain() = PedagogicalReport(
     docenteId = docenteId,
     fechaGeneracion = fechaGeneracion,
     fechaValidacion = fechaValidacion,
-    estado = estado
+    estado = estado,
+    estudianteNombre = estudianteNombre,
+    unidadTitulo = unidadTitulo,
+    asignaturaNombre = asignaturaNombre,
+    docenteNombre = docenteNombre
 )
 
 /** Convierte un informe de dominio en entidad Room. */
@@ -308,7 +334,11 @@ fun PedagogicalReport.toEntity() = PedagogicalReportEntity(
     docenteId = docenteId,
     fechaGeneracion = fechaGeneracion,
     fechaValidacion = fechaValidacion,
-    estado = estado
+    estado = estado,
+    estudianteNombre = estudianteNombre,
+    unidadTitulo = unidadTitulo,
+    asignaturaNombre = asignaturaNombre,
+    docenteNombre = docenteNombre
 )
 
 /** Convierte una entidad de detalle en modelo de dominio. */

@@ -45,7 +45,11 @@ data class PedagogicalReportEntity(
     @ColumnInfo(name = "docente_id") val docenteId: Int,
     @ColumnInfo(name = "fecha_generacion") val fechaGeneracion: Instant,
     val estado: ReportStatus,
-    @ColumnInfo(name = "fecha_validacion") val fechaValidacion: Instant?
+    @ColumnInfo(name = "fecha_validacion") val fechaValidacion: Instant?,
+    @ColumnInfo(name = "estudiante_nombre") val estudianteNombre: String? = null,
+    @ColumnInfo(name = "unidad_titulo") val unidadTitulo: String? = null,
+    @ColumnInfo(name = "asignatura_nombre") val asignaturaNombre: String? = null,
+    @ColumnInfo(name = "docente_nombre") val docenteNombre: String? = null
 )
 
 /** Detalle por OA de un informe (`detalle_informe_oa`). */

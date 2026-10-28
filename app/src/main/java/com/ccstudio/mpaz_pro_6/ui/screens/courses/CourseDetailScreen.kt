@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.User
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
@@ -41,8 +42,11 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
  * Detalle de un curso.
  *
  * Muestra el nombre, el año, la cantidad de estudiantes y un grid de dos
- * columnas con una tarjeta por estudiante. La barra superior la monta el
- * `Scaffold` de `AppNavGraph`.
+ * columnas con una tarjeta por estudiante. El listado usa el endpoint acotado
+ * del curso, así que la UTP y el docente solo ven los estudiantes a los que
+ * tienen acceso. La UTP puede abrir la gestión de docencias del curso mediante
+ * [onManageDocencias]. La barra superior la monta el `Scaffold` de
+ * `AppNavGraph`.
  */
 @Composable
 fun CourseDetailScreen(
@@ -51,7 +55,8 @@ fun CourseDetailScreen(
     isLoading: Boolean,
     error: ApiError?,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onManageDocencias: (() -> Unit)? = null
 ) {
     when {
         isLoading && course == null -> LoadingState(
@@ -89,6 +94,15 @@ fun CourseDetailScreen(
                         text = "${course.anio} · ${studentCountLabel(estudiantes.size)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (onManageDocencias != null) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    AppButton(
+                        text = "Gestionar docencias",
+                        onClick = onManageDocencias
                     )
                 }
             }

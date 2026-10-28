@@ -35,8 +35,8 @@ import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 fun QuestionCard(
     question: Question,
     alternativesCount: Int,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     activityTitle: String? = null
 ) {
@@ -105,27 +105,33 @@ fun QuestionCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Acciones.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onEdit,
-                    modifier = Modifier.weight(1f)
+            // Acciones, solo si la pantalla las habilita.
+            if (onEdit != null || onDelete != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Editar")
-                }
+                    if (onEdit != null) {
+                        OutlinedButton(
+                            onClick = onEdit,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Editar")
+                        }
+                    }
 
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text("Eliminar")
+                    if (onDelete != null) {
+                        Button(
+                            onClick = onDelete,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) {
+                            Text("Eliminar")
+                        }
+                    }
                 }
             }
         }

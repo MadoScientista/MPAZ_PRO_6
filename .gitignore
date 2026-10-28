@@ -31,3 +31,6 @@ local.properties
 /build/
 
 .vscode
+
+# Configuración local de firma release
+keystore.properties

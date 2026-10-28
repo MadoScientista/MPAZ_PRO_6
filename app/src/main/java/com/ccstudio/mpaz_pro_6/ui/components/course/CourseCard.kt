@@ -32,19 +32,20 @@ import com.ccstudio.mpaz_pro_6.data.model.Course
 /**
  * Tarjeta de un curso en el listado.
  *
- * Muestra el badge, el nombre, el año, la cantidad de estudiantes y un botón
- * «Ver detalle». La edición y el borrado quedan como iconos, igual que en
- * `SubjectCard`. El borrado siempre se ofrece; si el curso tiene estudiantes o
- * asignaciones, el backend responde `409 Conflict` y la pantalla lo explica.
+ * Muestra el badge, el nombre, el año y, cuando se conoce, la cantidad de
+ * estudiantes, más un botón «Ver detalle». La edición y el borrado quedan como
+ * iconos, igual que en `SubjectCard`. El borrado siempre se ofrece; si el curso
+ * tiene estudiantes o asignaciones, el backend responde `409 Conflict` y la
+ * pantalla lo explica.
  */
 @Composable
 fun CourseCard(
     course: Course,
-    studentCount: Int,
     onViewDetail: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    studentCount: Int? = null,
     showActions: Boolean = true
 ) {
     Card(
@@ -88,7 +89,9 @@ fun CourseCard(
                     )
 
                     Text(
-                        text = "${course.anio} · ${studentCountLabel(studentCount)}",
+                        text = studentCount?.let {
+                            "${course.anio} · ${studentCountLabel(it)}"
+                        } ?: course.anio.toString(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

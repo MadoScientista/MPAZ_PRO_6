@@ -26,10 +26,10 @@ import kotlinx.coroutines.launch
 /**
  * Estado del listado de unidades.
  *
- * Cambia su contenido según el `UserRole`: la UTP ve las unidades `BORRADOR` y
- * `EN_REVISION` pendientes de revisión, el docente las `AUTORIZADO` y
- * `PUBLICADO`, y el estudiante solo las `PUBLICADO` que además estén asignadas a
- * su curso.
+ * Cambia su contenido según el `UserRole`: la UTP ve solo las unidades
+ * `EN_REVISION` que esperan su revisión, el docente las `BORRADOR`, `AUTORIZADO`
+ * y `PUBLICADO`, y el estudiante solo las `PUBLICADO` que además estén asignadas
+ * a su curso.
  *
  * También resuelve el resumen de cada unidad: cantidad de contenidos, cantidad de
  * actividades y si tiene prueba final. Para el estudiante se cuentan solo los
@@ -223,8 +223,9 @@ class UnitListViewModel(
      * Indica si la unidad debe mostrarse al usuario con el rol de la pantalla.
      */
     private fun esVisiblePara(unit: LearningUnit): Boolean = when (rol) {
-        UserRole.UTP -> unit.estado.esPendienteDeRevision()
-        UserRole.DOCENTE -> unit.estado == ContentStatus.AUTHORIZED ||
+        UserRole.UTP -> unit.estado == ContentStatus.IN_REVIEW
+        UserRole.DOCENTE -> unit.estado == ContentStatus.DRAFT ||
+                unit.estado == ContentStatus.AUTHORIZED ||
                 unit.estado == ContentStatus.PUBLISHED
         UserRole.ESTUDIANTE -> unit.estado == ContentStatus.PUBLISHED
     }

@@ -4,6 +4,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.Docencia
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.User
@@ -13,8 +14,9 @@ import java.time.Instant
  * Datos en memoria que alimentan la app mientras no exista el backend.
  *
  * La semilla es coherente entre sí: las unidades apuntan a asignaturas
- * existentes, la asignación apunta a un curso, una unidad y un docente reales, y
- * las unidades autorizadas y publicadas lo están por el usuario con rol `UTP`.
+ * existentes, la asignación apunta a un curso y una unidad reales, la docencia
+ * relaciona al docente con el curso y la asignatura, y las unidades autorizadas
+ * y publicadas lo están por el usuario con rol `UTP`.
  *
  * Usuarios de prueba (la contraseña vive en `MockStore.passwords`, nunca en el
  * modelo `User`):
@@ -102,10 +104,21 @@ object MockData {
                 id = 1,
                 cursoId = 1,
                 unidadId = 1,
-                docenteId = 2,
                 maxIntentos = 2,
                 pruebaFinalHabilitada = true,
                 fecha = Instant.parse("2026-04-06T08:00:00Z")
+            )
+        )
+
+        val docencias = mutableListOf(
+            Docencia(
+                id = 1,
+                docenteId = 2,
+                docenteNombre = "Marco Díaz",
+                cursoId = 1,
+                cursoNombre = "6A",
+                asignaturaId = 1,
+                asignaturaNombre = "Matemática"
             )
         )
 
@@ -152,6 +165,7 @@ object MockData {
             courses = courses,
             units = units,
             assignments = assignments,
+            docencias = docencias,
             users = users,
             passwords = passwords
         )

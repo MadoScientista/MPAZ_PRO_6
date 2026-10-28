@@ -32,8 +32,8 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
  * sección de resumen se omite.
  *
  * Las acciones dependen del `ContentStatus`: el botón de autorizar solo debe
- * aparecer cuando la unidad está pendiente de revisión y el usuario tiene rol
- * `UTP`.
+ * aparecer cuando la unidad está `EN_REVISION` o `AUTORIZADO` y el usuario tiene
+ * rol `UTP`. Un `BORRADOR` pertenece al docente y nunca ofrece esa acción.
  */
 @Composable
 fun UnitCard(

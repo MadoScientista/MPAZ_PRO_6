@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -13,6 +15,25 @@ val mpazLocalOnly = providers.gradleProperty("MPAZ_LOCAL_ONLY")
     .orElse(providers.environmentVariable("MPAZ_LOCAL_ONLY"))
     .map(String::toBoolean)
     .getOrElse(false)
+
+// La firma release no se versiona. El APK de release solo se genera cuando
+// existe `keystore.properties` en la raíz del repositorio.
+val releaseKeystoreFile = rootProject.file("keystore.properties")
+val hasReleaseSigning = releaseKeystoreFile.exists()
+val releaseKeystore = Properties().apply {
+    if (hasReleaseSigning) {
+        releaseKeystoreFile.inputStream().use(::load)
+    }
+}
+val releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.contains("Release", ignoreCase = true)
+}
+if (!hasReleaseSigning && releaseTaskRequested) {
+    throw GradleException(
+        "Falta keystore.properties para firmar el APK release. " +
+            "Consulta README.md; el build debug sigue funcionando."
+    )
+}
 
 android {
     namespace = "com.ccstudio.mpaz_pro_6"
@@ -33,9 +54,20 @@ android {
         buildConfigField("boolean", "MPAZ_LOCAL_ONLY", "$mpazLocalOnly")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeystore.getProperty("storeFile"))
+                storePassword = releaseKeystore.getProperty("storePassword")
+                keyAlias = releaseKeystore.getProperty("keyAlias")
+                keyPassword = releaseKeystore.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
             optimization {
                 enable = false
             }

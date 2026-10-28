@@ -20,9 +20,6 @@ interface AssignmentDao {
     @Query("SELECT * FROM asignacion WHERE unidad_id = :unitId ORDER BY id")
     suspend fun getAssignmentsByUnit(unitId: Int): List<AssignmentEntity>
 
-    @Query("SELECT * FROM asignacion WHERE docente_id = :teacherId ORDER BY id")
-    suspend fun getAssignmentsByTeacher(teacherId: Int): List<AssignmentEntity>
-
     @Query("SELECT * FROM asignacion WHERE id = :id")
     suspend fun getAssignmentById(id: Int): AssignmentEntity?
 

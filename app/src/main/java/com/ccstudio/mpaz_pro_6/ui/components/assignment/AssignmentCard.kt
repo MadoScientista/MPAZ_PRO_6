@@ -28,10 +28,11 @@ import java.time.format.DateTimeFormatter
 /**
  * Tarjeta de una asignación.
  *
- * Muestra la unidad, el curso, el docente, la fecha y las reglas de evaluación
- * (`maxIntentos` y `pruebaFinalHabilitada`). La asignación solo trae identificadores,
- * así que los nombres los resuelve la pantalla que lista y los entrega como
- * `courseName`, `unitTitle` y `teacherName`.
+ * Muestra la unidad, el curso, la fecha y las reglas de evaluación
+ * (`maxIntentos` y `pruebaFinalHabilitada`). La asignación solo trae
+ * identificadores, así que los nombres los resuelve la pantalla que lista y los
+ * entrega como `courseName` y `unitTitle`. El docente se deriva de la docencia y
+ * no forma parte de la tarjeta.
  *
  * El borrado siempre se ofrece; si la asignación tiene objetivos, actividades o
  * intentos asociados, el backend responde `409 Conflict` y la pantalla lo explica.
@@ -45,7 +46,6 @@ fun AssignmentCard(
     assignment: Assignment,
     courseName: String,
     unitTitle: String,
-    teacherName: String,
     onViewDetail: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -63,7 +63,6 @@ fun AssignmentCard(
                 assignment = assignment,
                 courseName = courseName,
                 unitTitle = unitTitle,
-                teacherName = teacherName,
                 onViewDetail = onViewDetail,
                 onEdit = onEdit,
                 onDelete = onDelete,
@@ -79,7 +78,6 @@ fun AssignmentCard(
                 assignment = assignment,
                 courseName = courseName,
                 unitTitle = unitTitle,
-                teacherName = teacherName,
                 onViewDetail = onViewDetail,
                 onEdit = onEdit,
                 onDelete = onDelete,
@@ -95,7 +93,6 @@ private fun AssignmentCardContent(
     assignment: Assignment,
     courseName: String,
     unitTitle: String,
-    teacherName: String,
     onViewDetail: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -130,13 +127,7 @@ private fun AssignmentCardContent(
             overflow = TextOverflow.Ellipsis
         )
 
-        // Docente y fecha.
-        Text(
-            text = "Docente: $teacherName",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
+        // Fecha de la asignación.
         Text(
             text = "Fecha: ${formatInstant(assignment.fecha)}",
             style = MaterialTheme.typography.bodySmall,

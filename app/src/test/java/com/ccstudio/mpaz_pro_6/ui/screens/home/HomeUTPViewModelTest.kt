@@ -6,7 +6,6 @@ import com.ccstudio.mpaz_pro_6.data.mock.MockData
 import com.ccstudio.mpaz_pro_6.data.mock.MockStore
 import com.ccstudio.mpaz_pro_6.data.mock.MockSubjectRepository
 import com.ccstudio.mpaz_pro_6.data.mock.MockUnitRepository
-import com.ccstudio.mpaz_pro_6.data.mock.MockUserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -20,7 +19,8 @@ import org.junit.Test
  * Pruebas del panel de inicio de la UTP.
  *
  * El panel entrega a la pantalla las listas que alimentan los carruseles: solo
- * las unidades pendientes de revisión y todas las asignaturas.
+ * las unidades en revisión (los borradores pertenecen al docente) y todas las
+ * asignaturas.
  */
 class HomeUTPViewModelTest {
 
@@ -34,23 +34,18 @@ class HomeUTPViewModelTest {
             unitRepository = MockUnitRepository(store),
             courseRepository = MockCourseRepository(store),
             subjectRepository = MockSubjectRepository(store),
-            userRepository = MockUserRepository(store),
             dispatcher = Dispatchers.Unconfined
         )
     }
 
     @Test
-    fun `expone solo las unidades pendientes de revision`() = runBlocking {
+    fun `expone solo las unidades en revision`() = runBlocking {
         viewModel.cargar().join()
 
         val pendientes = viewModel.unidadesPendientes
 
-        assertEquals(3, pendientes.size)
-        assertTrue(
-            pendientes.all {
-                it.estado == ContentStatus.DRAFT || it.estado == ContentStatus.IN_REVIEW
-            }
-        )
+        assertEquals(1, pendientes.size)
+        assertTrue(pendientes.all { it.estado == ContentStatus.IN_REVIEW })
     }
 
     @Test

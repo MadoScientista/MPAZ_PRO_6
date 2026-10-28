@@ -4,6 +4,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentOrigin
 import com.ccstudio.mpaz_pro_6.data.enums.ContentResourceType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.local.dao.CurriculumDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnitDao
 import com.ccstudio.mpaz_pro_6.data.local.entity.ActivityEntity
@@ -154,6 +155,11 @@ class LocalContentRepository(
 
     override suspend fun delete(id: Int): Result<Unit> = localCall {
         dao.getContentById(id).orNotFound("Contenido").getOrThrow()
+        if (dao.countActivitiesByContent(id) > 0) {
+            throw ApiError.Conflict(
+                "No se puede eliminar un contenido con actividades asociadas."
+            )
+        }
         dao.deleteContentCascade(id)
     }
 }
@@ -223,8 +229,28 @@ class LocalActivityRepository(
     private val unitDao: UnitDao
 ) : ActivityRepository {
 
-    override suspend fun list(unitId: Int?): Result<List<Activity>> = localCall {
-        val entities = if (unitId == null) dao.getActivities() else dao.getActivitiesByUnit(unitId)
+    override suspend fun list(
+        unitId: Int?,
+        contentId: Int?,
+        onlyTransversal: Boolean
+    ): Result<List<Activity>> = localCall {
+        require(!(contentId != null && onlyTransversal)) {
+            "No se puede filtrar por contenido y por transversales a la vez."
+        }
+        require((contentId == null && !onlyTransversal) || unitId != null) {
+            "La unidad es obligatoria para filtrar por contenido o transversal."
+        }
+
+        val entities = when {
+            contentId != null && unitId != null ->
+                dao.getActivitiesByUnitAndContent(unitId, contentId)
+
+            onlyTransversal && unitId != null ->
+                dao.getTransversalActivitiesByUnit(unitId)
+
+            unitId == null -> dao.getActivities()
+            else -> dao.getActivitiesByUnit(unitId)
+        }
         entities.map { it.toDomain() }
     }
 
@@ -240,10 +266,12 @@ class LocalActivityRepository(
                 .any { it.tipo == ActivityType.FINAL_TEST }
             require(!hasFinalTest) { "La unidad ya tiene una prueba final." }
         }
+        validarContenidoDeUnidad(request.contenidoId, request.unidadId)
         val entities = dao.getActivities()
         val entity = ActivityEntity(
             id = entities.nextId { it.id },
             unidadId = request.unidadId,
+            contenidoId = request.contenidoId,
             titulo = request.titulo.trim(),
             tipo = request.tipo,
             orden = request.orden ?: 1
@@ -254,6 +282,10 @@ class LocalActivityRepository(
 
     override suspend fun update(id: Int, request: UpdateActivityRequest): Result<Activity> =
         localCall {
+            require(!(request.contenidoId != null && request.desasociarContenido == true)) {
+                "No se puede asociar y desasociar el contenido a la vez."
+            }
+
             val current = dao.getActivityById(id).orNotFound("Actividad").getOrThrow()
             val nextType = request.tipo ?: current.tipo
             if (nextType == ActivityType.FINAL_TEST && current.tipo != ActivityType.FINAL_TEST) {
@@ -261,7 +293,19 @@ class LocalActivityRepository(
                     .any { it.tipo == ActivityType.FINAL_TEST && it.id != id }
                 require(!hasFinalTest) { "La unidad ya tiene una prueba final." }
             }
+
+            val nextContenidoId = when {
+                request.desasociarContenido == true -> null
+                request.contenidoId != null -> {
+                    validarContenidoDeUnidad(request.contenidoId, current.unidadId)
+                    request.contenidoId
+                }
+
+                else -> current.contenidoId
+            }
+
             val updated = current.copy(
+                contenidoId = nextContenidoId,
                 titulo = request.titulo?.trim() ?: current.titulo,
                 tipo = nextType,
                 orden = request.orden ?: current.orden
@@ -274,6 +318,26 @@ class LocalActivityRepository(
     override suspend fun delete(id: Int): Result<Unit> = localCall {
         dao.getActivityById(id).orNotFound("Actividad").getOrThrow()
         dao.deleteActivityById(id)
+    }
+
+    /**
+     * Valida que el contenido exista y pertenezca a la unidad de la actividad.
+     *
+     * El `contenidoId` nulo representa una actividad transversal y no requiere
+     * validación.
+     */
+    private suspend fun validarContenidoDeUnidad(contenidoId: Int?, unidadId: Int) {
+        if (contenidoId == null) return
+
+        val contenido = dao.getContentById(contenidoId)
+            .orNotFound("Contenido")
+            .getOrThrow()
+        val objetivo = dao.getObjectiveById(contenido.oaId)
+            .orNotFound("Objetivo de aprendizaje")
+            .getOrThrow()
+        require(objetivo.unidadId == unidadId) {
+            "El contenido pertenece a otra unidad."
+        }
     }
 }
 

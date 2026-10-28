@@ -2,7 +2,9 @@ package com.ccstudio.mpaz_pro_6.data.local.repository
 
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
+import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.local.dao.CatalogDao
+import com.ccstudio.mpaz_pro_6.data.local.dao.CurriculumDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnitDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.UserDao
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningUnitEntity
@@ -15,6 +17,7 @@ import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 /** CRUD local de unidades de aprendizaje sobre Room. */
 class LocalUnitRepository(
     private val dao: UnitDao,
+    private val curriculumDao: CurriculumDao,
     private val catalogDao: CatalogDao,
     private val userDao: UserDao
 ) : UnitRepository {
@@ -37,6 +40,11 @@ class LocalUnitRepository(
             catalogDao.getSubjectById(request.asignaturaId)
                 .orNotFound("Asignatura")
                 .getOrThrow()
+            if (dao.getUnitsBySubject(request.asignaturaId).isNotEmpty()) {
+                throw ApiError.Conflict(
+                    "La asignatura ya tiene una unidad; el MVP admite máximo una por asignatura."
+                )
+            }
             val entities = dao.getUnits()
             val entity = LearningUnitEntity(
                 id = entities.nextId { it.id },
@@ -85,6 +93,35 @@ class LocalUnitRepository(
             fechaAutorizacion = nextAuthorizationDate
         )
         require(updated.titulo.isNotBlank()) { "El título es obligatorio." }
+        dao.upsertUnit(updated)
+
+        // El estado de la unidad gobierna el material: al autorizar o publicar,
+        // los contenidos y recursos de sus OAs acompañan ese estado. Sin esto,
+        // el material creado por el docente quedaría en BORRADOR y el estudiante
+        // no lo vería después de publicar la unidad.
+        if (nextState == ContentStatus.AUTHORIZED || nextState == ContentStatus.PUBLISHED) {
+            val contents = curriculumDao.getContentsByUnit(id)
+                .map { it.copy(estado = nextState) }
+            if (contents.isNotEmpty()) {
+                curriculumDao.upsertContents(contents)
+            }
+
+            val resources = curriculumDao.getContentResourcesByUnit(id)
+                .map { it.copy(estado = nextState) }
+            if (resources.isNotEmpty()) {
+                curriculumDao.upsertContentResources(resources)
+            }
+        }
+
+        updated.toDomain()
+    }
+
+    override suspend fun sendToReview(id: Int): Result<LearningUnit> = localCall {
+        val current = dao.getUnitById(id).orNotFound("Unidad").getOrThrow()
+        require(current.estado == ContentStatus.DRAFT) {
+            "Solo se puede enviar a revisión una unidad en borrador."
+        }
+        val updated = current.copy(estado = ContentStatus.IN_REVIEW)
         dao.upsertUnit(updated)
         updated.toDomain()
     }

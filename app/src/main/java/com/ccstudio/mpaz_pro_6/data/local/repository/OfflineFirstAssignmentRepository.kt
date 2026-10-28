@@ -25,11 +25,10 @@ class OfflineFirstAssignmentRepository(
 
     override suspend fun list(
         courseId: Int?,
-        unitId: Int?,
-        teacherId: Int?
+        unitId: Int?
     ): Result<List<Assignment>> =
         apiCall {
-            api.getAssignments(courseId, unitId, teacherId).map { it.toDomain() }
+            api.getAssignments(courseId, unitId).map { it.toDomain() }
         }.fold(
             onSuccess = { assignments ->
                 dao.upsertAssignments(assignments.map { it.toEntity() })
@@ -40,13 +39,11 @@ class OfflineFirstAssignmentRepository(
                     val entities = when {
                         courseId != null -> dao.getAssignmentsByCourse(courseId)
                         unitId != null -> dao.getAssignmentsByUnit(unitId)
-                        teacherId != null -> dao.getAssignmentsByTeacher(teacherId)
                         else -> dao.getAssignments()
                     }
                     entities
                         .filter { courseId == null || it.cursoId == courseId }
                         .filter { unitId == null || it.unidadId == unitId }
-                        .filter { teacherId == null || it.docenteId == teacherId }
                         .map { it.toDomain() }
                         .takeIf { it.isNotEmpty() }
                 }

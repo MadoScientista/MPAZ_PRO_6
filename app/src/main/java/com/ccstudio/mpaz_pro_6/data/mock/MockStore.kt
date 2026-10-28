@@ -2,6 +2,7 @@ package com.ccstudio.mpaz_pro_6.data.mock
 
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.Docencia
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.User
@@ -28,6 +29,7 @@ class MockStore(
     val courses: MutableList<Course> = mutableListOf(),
     val units: MutableList<LearningUnit> = mutableListOf(),
     val assignments: MutableList<Assignment> = mutableListOf(),
+    val docencias: MutableList<Docencia> = mutableListOf(),
     val users: MutableList<User> = mutableListOf(),
     val passwords: MutableMap<Int, String> = mutableMapOf(),
     val mutex: Mutex = Mutex()
@@ -38,5 +40,6 @@ class MockStore(
     var nextCourseId: Int = (courses.maxOfOrNull { it.id } ?: 0) + 1
     var nextUnitId: Int = (units.maxOfOrNull { it.id } ?: 0) + 1
     var nextAssignmentId: Int = (assignments.maxOfOrNull { it.id } ?: 0) + 1
+    var nextDocenciaId: Int = (docencias.maxOfOrNull { it.id } ?: 0) + 1
     var nextUserId: Int = (users.maxOfOrNull { it.id } ?: 0) + 1
 }

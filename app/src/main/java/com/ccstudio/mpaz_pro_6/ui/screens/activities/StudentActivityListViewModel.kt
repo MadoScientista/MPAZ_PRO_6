@@ -12,11 +12,14 @@ import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
+import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AttemptRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import com.ccstudio.mpaz_pro_6.ui.components.activity.StudentActivityStatus
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -30,7 +33,9 @@ data class StudentActivityItem(
     val unitTitle: String,
     val status: StudentActivityStatus,
     val attemptsCount: Int,
-    val latestCompletedAttemptId: Int?
+    val latestCompletedAttemptId: Int?,
+    /** La prueba final ya se completó, pero quedan intentos disponibles. */
+    val canRetry: Boolean = false
 )
 
 /**
@@ -46,7 +51,8 @@ class StudentActivityListViewModel(
     private val activityRepository: ActivityRepository,
     private val attemptRepository: AttemptRepository,
     private val studentId: Int,
-    private val courseId: Int?
+    private val courseId: Int?,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
 ) : ViewModel() {
 
     /** Actividades disponibles con su estado. */
@@ -67,7 +73,7 @@ class StudentActivityListViewModel(
 
     /** Carga las actividades del estudiante y las cruza con sus intentos. */
     fun cargar() {
-        viewModelScope.launch {
+        viewModelScope.launch(dispatcher) {
             isLoading = true
             error = null
             sinCurso = false
@@ -106,6 +112,7 @@ class StudentActivityListViewModel(
             val asignaciones = asignacionesResult.getOrDefault(emptyList())
             val todasLasActividades = actividadesResult.getOrDefault(emptyList())
             val actividadesAsignadas = mutableSetOf<Int>()
+            val asignacionDePruebaFinal = mutableMapOf<Int, Assignment>()
 
             asignaciones.forEach { assignment ->
                 val enlacesResult = assignmentRepository.listActivities(assignment.id)
@@ -126,7 +133,10 @@ class StudentActivityListViewModel(
                             it.unidadId == assignment.unidadId &&
                                     it.tipo == ActivityType.FINAL_TEST
                         }
-                        ?.let { actividadesAsignadas += it.id }
+                        ?.let { finalTest ->
+                            actividadesAsignadas += finalTest.id
+                            asignacionDePruebaFinal[finalTest.id] = assignment
+                        }
                 }
             }
 
@@ -170,12 +180,19 @@ class StudentActivityListViewModel(
                         else -> StudentActivityStatus.PENDING
                     }
 
+                    val maxIntentos = asignacionDePruebaFinal[activity.id]?.maxIntentos
+                    val canRetry = activity.tipo == ActivityType.FINAL_TEST &&
+                        ultimoCompletado != null &&
+                        !enProgreso &&
+                        (maxIntentos == null || intentos.size < maxIntentos)
+
                     StudentActivityItem(
                         activity = activity,
                         unitTitle = unitTitles[activity.unidadId] ?: "Sin unidad",
                         status = status,
                         attemptsCount = intentos.size,
-                        latestCompletedAttemptId = ultimoCompletado?.id
+                        latestCompletedAttemptId = ultimoCompletado?.id,
+                        canRetry = canRetry
                     )
                 }
                 .sortedWith(

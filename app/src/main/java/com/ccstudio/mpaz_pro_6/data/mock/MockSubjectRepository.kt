@@ -12,7 +12,8 @@ import kotlinx.coroutines.sync.withLock
  *
  * Reproduce las reglas del backend: el nombre es obligatorio y admite hasta 100
  * caracteres, los nombres duplicados devuelven `ApiError.Conflict` y eliminar una
- * asignatura con unidades asociadas también devuelve `ApiError.Conflict`.
+ * asignatura con unidades o docencias asociadas también devuelve
+ * `ApiError.Conflict`.
  */
 class MockSubjectRepository(
     private val store: MockStore
@@ -106,12 +107,13 @@ class MockSubjectRepository(
         }
 
         val unidades = store.units.filter { it.asignaturaId == id }
+        val docencias = store.docencias.count { it.asignaturaId == id }
 
-        if (unidades.isNotEmpty()) {
+        if (unidades.isNotEmpty() || docencias > 0) {
             return Result.failure(
                 ApiError.Conflict(
                     "No se puede eliminar la asignatura: tiene ${unidades.size} " +
-                        "unidad(es) asociada(s)."
+                        "unidad(es) y $docencias docencia(s) asociada(s)."
                 )
             )
         }

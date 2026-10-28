@@ -19,6 +19,15 @@ interface UserDao {
     @Query("SELECT * FROM usuario WHERE username = :username COLLATE NOCASE LIMIT 1")
     suspend fun getUserByUsername(username: String): UserEntity?
 
+    @Query(
+        """
+        SELECT * FROM usuario
+        WHERE rol = 'ESTUDIANTE' AND curso_id = :courseId
+        ORDER BY nombre
+        """
+    )
+    suspend fun getStudentsByCourse(courseId: Int): List<UserEntity>
+
     @Upsert
     suspend fun upsertUser(entity: UserEntity)
 
@@ -38,8 +47,8 @@ interface UserDao {
         """
         SELECT DISTINCT curso.*
         FROM curso
-        INNER JOIN asignacion ON asignacion.curso_id = curso.id
-        WHERE asignacion.docente_id = :docenteId
+        INNER JOIN docencia ON docencia.curso_id = curso.id
+        WHERE docencia.docente_id = :docenteId
         ORDER BY curso.anio, curso.nombre
         """
     )

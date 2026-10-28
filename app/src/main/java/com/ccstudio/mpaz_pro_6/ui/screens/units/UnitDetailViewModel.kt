@@ -13,6 +13,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
+import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
@@ -31,12 +32,14 @@ import kotlinx.coroutines.launch
  * Estado del detalle de una unidad.
  *
  * Consume `GET /api/unidades/{id}` y resuelve el material de la unidad:
- * objetivos, contenidos, actividades, cantidad de recursos por contenido y
- * cantidad de preguntas por actividad.
+ * objetivos, contenidos, actividades visibles, cantidad de recursos por contenido
+ * y cantidad de actividades por contenido.
  *
  * Para la UTP y el docente se muestra todo el material de la unidad. Para el
- * estudiante se muestran solo los contenidos publicados y las actividades
- * asignadas a su curso, más la prueba final habilitada.
+ * estudiante se muestran solo los contenidos publicados de los OAs asociados a
+ * su asignación y las actividades asociadas a esa asignación, más la prueba
+ * final habilitada. Las actividades regulares se abren desde el detalle del
+ * contenido; la prueba final se queda en este detalle de unidad.
  */
 class UnitDetailViewModel(
     private val unitRepository: UnitRepository,
@@ -80,12 +83,24 @@ class UnitDetailViewModel(
     var recursosPorContenido by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
+    /** Cantidad de actividades regulares por contenido. */
+    var actividadesPorContenido by mutableStateOf<Map<Int, Int>>(emptyMap())
+        private set
+
     /** Indica que el detalle se está cargando. */
     var isLoading by mutableStateOf(false)
         private set
 
     /** Error de la última carga, si lo hubo. */
     var error by mutableStateOf<ApiError?>(null)
+        private set
+
+    /** Indica que se está enviando la unidad a revisión. */
+    var isSendingReview by mutableStateOf(false)
+        private set
+
+    /** Mensaje de la última operación de revisión. */
+    var mensajeRevision by mutableStateOf<String?>(null)
         private set
 
     /** Carga la unidad y su material según el rol. */
@@ -98,6 +113,7 @@ class UnitDetailViewModel(
             actividades = emptyList()
             preguntasPorActividad = emptyMap()
             recursosPorContenido = emptyMap()
+            actividadesPorContenido = emptyMap()
 
             val unitResult = unitRepository.getById(unitId)
 
@@ -139,6 +155,28 @@ class UnitDetailViewModel(
             objetivos = unitObjectives
             val objectiveIds = unitObjectives.map { it.id }.toSet()
 
+            val assignment = if (rol == UserRole.ESTUDIANTE) {
+                cargarAsignacionEstudiante()
+            } else {
+                null
+            }
+            if (rol == UserRole.ESTUDIANTE && error != null) {
+                isLoading = false
+                return@launch
+            }
+
+            val assignedObjectiveIds = if (rol == UserRole.ESTUDIANTE && assignment != null) {
+                val linksResult = assignmentRepository.listObjectives(assignment.id)
+                if (linksResult.isFailure) {
+                    error = linksResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+                linksResult.getOrDefault(emptyList()).map { it.oaId }.toSet()
+            } else {
+                emptySet()
+            }
+
             val contentsResult = contentRepository.list()
 
             if (contentsResult.isFailure) {
@@ -151,7 +189,10 @@ class UnitDetailViewModel(
                 .filter { it.oaId in objectiveIds }
 
             val visibleContents = if (rol == UserRole.ESTUDIANTE) {
-                allContents.filter { it.estado == ContentStatus.PUBLISHED }
+                allContents.filter {
+                    it.estado == ContentStatus.PUBLISHED &&
+                        it.oaId in assignedObjectiveIds
+                }
             } else {
                 allContents
             }
@@ -170,7 +211,7 @@ class UnitDetailViewModel(
                 .filter { it.unidadId == unitId }
 
             val visibleActivities = if (rol == UserRole.ESTUDIANTE) {
-                actividadesParaEstudiante(unitActivities)
+                actividadesParaEstudiante(assignment, unitActivities)
             } else {
                 unitActivities
             }
@@ -196,6 +237,12 @@ class UnitDetailViewModel(
                 emptyMap()
             }
 
+            actividadesPorContenido = actividades
+                .filter { it.tipo != ActivityType.FINAL_TEST }
+                .mapNotNull { it.contenidoId }
+                .groupingBy { it }
+                .eachCount()
+
             val contentIds = contenidos.map { it.id }.toSet()
             val resourcesResult = contentResourceRepository.list()
 
@@ -212,27 +259,32 @@ class UnitDetailViewModel(
         }
     }
 
-    /**
-     * Resuelve las actividades visibles para el estudiante: las asociadas a la
-     * asignación de su curso más la prueba final habilitada.
-     */
-    private suspend fun actividadesParaEstudiante(
-        unitActivities: List<Activity>
-    ): List<Activity> {
-        if (courseId == null) return emptyList()
+    /** Carga la asignación del curso del estudiante para esta unidad. */
+    private suspend fun cargarAsignacionEstudiante(): Assignment? {
+        val idCurso = courseId ?: return null
 
         val assignmentsResult = assignmentRepository.list(
-            courseId = courseId,
+            courseId = idCurso,
             unitId = unitId
         )
 
         if (assignmentsResult.isFailure) {
             error = assignmentsResult.exceptionOrNull() as? ApiError
-            return emptyList()
+            return null
         }
 
-        val assignment = assignmentsResult.getOrDefault(emptyList()).firstOrNull()
-            ?: return emptyList()
+        return assignmentsResult.getOrDefault(emptyList()).firstOrNull()
+    }
+
+    /**
+     * Resuelve las actividades visibles para el estudiante: las asociadas a la
+     * asignación de su curso más la prueba final habilitada.
+     */
+    private suspend fun actividadesParaEstudiante(
+        assignment: Assignment?,
+        unitActivities: List<Activity>
+    ): List<Activity> {
+        if (assignment == null) return emptyList()
 
         val linksResult = assignmentRepository.listActivities(assignment.id)
 
@@ -255,6 +307,29 @@ class UnitDetailViewModel(
         }
 
         return unitActivities.filter { it.id in assignedIds }
+    }
+
+    /** Envía la unidad en borrador a revisión de la UTP. */
+    fun enviarARevision() {
+        val current = unidad ?: return
+        if (isSendingReview) return
+
+        viewModelScope.launch {
+            isSendingReview = true
+            mensajeRevision = null
+            error = null
+
+            val result = unitRepository.sendToReview(current.id)
+            isSendingReview = false
+
+            if (result.isFailure) {
+                error = result.exceptionOrNull() as? ApiError
+                return@launch
+            }
+
+            unidad = result.getOrNull() ?: current
+            mensajeRevision = "Unidad enviada a revisión."
+        }
     }
 
     companion object {

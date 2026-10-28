@@ -45,6 +45,16 @@ interface CurriculumDao {
     @Query("SELECT * FROM contenido WHERE id = :id")
     suspend fun getContentById(id: Int): ContentEntity?
 
+    @Query(
+        """
+        SELECT contenido.* FROM contenido
+        INNER JOIN objetivo_aprendizaje
+            ON objetivo_aprendizaje.id = contenido.oa_id
+        WHERE objetivo_aprendizaje.unidad_id = :unitId
+        """
+    )
+    suspend fun getContentsByUnit(unitId: Int): List<ContentEntity>
+
     @Upsert
     suspend fun upsertContent(entity: ContentEntity)
 
@@ -66,6 +76,17 @@ interface CurriculumDao {
     @Query("SELECT * FROM recurso_contenido WHERE id = :id")
     suspend fun getContentResourceById(id: Int): ContentResourceEntity?
 
+    @Query(
+        """
+        SELECT recurso_contenido.* FROM recurso_contenido
+        INNER JOIN contenido ON contenido.id = recurso_contenido.contenido_id
+        INNER JOIN objetivo_aprendizaje
+            ON objetivo_aprendizaje.id = contenido.oa_id
+        WHERE objetivo_aprendizaje.unidad_id = :unitId
+        """
+    )
+    suspend fun getContentResourcesByUnit(unitId: Int): List<ContentResourceEntity>
+
     @Upsert
     suspend fun upsertContentResource(entity: ContentResourceEntity)
 
@@ -86,6 +107,30 @@ interface CurriculumDao {
 
     @Query("SELECT * FROM actividad WHERE unidad_id = :unitId ORDER BY orden")
     suspend fun getActivitiesByUnit(unitId: Int): List<ActivityEntity>
+
+    @Query(
+        """
+        SELECT * FROM actividad
+        WHERE unidad_id = :unitId AND contenido_id = :contentId
+        ORDER BY orden
+        """
+    )
+    suspend fun getActivitiesByUnitAndContent(
+        unitId: Int,
+        contentId: Int
+    ): List<ActivityEntity>
+
+    @Query(
+        """
+        SELECT * FROM actividad
+        WHERE unidad_id = :unitId AND contenido_id IS NULL
+        ORDER BY orden
+        """
+    )
+    suspend fun getTransversalActivitiesByUnit(unitId: Int): List<ActivityEntity>
+
+    @Query("SELECT COUNT(*) FROM actividad WHERE contenido_id = :contentId")
+    suspend fun countActivitiesByContent(contentId: Int): Int
 
     @Query("SELECT * FROM actividad WHERE id = :id")
     suspend fun getActivityById(id: Int): ActivityEntity?

@@ -1,7 +1,6 @@
 package com.ccstudio.mpaz_pro_6.ui.screens.home
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -14,12 +13,13 @@ import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AttemptRepository
-import com.ccstudio.mpaz_pro_6.data.repository.PedagogicalReportRepository
+import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
@@ -32,28 +32,36 @@ import kotlinx.coroutines.launch
  * - Actividades: las asociadas a cada asignación más la `PRUEBA_FINAL` de la
  *   unidad cuando la asignación la habilita.
  * - Pendientes: las actividades disponibles en las que el estudiante todavía no
- *   tiene un intento completado.
+ *   tiene un intento completado, más las pruebas finales completadas que aún
+ *   admiten un nuevo intento.
  *
- * Los informes se cuentan como dato de apoyo: si esa consulta falla, el panel
- * conserva las unidades y actividades.
+ * El estudiante no accede a informes pedagógicos.
  */
 class HomeStudentViewModel(
     private val assignmentRepository: AssignmentRepository,
     private val unitRepository: UnitRepository,
     private val subjectRepository: SubjectRepository,
+    private val courseRepository: CourseRepository,
     private val activityRepository: ActivityRepository,
     private val attemptRepository: AttemptRepository,
-    private val pedagogicalReportRepository: PedagogicalReportRepository,
     private val studentId: Int,
     private val courseId: Int?
 ) : ViewModel() {
+
+    /** Curso de contexto del estudiante. */
+    var curso by mutableStateOf<Course?>(null)
+        private set
 
     /** Unidades publicadas y asignadas al curso del estudiante. */
     var unidades by mutableStateOf<List<LearningUnit>>(emptyList())
         private set
 
-    /** Asignaturas, para resolver el nombre que la unidad solo trae por id. */
+    /** Asignaturas visibles con al menos una unidad publicada y asignada. */
     var asignaturas by mutableStateOf<List<Subject>>(emptyList())
+        private set
+
+    /** Cantidad de unidades visibles por asignatura. */
+    var unidadesPorAsignatura by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
     /** Actividades disponibles que el estudiante todavía no completó. */
@@ -64,8 +72,13 @@ class HomeStudentViewModel(
     var actividadesEnProgreso by mutableStateOf<Set<Int>>(emptySet())
         private set
 
-    /** Cantidad de informes del estudiante. */
-    var totalInformes by mutableIntStateOf(0)
+    /**
+     * Pruebas finales completadas que todavía admiten un nuevo intento.
+     *
+     * El panel las vuelve a mostrar en pendientes con la acción “Repetir
+     * prueba”; cuando se alcanza `maxIntentos` desaparecen.
+     */
+    var actividadesParaRepetir by mutableStateOf<Set<Int>>(emptySet())
         private set
 
     /** `true` cuando el estudiante no tiene curso asignado. */
@@ -88,15 +101,20 @@ class HomeStudentViewModel(
             sinCurso = false
 
             if (courseId == null) {
+                curso = null
                 unidades = emptyList()
                 asignaturas = emptyList()
+                unidadesPorAsignatura = emptyMap()
                 actividadesPendientes = emptyList()
                 actividadesEnProgreso = emptySet()
-                totalInformes = 0
+                actividadesParaRepetir = emptySet()
                 sinCurso = true
                 isLoading = false
                 return@launch
             }
+
+            // El curso es contexto: si falla, el resto del panel sigue visible.
+            curso = courseRepository.getById(courseId).getOrNull()
 
             val asignacionesResult = assignmentRepository.list(courseId = courseId)
 
@@ -190,15 +208,37 @@ class HomeStudentViewModel(
                 }
 
             unidades = unidadesVisibles
+
+            val subjectIds = unidadesVisibles.map { it.asignaturaId }.toSet()
             asignaturas = asignaturasResult.getOrDefault(emptyList())
+                .filter { it.id in subjectIds }
+                .sortedBy { it.nombre.lowercase() }
+            unidadesPorAsignatura = unidadesVisibles
+                .groupingBy { it.asignaturaId }
+                .eachCount()
 
             val unidadesVisiblesIds = unidadesVisibles.map { it.id }.toSet()
+
+            fun puedeRepetirPruebaFinal(activity: Activity): Boolean {
+                if (activity.tipo != ActivityType.FINAL_TEST ||
+                    activity.id !in actividadesCompletadas ||
+                    activity.id in idsEnProgreso
+                ) {
+                    return false
+                }
+
+                val maxIntentos = asignacionDePruebaFinal[activity.id]?.maxIntentos
+                    ?: return true
+                return (intentosPorActividad[activity.id] ?: 0) < maxIntentos
+            }
 
             actividadesPendientes = todasLasActividades.filter { activity ->
                 activity.unidadId in unidadesVisiblesIds && when {
                     activity.id !in actividadesAsignadas -> false
                     activity.id in idsEnProgreso -> true
-                    activity.id in actividadesCompletadas -> false
+                    activity.id in actividadesCompletadas ->
+                        puedeRepetirPruebaFinal(activity)
+
                     else -> {
                         val maxIntentos = asignacionDePruebaFinal[activity.id]?.maxIntentos
                         maxIntentos == null ||
@@ -207,12 +247,10 @@ class HomeStudentViewModel(
                 }
             }
             actividadesEnProgreso = idsEnProgreso
-
-            // Dato de apoyo: un fallo de informes no oculta unidades ni actividades.
-            totalInformes = pedagogicalReportRepository
-                .list(studentId = studentId)
-                .getOrDefault(emptyList())
-                .size
+            actividadesParaRepetir = todasLasActividades
+                .filter { it.id in unidadesVisiblesIds && puedeRepetirPruebaFinal(it) }
+                .map { it.id }
+                .toSet()
 
             isLoading = false
         }
@@ -225,9 +263,9 @@ class HomeStudentViewModel(
             assignmentRepository: AssignmentRepository,
             unitRepository: UnitRepository,
             subjectRepository: SubjectRepository,
+            courseRepository: CourseRepository,
             activityRepository: ActivityRepository,
             attemptRepository: AttemptRepository,
-            pedagogicalReportRepository: PedagogicalReportRepository,
             studentId: Int,
             courseId: Int?
         ): ViewModelProvider.Factory = viewModelFactory {
@@ -236,9 +274,9 @@ class HomeStudentViewModel(
                     assignmentRepository = assignmentRepository,
                     unitRepository = unitRepository,
                     subjectRepository = subjectRepository,
+                    courseRepository = courseRepository,
                     activityRepository = activityRepository,
                     attemptRepository = attemptRepository,
-                    pedagogicalReportRepository = pedagogicalReportRepository,
                     studentId = studentId,
                     courseId = courseId
                 )

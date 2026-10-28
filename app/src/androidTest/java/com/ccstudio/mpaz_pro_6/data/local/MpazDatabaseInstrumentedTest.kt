@@ -16,6 +16,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.ActivityEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentObjectiveEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.CourseEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.DocenciaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningObjectiveEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningUnitEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.PedagogicalReportEntity
@@ -80,7 +81,27 @@ class MpazDatabaseInstrumentedTest {
         crearBaseParaAsignacion()
 
         assertThrows(SQLiteConstraintException::class.java) {
-            exec("INSERT INTO asignacion VALUES (2, 1, 1, 1, 1, 0, ${epoch()})")
+            exec("INSERT INTO asignacion VALUES (2, 1, 1, 1, 0, ${epoch()})")
+        }
+        Unit
+    }
+
+    @Test
+    fun docenciaDuplicadaPorCursoYAsignaturaFalla() = runBlocking {
+        crearBaseParaAsignacion()
+        database.docenciaDao().upsertDocencia(
+            DocenciaEntity(
+                id = 1,
+                docenteId = 1,
+                cursoId = 1,
+                asignaturaId = 1
+            )
+        )
+
+        assertEquals(1, database.userDao().getCoursesForTeacher(1).size)
+
+        assertThrows(SQLiteConstraintException::class.java) {
+            exec("INSERT INTO docencia (id, docente_id, curso_id, asignatura_id) VALUES (2, 1, 1, 1)")
         }
         Unit
     }
@@ -107,11 +128,11 @@ class MpazDatabaseInstrumentedTest {
     fun actividadConTituloDuplicadoEnLaMismaUnidadFalla() = runBlocking {
         crearUnidad()
         database.curriculumDao().upsertActivity(
-            ActivityEntity(1, 1, "Prueba", ActivityType.ACTIVITY, 1)
+            ActivityEntity(1, 1, null, "Prueba", ActivityType.ACTIVITY, 1)
         )
 
         assertThrows(SQLiteConstraintException::class.java) {
-            exec("INSERT INTO actividad VALUES (2, 1, 'Prueba', 'DESAFIO', 2)")
+            exec("INSERT INTO actividad VALUES (2, 1, NULL, 'Prueba', 'DESAFIO', 2)")
         }
         Unit
     }
@@ -120,12 +141,12 @@ class MpazDatabaseInstrumentedTest {
     fun indiceParcialPermiteUnaSolaPruebaFinalPorUnidad() {
         runBlocking { crearUnidad() }
         SeedLoader.createIndexes(database.openHelper.writableDatabase)
-        exec("INSERT INTO actividad VALUES (1, 1, 'Prueba final', 'PRUEBA_FINAL', 1)")
+        exec("INSERT INTO actividad VALUES (1, 1, NULL, 'Prueba final', 'PRUEBA_FINAL', 1)")
 
         assertThrows(SQLiteConstraintException::class.java) {
-            exec("INSERT INTO actividad VALUES (2, 1, 'Otra prueba final', 'PRUEBA_FINAL', 2)")
+            exec("INSERT INTO actividad VALUES (2, 1, NULL, 'Otra prueba final', 'PRUEBA_FINAL', 2)")
         }
-        exec("INSERT INTO actividad VALUES (3, 1, 'Actividad normal', 'ACTIVIDAD', 3)")
+        exec("INSERT INTO actividad VALUES (3, 1, NULL, 'Actividad normal', 'ACTIVIDAD', 3)")
     }
 
     @Test
@@ -162,9 +183,14 @@ class MpazDatabaseInstrumentedTest {
             assertTrue(seeded.catalogDao().getCourses().isNotEmpty())
             assertTrue(seeded.catalogDao().getSubjects().isNotEmpty())
             assertTrue(seeded.userDao().getUsers().isNotEmpty())
+            assertTrue(seeded.docenciaDao().getDocencias().isNotEmpty())
             assertTrue(seeded.unitDao().getUnits().isNotEmpty())
             assertTrue(seeded.curriculumDao().getActivities().isNotEmpty())
             assertNotNull(seeded.unitDao().getUnitById(1))
+            assertEquals(4, seeded.unitDao().getUnits().size)
+            assertEquals(36, seeded.curriculumDao().getObjectives().size)
+            assertEquals(9, seeded.curriculumDao().getObjectivesByUnit(12).size)
+            assertEquals(3, seeded.assignmentDao().getAssignments().size)
         } finally {
             seeded.close()
         }
@@ -220,7 +246,6 @@ class MpazDatabaseInstrumentedTest {
                 id = 1,
                 cursoId = 1,
                 unidadId = 1,
-                docenteId = 1,
                 maxIntentos = 1,
                 pruebaFinalHabilitada = false,
                 fecha = Instant.parse("2026-04-06T08:00:00Z")
@@ -238,7 +263,6 @@ class MpazDatabaseInstrumentedTest {
         id = id,
         cursoId = 1,
         unidadId = 1,
-        docenteId = 1,
         maxIntentos = 1,
         pruebaFinalHabilitada = false,
         fecha = Instant.parse("2026-04-06T08:00:00Z")

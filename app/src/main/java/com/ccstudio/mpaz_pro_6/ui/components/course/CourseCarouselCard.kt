@@ -31,15 +31,15 @@ import com.ccstudio.mpaz_pro_6.data.model.Course
 /**
  * Tarjeta compacta de un curso para el carrusel del panel de inicio.
  *
- * Muestra el badge, el nombre, el año, la cantidad de estudiantes y un chevron.
- * Tocar la tarjeta abre el detalle del curso.
+ * Muestra el badge, el nombre, el año y, cuando la pantalla lo conoce, la
+ * cantidad de estudiantes. Tocar la tarjeta abre el detalle del curso.
  */
 @Composable
 fun CourseCarouselCard(
     course: Course,
-    studentCount: Int,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    studentCount: Int? = null
 ) {
     Card(
         onClick = onClick,
@@ -83,7 +83,9 @@ fun CourseCarouselCard(
                 )
 
                 Text(
-                    text = "${course.anio} · ${studentCountLabel(studentCount)}",
+                    text = studentCount?.let {
+                        "${course.anio} · ${studentCountLabel(it)}"
+                    } ?: course.anio.toString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

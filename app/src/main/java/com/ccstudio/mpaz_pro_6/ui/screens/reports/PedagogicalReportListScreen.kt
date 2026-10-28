@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
-import com.ccstudio.mpaz_pro_6.data.model.User
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
@@ -33,17 +33,18 @@ import com.ccstudio.mpaz_pro_6.ui.components.report.ReportCard
  * Listado de informes pedagógicos del docente.
  *
  * Consume `GET /api/informes-pedagogicos` sin filtro de docente (el backend no lo
- * admite) y el ViewModel descarta los de otros docentes. Los nombres de
- * estudiante y unidad se resuelven con los catálogos que recibe la pantalla.
+ * admite) y el ViewModel descarta los de otros docentes. El nombre del estudiante
+ * llega en el informe; la unidad se resuelve con el catálogo de apoyo. El botón
+ * «Generar informe» abre el formulario que crea uno nuevo.
  *
  * La búsqueda por texto es **client-side**.
  */
 @Composable
 fun PedagogicalReportListScreen(
     informes: List<PedagogicalReport>,
-    usuarios: List<User>,
     unidades: List<LearningUnit>,
     onViewDetail: (PedagogicalReport) -> Unit,
+    onCreate: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
@@ -51,14 +52,13 @@ fun PedagogicalReportListScreen(
 ) {
     var search by rememberSaveable { mutableStateOf("") }
 
-    val studentNames = usuarios.associate { it.id to it.nombre }
     val unitTitles = unidades.associate { it.id to it.titulo }
 
     val filteredReports = informes.filter { report ->
         val query = search.trim()
 
-        val studentName = studentNames[report.estudianteId].orEmpty()
-        val unitTitle = unitTitles[report.unidadId].orEmpty()
+        val studentName = report.estudianteNombre.orEmpty()
+        val unitTitle = report.unidadTitulo ?: unitTitles[report.unidadId].orEmpty()
 
         query.isEmpty() ||
                 studentName.contains(query, ignoreCase = true) ||
@@ -90,6 +90,11 @@ fun PedagogicalReportListScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
 
+                    AppButton(
+                        text = "Generar informe",
+                        onClick = onCreate
+                    )
+
                     SearchField(
                         value = search,
                         onValueChange = { search = it },
@@ -104,7 +109,7 @@ fun PedagogicalReportListScreen(
                     if (filteredReports.isEmpty()) {
                         EmptyState(
                             message = if (informes.isEmpty()) {
-                                "No tienes informes."
+                                "No tienes informes. Usa «Generar informe» para crear uno."
                             } else {
                                 "No se encontraron informes."
                             }
@@ -121,9 +126,10 @@ fun PedagogicalReportListScreen(
                             ) { report ->
                                 ReportCard(
                                     report = report,
-                                    studentName = studentNames[report.estudianteId]
+                                    studentName = report.estudianteNombre
                                         ?: "Estudiante #${report.estudianteId}",
-                                    unitName = unitTitles[report.unidadId]
+                                    unitName = report.unidadTitulo
+                                        ?: unitTitles[report.unidadId]
                                         ?: "Unidad #${report.unidadId}",
                                     onViewDetail = { onViewDetail(report) }
                                 )

@@ -71,6 +71,15 @@ class OfflineFirstUnitRepository(
             onFailure = { Result.failure(it) }
         )
 
+    override suspend fun sendToReview(id: Int): Result<LearningUnit> =
+        apiCall { api.sendUnitToReview(id).toDomain() }.fold(
+            onSuccess = { unit ->
+                dao.upsertUnit(unit.toEntity())
+                Result.success(unit)
+            },
+            onFailure = { Result.failure(it) }
+        )
+
     override suspend fun delete(id: Int): Result<Unit> =
         apiCall {
             api.deleteUnit(id).requireSuccess()

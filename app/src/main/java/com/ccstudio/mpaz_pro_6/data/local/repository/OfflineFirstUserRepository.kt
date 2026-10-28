@@ -90,4 +90,19 @@ class OfflineFirstUserRepository(
                 }
             }
         )
+
+    override suspend fun listStudentsByCourse(courseId: Int): Result<List<User>> =
+        apiCall { api.getCourseStudents(courseId).map { it.toDomain() } }.fold(
+            onSuccess = { students ->
+                dao.upsertUsers(students.map { it.toEntity() })
+                Result.success(students)
+            },
+            onFailure = { error ->
+                cachedValueOrError(error) {
+                    dao.getStudentsByCourse(courseId)
+                        .map { it.toDomain() }
+                        .takeIf { it.isNotEmpty() }
+                }
+            }
+        )
 }

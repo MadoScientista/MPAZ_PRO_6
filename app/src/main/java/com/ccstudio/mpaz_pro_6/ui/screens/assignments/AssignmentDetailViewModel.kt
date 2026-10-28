@@ -17,16 +17,15 @@ import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
 import com.ccstudio.mpaz_pro_6.data.repository.LearningObjectiveRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
-import com.ccstudio.mpaz_pro_6.data.repository.UserRepository
 import kotlinx.coroutines.launch
 
 /**
  * Estado del detalle de una asignación.
  *
- * Carga la asignación y resuelve el curso, la unidad y el docente, que la
- * asignación solo trae como identificadores. Después carga los catálogos de OA y
- * actividades de la unidad y las asociaciones de la asignación, para que el
- * docente pueda gestionarlas.
+ * Carga la asignación y resuelve el curso y la unidad, que la asignación solo
+ * trae como identificadores. Después carga los catálogos de OA y actividades de
+ * la unidad y las asociaciones de la asignación, para que el docente pueda
+ * gestionarlas.
  *
  * La edición de reglas vive en `AssignmentFormViewModel`; este ViewModel se
  * encarga de las asociaciones y del borrado.
@@ -35,7 +34,6 @@ class AssignmentDetailViewModel(
     private val assignmentRepository: AssignmentRepository,
     private val courseRepository: CourseRepository,
     private val unitRepository: UnitRepository,
-    private val userRepository: UserRepository,
     private val learningObjectiveRepository: LearningObjectiveRepository,
     private val activityRepository: ActivityRepository,
     private val assignmentId: Int
@@ -51,10 +49,6 @@ class AssignmentDetailViewModel(
 
     /** Título de la unidad asignada. */
     var unitTitle by mutableStateOf("")
-        private set
-
-    /** Nombre del docente de la asignación. */
-    var teacherName by mutableStateOf("")
         private set
 
     /** Objetivos de aprendizaje de la unidad, para asociar o desasociar. */
@@ -134,16 +128,6 @@ class AssignmentDetailViewModel(
             }
 
             unitTitle = unitResult.getOrThrow().titulo
-
-            val teacherResult = userRepository.getById(assignment.docenteId)
-
-            if (teacherResult.isFailure) {
-                error = teacherResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
-            }
-
-            teacherName = teacherResult.getOrThrow().nombre
 
             val assignedObjectivesResult =
                 assignmentRepository.listObjectives(assignmentId)
@@ -351,7 +335,6 @@ class AssignmentDetailViewModel(
             assignmentRepository: AssignmentRepository,
             courseRepository: CourseRepository,
             unitRepository: UnitRepository,
-            userRepository: UserRepository,
             learningObjectiveRepository: LearningObjectiveRepository,
             activityRepository: ActivityRepository,
             assignmentId: Int
@@ -361,7 +344,6 @@ class AssignmentDetailViewModel(
                     assignmentRepository = assignmentRepository,
                     courseRepository = courseRepository,
                     unitRepository = unitRepository,
-                    userRepository = userRepository,
                     learningObjectiveRepository = learningObjectiveRepository,
                     activityRepository = activityRepository,
                     assignmentId = assignmentId

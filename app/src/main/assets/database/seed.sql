@@ -1,14 +1,14 @@
 -- =====================================================================
--- MPAZ PRO 6 - Datos de demo (SQLite)
--- Fuente: common/seed/DataInitializer.java (seccion 11 de la especificacion)
+-- MPAZ PRO 6 - Datos de demostración (SQLite)
+-- Nivel: 6.º básico | Año: 2026
 --
--- Los ids son explicitos para que las referencias entre tablas sean
--- deterministas. Los timestamps van como epoch en milisegundos, igual que
--- sqlite-jdbc con date_class=INTEGER.
+-- Una unidad por asignatura. Las unidades 1, 4 y 9 están publicadas; la
+-- unidad 12 (Historia) queda en BORRADOR para demostrar la autoría docente.
+-- Los OAs, contenidos, actividades, preguntas y alternativas se extraen del
+-- seed curricular de 6.º básico, recortados a las cuatro unidades del modelo.
 --
--- La app no guarda contrasenas ni hashes: el login se resuelve contra
--- `/api/auth/login`. Este archivo solo precarga la cache offline con los datos
--- publicos de demostracion.
+-- Los estados se sincronizan explícitamente al final: el esquema Room 4 no
+-- tiene `contenido.unidad_id` y no puede ejecutar los UPDATE del seed remoto.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -27,7 +27,7 @@ INSERT INTO usuario (id, nombre, username, rol, curso_id) VALUES
     (6, 'Benjamin Ortiz', 'benjamin', 'ESTUDIANTE', 1);
 
 -- ---------------------------------------------------------------------
--- B) Asignaturas y unidades
+-- B) Asignaturas, docencias y unidades
 -- ---------------------------------------------------------------------
 
 INSERT INTO asignatura (id, nombre) VALUES
@@ -36,251 +36,242 @@ INSERT INTO asignatura (id, nombre) VALUES
     (3, 'Ciencias Naturales'),
     (4, 'Historia, Geografia y Ciencias Sociales');
 
+INSERT INTO docencia (id, docente_id, curso_id, asignatura_id) VALUES
+    (1, 2, 1, 1),
+    (2, 2, 1, 2),
+    (3, 2, 1, 3),
+    (4, 2, 1, 4);
+
 INSERT INTO unidad (id, asignatura_id, titulo, orden, estado, autorizada_por_id, fecha_autorizacion) VALUES
-    (1, 1, 'Lectura y comprehension de textos', 1, 'PUBLICADO', 1, 1772442000000),
-    (2, 2, 'Numeros, operaciones y problemas', 1, 'AUTORIZADO', 1, 1772442300000),
-    (3, 3, 'Materia y energia en los seres vivos', 1, 'PUBLICADO', 1, 1772442600000),
-    (4, 4, 'Las sociedades en el tiempo y el espacio', 1, 'PUBLICADO', 1, 1772442900000),
-    (5, 1, 'Comprension de textos narrativos', 2, 'BORRADOR', NULL, NULL),
-    (6, 2, 'Ecosistemas y biodiversidad', 2, 'EN_REVISION', NULL, NULL);
+    (1, 1, 'Lectura - Comprension', 1, 'PUBLICADO', 1, 1772409600000),
+    (4, 2, 'Numeros y operaciones', 1, 'PUBLICADO', 1, 1772409600000),
+    (9, 3, 'Ciencias de la Vida', 1, 'PUBLICADO', 1, 1772668800000),
+    (12, 4, 'Historia', 1, 'BORRADOR', NULL, NULL);
 
 -- ---------------------------------------------------------------------
--- C) Objetivos de aprendizaje (2 por unidad)
+-- C) Objetivos de aprendizaje de las cuatro unidades
 -- ---------------------------------------------------------------------
-
 INSERT INTO objetivo_aprendizaje (id, unidad_id, codigo, descripcion, eje, texto_referencia) VALUES
-    (1, 1, 'OA-LC-6A-01', 'Comprender el proposito y la idea principal de un texto informativo breve, distinguiendo tema y detalles.', 'Lectura y comprension', NULL),
-    (2, 1, 'OA-LC-6A-02', 'Interpretar mensajes que combinan lenguaje verbal y no verbal, como titulos, subtitulos e imagenes de apoyo.', 'Comprension multimodal', NULL),
-    (3, 2, 'OA-MA-6A-01', 'Resolver problemas de la vida diaria usando operaciones con numeros naturales y decimales.', 'Numeros y operaciones', NULL),
-    (4, 2, 'OA-MA-6A-02', 'Reconocer y describir patrones numericos y geometricos presentes en objetos y figuras.', 'Patrones y formas', NULL),
-    (5, 3, 'OA-CN-6A-01', 'Explicar como se organiza la materia en los seres vivos y que cambios sofre en un proceso observable.', 'Materia y energia', NULL),
-    (6, 3, 'OA-CN-6A-02', 'Relacionar la luz con la produccion de energia en las plantas y su importancia para los otros seres vivos.', 'Luz y vida', NULL),
-    (7, 4, 'OA-HG-6A-01', 'Ubicar en el tiempo y en el espacio hechos y fenomenos sociales, usando categorias simples.', 'Tiempo y espacio', NULL),
-    (8, 4, 'OA-HG-6A-02', 'Reconocer la influencia de las actividades humanas en el ambiente de su comunidad.', 'Convivencia y ambiente', NULL);
+    (1, 1, 'LE06 OA 01', 'Leer de manera fluida textos variados apropiados a su edad: pronunciando las palabras con precisión; respetando la prosodia indicada por todos los signos de puntuación; decodificando de manera automática la mayoría de las palabras del texto.', 'Lectura - Comprensión', NULL),
+    (2, 1, 'LE06 OA 02', 'Comprender textos aplicando estrategias de comprensión lectora; por ejemplo: relacionar la información del texto con sus experiencias y conocimientos; releer lo que no fue comprendido; formular preguntas sobre lo leído y responderlas; organizar la información en esquemas o mapas conceptuales; resumir.', 'Lectura - Comprensión', NULL),
+    (3, 1, 'LE06 OA 03', 'Leer y familiarizarse con un amplio repertorio de literatura para aumentar su conocimiento del mundo, desarrollar su imaginación y reconocer su valor social y cultural; por ejemplo: poemas, cuentos folclóricos y de autor, fábulas, leyendas, mitos, novelas, historietas, entre otros.', 'Lectura - Comprensión', NULL),
+    (4, 1, 'LE06 OA 04', 'Analizar aspectos relevantes de las narraciones leídas para profundizar su comprensión: identificar las acciones principales del relato y explicar cómo influyen en el desarrollo de la historia; explicar las actitudes y reacciones de los personajes de acuerdo con sus motivaciones y las situaciones que viven; describir el ambiente y las costumbres representadas en el texto y explicar su influencia en las acciones del relato; relacionar el relato, si es pertinente, con la época y el lugar en que se ambienta; interpretar el lenguaje figurado; expresar opiniones sobre las actitudes y acciones de los personajes y fundamentarlas con ejemplos del texto; llegar a conclusiones sustentadas en la información del texto; comparar textos de autores diferentes y justificar su preferencia por alguno.', 'Lectura - Comprensión', NULL),
+    (5, 1, 'LE06 OA 05', 'Analizar aspectos relevantes de diversos poemas para profundizar su comprensión: explicar cómo el lenguaje poético empleado por el autor apela a los sentidos, sugiere estados de ánimo y crea imágenes en el lector; identificar personificaciones, comparaciones e hipérboles y explicar su significado dentro del poema; analizar cómo los efectos sonoros (aliteración y onomatopeya) utilizados por el poeta refuerzan lo dicho.', 'Lectura - Comprensión', NULL),
+    (6, 1, 'LE06 OA 06', 'Leer independientemente y comprender textos no literarios (cartas, biografías, relatos históricos, libros y artículos informativos, noticias, etc.) para ampliar su conocimiento del mundo y formarse una opinión: extraer información explícita e implícita; hacer inferencias a partir de la información del texto y de sus experiencias y conocimientos; relacionar la información de imágenes, gráficos, tablas, mapas o diagramas con el texto; interpretar expresiones en lenguaje figurado; comparar información entre dos textos del mismo tema; formular una opinión sobre algún aspecto de la lectura y fundamentarla con información del texto o conocimientos previos.', 'Lectura - Comprensión', NULL),
+    (7, 1, 'LE06 OA 07', 'Evaluar críticamente la información presente en textos de diversa procedencia: determinar quién es el emisor, cuál es su propósito y a quién dirige el mensaje; evaluar si un texto entrega suficiente información para responder una pregunta o cumplir un propósito; comparar la información que se entrega sobre una misma noticia en distintas fuentes.', 'Lectura - Comprensión', NULL),
+    (8, 1, 'LE06 OA 08', 'Sintetizar, registrar y ordenar las ideas principales de textos leídos para satisfacer propósitos como estudiar, hacer una investigación, recordar detalles, entre otros.', 'Lectura - Comprensión', NULL),
+    (9, 1, 'LE06 OA 09', 'Desarrollar el gusto por la lectura, leyendo habitualmente diversos textos.', 'Lectura - Comprensión', NULL),
+    (10, 1, 'LE06 OA 10', 'Asistir habitualmente a la biblioteca para satisfacer diversos propósitos (seleccionar textos, investigar sobre un tema, informarse sobre actualidad, etc.), adecuando su comportamiento y cuidando el material para permitir el trabajo y la lectura de los demás.', 'Lectura - Comprensión', NULL),
+    (11, 1, 'LE06 OA 11', 'Buscar y comparar información sobre un tema, utilizando fuentes como internet, enciclopedias, libros y prensa, entre otras, para llevar a cabo una investigación.', 'Lectura - Comprensión', NULL),
+    (12, 1, 'LE06 OA 12', 'Aplicar estrategias para determinar el significado de palabras nuevas: claves contextuales; raíces y afijos; preguntar a otro; diccionarios, enciclopedias e internet.', 'Lectura - Comprensión', NULL),
+    (32, 4, 'MA06 OA 01', 'Demostrar que comprenden los factores y múltiplos: determinar los múltiplos y factores de números naturales menores de 100; identificar números primos y compuestos; resolver problemas que involucran múltiplos.', 'Números y operaciones', NULL),
+    (33, 4, 'MA06 OA 02', 'Realizar cálculos que involucren las cuatro operaciones en el contexto de la resolución de problemas, utilizando la calculadora en ámbitos superiores a 10 000.', 'Números y operaciones', NULL),
+    (34, 4, 'MA06 OA 03', 'Demostrar que comprenden el concepto de razón de manera concreta, pictórica y simbólica, en forma manual y/o usando software educativo.', 'Números y operaciones', NULL),
+    (35, 4, 'MA06 OA 04', 'Demostrar que comprenden el concepto de porcentaje de manera concreta, pictórica y simbólica, de forma manual y/o usando software educativo.', 'Números y operaciones', NULL),
+    (36, 4, 'MA06 OA 05', 'Demostrar que comprenden las fracciones y números mixtos: identificar y determinar equivalencias entre fracciones impropias y números mixtos usando material concreto y representaciones pictóricas, de manera manual y/o con software educativo; representar estos números en la recta numérica.', 'Números y operaciones', NULL),
+    (37, 4, 'MA06 OA 06', 'Resolver adiciones y sustracciones de fracciones propias e impropias y números mixtos con numeradores y denominadores de hasta dos dígitos.', 'Números y operaciones', NULL),
+    (38, 4, 'MA06 OA 07', 'Demostrar que comprenden la multiplicación y la división de decimales por números naturales de un dígito, múltiplos de 10 y decimales hasta la milésima, de manera concreta, pictórica y simbólica.', 'Números y operaciones', NULL),
+    (39, 4, 'MA06 OA 08', 'Resolver problemas rutinarios y no rutinarios que involucren adiciones y sustracciones de fracciones propias, impropias, números mixtos o decimales hasta la milésima.', 'Números y operaciones', NULL),
+    (56, 9, 'CN06 OA 01', 'Explicar, a partir de una investigación experimental, los requerimientos de agua, dióxido de carbono y energía lumínica para la producción de azúcar y liberación de oxígeno en la fotosíntesis, comunicando sus resultados y los aportes de científicos en este campo a través del tiempo.', 'Ciencias de la Vida', NULL),
+    (57, 9, 'CN06 OA 02', 'Representar, por medio de modelos, la transferencia de energía y materia desde los organismos fotosintéticos a otros seres vivos por medio de cadenas y redes alimentarias en diferentes ecosistemas.', 'Ciencias de la Vida', NULL),
+    (58, 9, 'CN06 OA 03', 'Analizar los efectos de la actividad humana sobre las redes alimentarias.', 'Ciencias de la Vida', NULL),
+    (59, 9, 'CN06 OA 04', 'Identificar y describir las funciones de las principales estructuras del sistema reproductor humano femenino y masculino.', 'Ciencias de la Vida', NULL),
+    (60, 9, 'CN06 OA 05', 'Describir y comparar los cambios que se producen en la pubertad en mujeres y hombres, reconociéndola como una etapa del desarrollo humano.', 'Ciencias de la Vida', NULL),
+    (61, 9, 'CN06 OA 06', 'Reconocer los beneficios de realizar actividad física en forma regular y de cuidar la higiene corporal en el período de la pubertad.', 'Ciencias de la Vida', NULL),
+    (62, 9, 'CN06 OA 07', 'Investigar y comunicar los efectos nocivos de algunas drogas para la salud, proponiendo conductas de protección.', 'Ciencias de la Vida', NULL),
+    (74, 12, 'HI06 OA 01', 'Explicar los múltiples antecedentes de la independencia de las colonias americanas y reconocer que la independencia de Chile se enmarca en un proceso continental.', 'Historia', NULL),
+    (75, 12, 'HI06 OA 02', 'Explicar el desarrollo del proceso de independencia de Chile, considerando actores y bandos que se enfrentaron, hombres y mujeres destacados, avances y retrocesos de la causa patriota y acontecimientos significativos, como el cabildo abierto de 1810 y la formación de la Primera Junta Nacional de Gobierno, la elección del primer Congreso Nacional, las batallas de Rancagua, Chacabuco y Maipú y la Declaración de la Independencia, entre otros.', 'Historia', NULL),
+    (76, 12, 'HI06 OA 03', 'Describir hitos y procesos de la organización de la república, incluyendo las dificultades y desafíos que implicó organizar en Chile una nueva forma de gobierno, el surgimiento de grupos con diferentes ideas políticas (conservadores y liberales), las características de la Constitución de 1833 y el impacto de las reformas realizadas por los liberales en la segunda mitad del siglo XIX.', 'Historia', NULL),
+    (77, 12, 'HI06 OA 04', 'Investigar aspectos culturales del siglo XIX, como los avances en educación y la fundación de instituciones, el aporte de intelectuales y científicos nacionales (por ejemplo, Diego Barros Arana, Benjamín Vicuña Mackenna y José Victorino Lastarria) y extranjeros (por ejemplo, Andrés Bello, Claudio Gay, Charles Darwin y María Graham), las primeras mujeres en obtener títulos universitarios y el impacto de la llegada del ferrocarril y otros avances tecnológicos.', 'Historia', NULL),
+    (78, 12, 'HI06 OA 05', 'Describir cómo se conformó el territorio de Chile durante el siglo XIX, considerando colonizaciones europeas, la incorporación de Isla de Pascua, la ocupación de la Araucanía, la Guerra del Pacífico y diversos conflictos bélicos, entre otros factores.', 'Historia', NULL),
+    (79, 12, 'HI06 OA 06', 'Caracterizar los principales aspectos que definieron el período de riqueza aportada por la explotación del salitre, considerando la expansión económica y el inicio de la cuestión social.', 'Historia', NULL),
+    (80, 12, 'HI06 OA 07', 'Explicar y dar ejemplos de la progresiva democratización de la sociedad durante el siglo XX, considerando el acceso creciente al voto, la participación de la mujer en la vida pública y el acceso a la educación y la cultura, entre otros.', 'Historia', NULL),
+    (81, 12, 'HI06 OA 08', 'Comparar diferentes visiones sobre el quiebre de la democracia en Chile, el régimen o dictadura militar y el proceso de recuperación de la democracia a fines del siglo XX, considerando los distintos actores, experiencias y puntos de vista, y el consenso actual con respecto al valor de la democracia.', 'Historia', NULL),
+    (82, 12, 'HI06 OA 09', 'Explicar y dar ejemplos de aspectos que se mantienen y aspectos que han cambiado o se han desarrollado en la sociedad chilena a lo largo de su historia.', 'Historia', NULL);
 
 -- ---------------------------------------------------------------------
--- D) Contenidos y recursos (1 por OA)
+-- D) Contenidos y recursos
 -- ---------------------------------------------------------------------
-
 INSERT INTO contenido (id, oa_id, titulo, explicacion, ejemplos, instrucciones, orden, origen) VALUES
-    (1, 1, 'De que se trata un texto informativo',
-        'Un texto informativo explica algo de forma ordenada. Su idea principal responde a la pregunta de que trata, y los detalles la acompanan sin reemplazarla. Para encontrarla, conviene leer el titulo y el primer parrafo antes de seguir.',
-        'Un texto sobre el ciclo del agua suele decir en su primera linea que tratara sobre ese proceso.',
-        'Busca el titulo y la primera frase. Escribi en una linea de que trata el texto.',
-        1, 'PROPIO'),
-    (2, 2, 'Cuando la imagen completa al texto',
-        'Muchos textos informativos incorporan imagenes, diagramas o infografias. La imagen no decora: aporta datos que el texto no repite. Para leerla hay que identificar que muestra, que rotulos tiene y que relacion propone.',
-        'En un diagrama de etapas, cada recuadro es un paso y las flechas indican el orden.',
-        'Mira la imagen y responde: que dato agrega al texto y donde lo encuentras.',
-        1, 'PROPIO'),
-    (3, 3, 'Elegir la operacion que corresponde',
-        'Un problema de la vida diaria se resuelve identificando primero que se pide y despues eligiendo la operacion. Sumar acumula, restar quita, multiplicar repite y divide repartir. Elegir mal la operacion es la causa mas comun de error.',
-        'Si hay 6 cajas con 8 utiles cada una y se necesitan 40, toca multiplicar y luego restar.',
-        'Subraya que se pide antes de calcular. Anota la operacion que elegiste y por que.',
-        1, 'PROPIO'),
-    (4, 4, 'Patrones que se repiten',
-        'Un patron es una secuencia que se repite con la misma regla. Se puede describir, continuar y anticipar. En figuras, el patron suele ser una regla de posicion o de forma que se aplica a cada elemento.',
-        'Una fila de 3 cuadrados y un circulo que se repite cada cuatro figuras.',
-        'Completa la secuencia y explica la regla con la que la completaste.',
-        1, 'PROPIO'),
-    (5, 5, 'La materia cambia de forma',
-        'La materia es todo lo que ocupa espacio. En los seres vivos cambia de forma sin dejar de ser materia: el hielo se derrite, una hoja verde se pone amarilla, la madera se convierte en ceniza. Estos cambios se pueden describir y observar.',
-        'Al dejar un cubo de hielo a temperatura ambiente, pasa de solido a liquido sin volverse otra sustancia.',
-        'Describe un cambio de estado o de aspecto que hayas observado en una planta o en un objeto.',
-        1, 'PROPIO'),
-    (6, 6, 'De donde sale la energia de una planta',
-        'Las plantas captan energia de la luz y la usan para fabricar su propio alimento. Ese alimento es la base de la cadena alimentaria: sin el, los animales no tendrian energia disponible.',
-        'Por eso las areas con poca luz tienen menos vegetacion y menos animales asociados.',
-        'Explica con tus palabras por que se dice que las plantas son la base de la cadena alimentaria.',
-        1, 'PROPIO'),
-    (7, 7, 'Ubicar un hecho en el tiempo y el lugar',
-        'Ubicar un hecho significa ubicar cuando ocurrio y donde. El tiempo se ordena con categorias amplias y el lugar se ubica con un punto de referencia mas general. Un mismo hecho puede explicarse distinto segun desde que lugar se mire.',
-        'La migracion del chancho de azucar se asocia al invierno en el hemisferio sur.',
-        'Ubica un hecho que ocurrio en tu comuna y di por que importa saber donde y cuando.',
-        1, 'PROPIO'),
-    (8, 8, 'Como las personas cambian su entorno',
-        'Las actividades humanas, como construir, cultivar o sacar minerales, modifican el ambiente. Los cambios pueden mejorar o deteriorar, y el efecto depende de como se haga la actividad.',
-        'Un parque bien cuidado mantiene arboles y deja el suelo permeable; uno descuidado pierde vegetacion.',
-        'Describe una actividad de tu barrio y que cambio produce en el ambiente.',
-        1, 'PROPIO');
-
+    (1, 2, 'Estrategias de comprensión lectora', 'Comprender un texto requiere construir significado: conectar sus ideas con conocimientos previos, releer pasajes poco claros, formular preguntas y resumir la información central. Un esquema ayuda a separar las ideas principales de los detalles.', 'Al leer una noticia sobre el agua, se puede resumir la idea central y anotar dos datos que la apoyan.', 'Lee un texto breve. Formula una pregunta, responde con información del texto y escribe un resumen de dos oraciones.', 1, 'PROPIO'),
+    (4, 35, 'Comprender y calcular porcentajes', 'Un porcentaje expresa una cantidad como parte de 100. Puede representarse con una cuadrícula de cien partes, como fracción con denominador 100 o con un número seguido del símbolo %.', 'Si 25 de 100 casillas están marcadas, está representado el 25 %. En una encuesta de 20 estudiantes, 5 equivalen al 25 %.', 'Representa 10 %, 25 % y 50 % de una cuadrícula de cien. Luego resuelve un problema sencillo e indica cómo encontraste el resultado.', 1, 'PROPIO'),
+    (9, 57, 'Cadenas y redes alimentarias', 'La materia y la energía pasan de los organismos fotosintéticos a otros seres vivos a través de la alimentación. Las flechas de una cadena alimentaria indican la dirección de la transferencia de materia y energía.', 'Hierba → saltamontes → rana → culebra muestra una posible relación alimentaria en un ecosistema.', 'Construye una cadena alimentaria de un ecosistema, identifica al productor y explica qué podría ocurrir si uno de sus organismos disminuye.', 1, 'PROPIO'),
+    (12, 75, 'El proceso de independencia de Chile', 'La independencia de Chile fue un proceso con avances y retrocesos, protagonizado por distintos grupos y personas. Entre sus hitos están el cabildo abierto de 1810, la Primera Junta de Gobierno, las batallas de Rancagua, Chacabuco y Maipú y la Declaración de Independencia.', 'Una línea de tiempo permite ordenar los hitos y relacionarlos con los cambios en el control político del territorio.', 'Ordena tres hitos del proceso de independencia y explica por qué uno de ellos fue importante para la causa patriota.', 1, 'PROPIO');
 INSERT INTO recurso_contenido (id, contenido_id, tipo, url, descripcion, origen) VALUES
-    (1, 1, 'IMAGEN', 'recursos/texto-informativo-organizacion.png', 'Diagrama con las cuatro partes de un texto informativo: titulo, introduccion, desarrollo y cierre.', 'PROPIO'),
-    (2, 2, 'IMAGEN', 'recursos/infografia-ciclo-agua.png', 'Infografia de seis recuadros con las etapas del ciclo del agua.', 'PROPIO'),
-    (3, 3, 'IMAGEN', 'recursos/jerarquia-operaciones.png', 'Organigrama que ordena las operaciones segun la accion que realizar.', 'PROPIO'),
-    (4, 4, 'IMAGEN', 'recursos/patrones-figuras.png', 'Franja con cinco figuras de una secuencia y la regla escrita al lado.', 'PROPIO'),
-    (5, 5, 'AUDIO', 'recursos/auditivo-cambio-estado.mp3', 'Transcripcion de una explicacion de 90 segundos sobre cambios de estado.', 'PROPIO'),
-    (6, 6, 'IMAGEN', 'recursos/cadena-alimentaria.png', 'Cadena de cuatro niveles con flechas que unen sol, planta, insecto y ave.', 'PROPIO'),
-    (7, 7, 'IMAGEN', 'recursos/mapa-comuna-marcadores.png', 'Mapa simple de la comuna con cuatro puntos de referencia y una leyenda.', 'PROPIO'),
-    (8, 8, 'AUDIO', 'recursos/auditivo-entorno-comunitario.mp3', 'Transcripcion de una entrevista breve a dos vecinos sobre su plaza.', 'PROPIO');
+    (1, 1, 'IMAGEN', 'recursos/6basico/eje-01-oa.png', 'Recurso visual de apoyo para estrategias de comprensión lectora, relacionado con LE06 OA 02.', 'PROPIO'),
+    (4, 4, 'IMAGEN', 'recursos/6basico/eje-04-oa.png', 'Recurso visual de apoyo para comprender y calcular porcentajes, relacionado con MA06 OA 04.', 'PROPIO'),
+    (9, 9, 'IMAGEN', 'recursos/6basico/eje-09-oa.png', 'Recurso visual de apoyo para cadenas y redes alimentarias, relacionado con CN06 OA 02.', 'PROPIO'),
+    (12, 12, 'IMAGEN', 'recursos/6basico/eje-12-oa.png', 'Recurso visual de apoyo para el proceso de independencia de chile, relacionado con HI06 OA 02.', 'PROPIO');
 
 -- ---------------------------------------------------------------------
--- E) Actividades (ACTIVIDAD, DESAFIO y PRUEBA_FINAL por unidad)
+-- E) Actividades: una práctica, un desafío y una prueba final por unidad
 -- ---------------------------------------------------------------------
-
-INSERT INTO actividad (id, unidad_id, titulo, tipo, orden) VALUES
-    (1, 1, 'Explorar un texto informativo', 'ACTIVIDAD', 1),
-    (2, 1, 'Desafio: reconstruir un aviso', 'DESAFIO', 2),
-    (3, 1, 'Prueba final de Lengua y Comunicacion', 'PRUEBA_FINAL', 3),
-    (4, 2, 'Explorar problemas de la vida diaria', 'ACTIVIDAD', 1),
-    (5, 2, 'Desafio: encontrar el patron', 'DESAFIO', 2),
-    (6, 2, 'Prueba final de Matematica', 'PRUEBA_FINAL', 3),
-    (7, 3, 'Explorar los cambios de la materia', 'ACTIVIDAD', 1),
-    (8, 3, 'Desafio: ordenar una cadena', 'DESAFIO', 2),
-    (9, 3, 'Prueba final de Ciencias Naturales', 'PRUEBA_FINAL', 3),
-    (10, 4, 'Explorar la ubicacion de un hecho', 'ACTIVIDAD', 1),
-    (11, 4, 'Desafio: comparar dos lugares', 'DESAFIO', 2),
-    (12, 4, 'Prueba final de Historia y Ciencias Sociales', 'PRUEBA_FINAL', 3);
+INSERT INTO actividad (id, unidad_id, contenido_id, titulo, tipo, orden) VALUES
+    (1, 1, 1, 'Actividad: Estrategias de comprensión lectora', 'ACTIVIDAD', 1),
+    (2, 1, 1, 'Desafío: aplicar estrategias de comprensión lectora', 'DESAFIO', 2),
+    (3, 1, NULL, 'Evaluación: Lectura - Comprensión', 'PRUEBA_FINAL', 3),
+    (10, 4, 4, 'Actividad: Comprender y calcular porcentajes', 'ACTIVIDAD', 1),
+    (11, 4, 4, 'Desafío: aplicar comprender y calcular porcentajes', 'DESAFIO', 2),
+    (12, 4, NULL, 'Evaluación: Números y operaciones', 'PRUEBA_FINAL', 3),
+    (25, 9, 9, 'Actividad: Cadenas y redes alimentarias', 'ACTIVIDAD', 1),
+    (26, 9, 9, 'Desafío: aplicar cadenas y redes alimentarias', 'DESAFIO', 2),
+    (27, 9, NULL, 'Evaluación: Ciencias de la Vida', 'PRUEBA_FINAL', 3),
+    (34, 12, 12, 'Actividad: El proceso de independencia de Chile', 'ACTIVIDAD', 1),
+    (35, 12, 12, 'Desafío: aplicar el proceso de independencia de chile', 'DESAFIO', 2),
+    (36, 12, NULL, 'Evaluación: Historia', 'PRUEBA_FINAL', 3);
 
 -- ---------------------------------------------------------------------
--- F) Preguntas y alternativas de las actividades 1, 4, 7 y 10,
---    y de la prueba final de la unidad 1 (actividad 3)
+-- F) Preguntas y alternativas de las actividades seleccionadas
 -- ---------------------------------------------------------------------
-
 INSERT INTO pregunta (id, actividad_id, unidad_id, oa_id, enunciado, criterio_respuesta, dificultad, orden) VALUES
-    (1, 3, 1, 1, 'Lee el siguiente texto sobre el ciclo del agua y responde: el texto informa principalmente sobre',
-        'Responde en una frase. Basta con nombrar el tema del texto.', 'BAJA', 1),
-    (2, 3, 1, 1, 'Cual de estas partes de un texto informativo aparece primero y anuncia de que se tratara',
-        'Marca una sola alternativa y explica en una linea por que.', 'BAJA', 2),
-    (3, 3, 1, 2, 'Observa la infografia que acompana al texto. Que dato aporta la imagen que el texto no repite',
-        'Menciona un dato concreto de la imagen.', 'MEDIA', 1),
-    (4, 3, 1, 2, 'En una secuencia de figuras donde se repite un circulo cada cuatro elementos, que figura ocupara la posicion 10',
-        'Escribe el numero de la posicion y el nombre de la figura.', 'MEDIA', 2),
-    (5, 3, 1, 1, 'Un texto explica que las plantas usan la luz para fabricar su alimento. De que tipo de texto se trata',
-        'Responde indicando el tipo y una caracteristica que lo delate.', 'ALTA', 1),
-    (6, 3, 1, 2, 'Dos personas leen el mismo texto pero sacan conclusiones distintas. Cual es la razon mas probable',
-        'Explica usando la idea de que los mensajes combinan texto e imagen.', 'ALTA', 2),
-    (7, 1, 1, 1, 'Cual es la idea principal de un texto informativo',
-        'Responde con una frase que resuma el tema.', 'BAJA', 1),
-    (8, 1, 1, 2, 'Que parte del texto anuncia de que se tratara',
-        'Marca una sola alternativa.', 'BAJA', 2),
-    (9, 4, 2, 3, 'Que operacion conviene para repartir una cantidad en partes iguales',
-        'Marca una sola alternativa.', 'BAJA', 1),
-    (10, 4, 2, 4, 'Que regla sigue una secuencia que repite un circulo cada cuatro figuras',
-        'Marca una sola alternativa.', 'MEDIA', 2),
-    (11, 7, 3, 5, 'Que cambio observable muestra que la materia cambia de forma',
-        'Marca una sola alternativa y justifica con un ejemplo.', 'BAJA', 1),
-    (12, 7, 3, 6, 'De donde obtienen energia las plantas',
-        'Marca una sola alternativa.', 'MEDIA', 2),
-    (13, 10, 4, 7, 'Que datos permiten ubicar un hecho en el tiempo y el espacio',
-        'Marca una sola alternativa.', 'BAJA', 1),
-    (14, 10, 4, 8, 'Como puede cambiar una actividad humana el ambiente de una comunidad',
-        'Marca una sola alternativa y menciona un efecto.', 'MEDIA', 2);
-
+    (1, 1, 1, 2, '¿Qué conviene hacer cuando una parte del texto no se comprende?', 'Indica una estrategia de comprensión lectora.', 'BAJA', 1),
+    (2, 2, 1, 2, '¿Para qué sirve resumir un texto?', 'Relaciona el resumen con las ideas principales.', 'BAJA', 2),
+    (3, 3, 1, 2, '¿Qué debe incluir un buen resumen?', 'Reconoce selección de información central.', 'MEDIA', 3),
+    (4, 3, 1, 2, 'Si una respuesta no aparece escrita literalmente, ¿qué puede hacer el lector?', 'Explica que puede inferir a partir de pistas y conocimientos previos.', 'MEDIA', 4),
+    (5, 3, 1, 2, '¿Cuál estrategia ayuda a comprobar una interpretación?', 'Selecciona una estrategia basada en evidencia textual.', 'ALTA', 5),
+    (16, 10, 4, 35, '¿Qué representa 25 %?', 'Interpreta porcentaje como parte de 100.', 'BAJA', 1),
+    (17, 11, 4, 35, '¿Cuánto es el 50 % de 20?', 'Calcula la mitad de una cantidad.', 'BAJA', 2),
+    (18, 12, 4, 35, 'En una encuesta de 100 personas, 30 prefieren leer. ¿Qué porcentaje corresponde?', 'Relaciona cantidad sobre 100 con porcentaje.', 'MEDIA', 3),
+    (19, 12, 4, 35, '¿Qué representación corresponde al 25 % de una cuadrícula de 100 casillas?', 'Identifica 25 de 100 casillas.', 'MEDIA', 4),
+    (20, 12, 4, 35, 'Una mochila cuesta $20 000 y tiene un descuento del 10 %. ¿Cuánto se descuenta?', 'Calcula 10 % de 20 000.', 'ALTA', 5),
+    (41, 25, 9, 57, '¿Qué organismos incorporan energía lumínica a muchas cadenas alimentarias?', 'Identifica productores fotosintéticos.', 'BAJA', 1),
+    (42, 26, 9, 57, '¿Qué indican las flechas en una cadena alimentaria?', 'Interpreta transferencia de materia y energía.', 'BAJA', 2),
+    (43, 27, 9, 57, 'En hierba → saltamontes → rana, ¿qué organismo es consumidor primario?', 'Reconoce quién se alimenta del productor.', 'MEDIA', 3),
+    (44, 27, 9, 57, '¿Qué podría suceder si disminuye mucho la población de productores?', 'Relaciona productores con disponibilidad de alimento y energía.', 'MEDIA', 4),
+    (45, 27, 9, 57, '¿Por qué las redes alimentarias representan mejor algunas relaciones que una sola cadena?', 'Reconoce múltiples relaciones tróficas.', 'ALTA', 5),
+    (56, 34, 12, 75, '¿Qué hito ocurrió en Chile en 1810?', 'Reconoce la Primera Junta/cabildo abierto.', 'BAJA', 1),
+    (57, 35, 12, 75, '¿Por qué se considera que la independencia de Chile fue un proceso?', 'Reconoce avances, retrocesos y distintos hitos.', 'BAJA', 2),
+    (58, 36, 12, 75, '¿Qué permite mostrar una línea de tiempo?', 'Organiza acontecimientos cronológicamente.', 'MEDIA', 3),
+    (59, 36, 12, 75, '¿Cuál de estos hitos se relaciona con la causa patriota?', 'Identifica batalla vinculada al proceso.', 'MEDIA', 4),
+    (60, 36, 12, 75, '¿Qué enfoque ayuda a explicar el proceso de independencia?', 'Considera actores, bandos y acontecimientos.', 'ALTA', 5);
 INSERT INTO alternativa (id, pregunta_id, texto, es_correcta) VALUES
-    (1, 1, 'las formas de empezar el dia', 0),
-    (2, 1, 'el proceso por el que el agua recorre la tierra', 1),
-    (3, 1, 'las plantas y su alimento', 0),
-    (4, 1, 'las partes de un texto', 0),
-    (5, 2, 'El desarrollo', 0),
-    (6, 2, 'El titulo', 1),
-    (7, 2, 'La conclusion', 0),
-    (8, 3, 'Un dato sobre etapas del agua que el texto no detalla', 1),
-    (9, 3, 'El numero de palabras del texto', 0),
-    (10, 3, 'El nombre de quien lo escribio', 0),
-    (11, 4, 'Un cuadrado', 0),
-    (12, 4, 'Un circulo', 1),
-    (13, 4, 'Un triangulo', 0),
-    (14, 5, 'Un texto informativo, porque explica un proceso de la naturaleza', 1),
-    (15, 5, 'Un texto poetico, porque usa imagenes', 0),
-    (16, 5, 'Un articulo de opinion, porque critica', 0),
-    (17, 6, 'Leyeron partes distintas del mensaje completo', 1),
-    (18, 6, 'El texto estaba mal escrito', 0),
-    (19, 6, 'No tenia imagenes', 0),
-    (20, 7, 'De que trata el texto y cual es su idea principal', 1),
-    (21, 7, 'Cuantas palabras tiene el texto', 0),
-    (22, 7, 'Quien escribio el texto', 0),
-    (23, 8, 'El titulo', 1),
-    (24, 8, 'La ultima frase', 0),
-    (25, 8, 'Las letras grandes', 0),
-    (26, 9, 'Dividir', 1),
-    (27, 9, 'Sumar', 0),
-    (28, 9, 'Multiplicar', 0),
-    (29, 10, 'Se repite cada cuatro posiciones', 1),
-    (30, 10, 'Cambia de color en cada figura', 0),
-    (31, 10, 'No sigue ninguna regla', 0),
-    (32, 11, 'El hielo pasa de solido a liquido', 1),
-    (33, 11, 'El hielo deja de ser materia', 0),
-    (34, 11, 'El agua se convierte en otra sustancia', 0),
-    (35, 12, 'De la luz', 1),
-    (36, 12, 'De los insectos que come', 0),
-    (37, 12, 'No necesita energia', 0),
-    (38, 13, 'Cuando ocurrio y donde ocurrio', 1),
-    (39, 13, 'Solo el nombre del protagonista', 0),
-    (40, 13, 'El color del mapa', 0),
-    (41, 14, 'Construir puede cambiar el suelo y la vegetacion', 1),
-    (42, 14, 'Las actividades humanas no afectan el ambiente', 0),
-    (43, 14, 'Solo el clima cambia el ambiente', 0);
+    (1, 1, 'Continuar sin prestar atención', 0),
+    (2, 1, 'Releer el pasaje y formular una pregunta', 1),
+    (3, 1, 'Mirar solo la última palabra', 0),
+    (4, 2, 'Para copiar todas las oraciones', 0),
+    (5, 2, 'Para reemplazar el título por una imagen', 0),
+    (6, 2, 'Para registrar sus ideas principales de forma breve', 1),
+    (7, 3, 'Las ideas principales del texto', 1),
+    (8, 3, 'Opiniones que no aparecen en el texto', 0),
+    (9, 3, 'Todas las palabras en el mismo orden', 0),
+    (10, 4, 'Inventar un dato sin revisar el texto', 0),
+    (11, 4, 'Relacionar pistas del texto con sus conocimientos', 1),
+    (12, 4, 'Ignorar la pregunta', 0),
+    (13, 5, 'Buscar pistas y releer la parte pertinente', 1),
+    (14, 5, 'Elegir la respuesta más larga', 0),
+    (15, 5, 'Cambiar de tema', 0),
+    (46, 16, '25 partes de cada 100', 1),
+    (47, 16, '25 partes de cada 10', 0),
+    (48, 16, '100 partes de cada 25', 0),
+    (49, 17, '5', 0),
+    (50, 17, '10', 1),
+    (51, 17, '15', 0),
+    (52, 18, '3 %', 0),
+    (53, 18, '70 %', 0),
+    (54, 18, '30 %', 1),
+    (55, 19, '25 casillas marcadas', 1),
+    (56, 19, '50 casillas marcadas', 0),
+    (57, 19, '75 casillas marcadas', 0),
+    (58, 20, '$10 000', 0),
+    (59, 20, '$2 000', 1),
+    (60, 20, '$200', 0),
+    (121, 41, 'Los productores fotosintéticos', 1),
+    (122, 41, 'Solo los consumidores terciarios', 0),
+    (123, 41, 'Los descomponedores exclusivamente', 0),
+    (124, 42, 'El tamaño de los organismos', 0),
+    (125, 42, 'La dirección de transferencia de materia y energía', 1),
+    (126, 42, 'La distancia entre hábitats', 0),
+    (127, 43, 'La hierba', 0),
+    (128, 43, 'La rana', 0),
+    (129, 43, 'El saltamontes', 1),
+    (130, 44, 'Podría reducirse el alimento para otros niveles', 1),
+    (131, 44, 'Todas las poblaciones aumentarían necesariamente', 0),
+    (132, 44, 'La red alimentaria no tendría ningún cambio', 0),
+    (133, 45, 'Muestran varias relaciones alimentarias conectadas', 1),
+    (134, 45, 'Solo muestran un organismo', 0),
+    (135, 45, 'Eliminan los productores', 0),
+    (166, 56, 'La batalla de Maipú', 0),
+    (167, 56, 'La Declaración de Independencia de 1818', 0),
+    (168, 56, 'El cabildo abierto y la formación de la Primera Junta de Gobierno', 1),
+    (169, 57, 'Porque ocurrió mediante distintos acontecimientos y etapas', 1),
+    (170, 57, 'Porque ocurrió en un único día sin conflictos', 0),
+    (171, 57, 'Porque no participaron personas', 0),
+    (172, 58, 'La altura de las montañas', 0),
+    (173, 58, 'El orden temporal de los acontecimientos', 1),
+    (174, 58, 'Solo la población actual', 0),
+    (175, 59, 'La formación de la ONU', 0),
+    (176, 59, 'La llegada del ferrocarril en el siglo XIX', 0),
+    (177, 59, 'La batalla de Chacabuco', 1),
+    (178, 60, 'Analizar actores, bandos, avances, retrocesos e hitos', 1),
+    (179, 60, 'Mencionar solo una fecha sin contexto', 0),
+    (180, 60, 'Excluir los acontecimientos políticos', 0);
 
 -- ---------------------------------------------------------------------
--- G) Asignaciones del docente
+-- G) Asignaciones a 6A
+--    Historia queda sin asignación inicial: el docente la crea después de que
+--    la UTP publique la unidad.
 -- ---------------------------------------------------------------------
-
-INSERT INTO asignacion (id, curso_id, unidad_id, docente_id, max_intentos, prueba_final_habilitada, fecha) VALUES
-    (1, 1, 1, 2, 2, 1, 1775462400000),
-    (2, 1, 2, 2, 2, 0, 1775462700000),
-    (3, 1, 3, 2, 1, 0, 1775463000000),
-    (4, 1, 4, 2, 1, 0, 1775463300000);
+INSERT INTO asignacion (id, curso_id, unidad_id, max_intentos, prueba_final_habilitada, fecha) VALUES
+    (1, 1, 1, 2, 1, 1775462400000),
+    (2, 1, 4, 2, 1, 1775462700000),
+    (3, 1, 9, 2, 1, 1775463000000);
 
 INSERT INTO asignacion_oa (asignacion_id, unidad_id, oa_id) VALUES
-    (1, 1, 1),
     (1, 1, 2),
-    (2, 2, 3),
-    (2, 2, 4),
-    (3, 3, 5),
-    (3, 3, 6),
-    (4, 4, 7),
-    (4, 4, 8);
+    (2, 4, 35),
+    (3, 9, 57);
 
 INSERT INTO asignacion_actividad (asignacion_id, unidad_id, actividad_id) VALUES
     (1, 1, 1),
-    (2, 2, 4),
-    (3, 3, 7),
-    (4, 4, 10);
+    (1, 1, 2),
+    (2, 4, 10),
+    (2, 4, 11),
+    (3, 9, 25),
+    (3, 9, 26);
 
 -- ---------------------------------------------------------------------
 -- H) Intentos y respuestas de ejemplo
---    Camila: 2 intentos (el ultimo completado), Mateo: 1 completado,
---    Javiera: 1 en progreso, Benjamin: sin intentos.
 -- ---------------------------------------------------------------------
-
 INSERT INTO intento (id, estudiante_id, actividad_id, numero, fecha_inicio, fecha_fin) VALUES
-    (1, 3, 3, 1, 1777888800000, 1777889640000),
-    (2, 3, 3, 2, 1778080800000, 1778081580000),
-    (3, 4, 3, 1, 1777978800000, 1777979940000),
-    (4, 5, 3, 1, 1778169600000, NULL);
+    (1, 3, 3, 1, 1777248000000, 1777248900000),
+    (2, 3, 3, 2, 1777420800000, 1777421580000),
+    (3, 4, 12, 1, 1777334400000, 1777335240000),
+    (4, 5, 27, 1, 1777680000000, NULL);
 
 INSERT INTO respuesta_estudiante (id, intento_id, pregunta_id, alternativa_id, es_correcta) VALUES
-    (1, 2, 1, 2, 1),
-    (2, 2, 2, 6, 1),
-    (3, 2, 3, 8, 1),
-    (4, 2, 4, 11, 0),
-    (5, 2, 5, 15, 0),
-    (6, 2, 6, 19, 0),
-    (7, 3, 1, 1, 0),
-    (8, 3, 2, 5, 0),
-    (9, 3, 3, 8, 1),
-    (10, 3, 4, 12, 1),
-    (11, 3, 5, 14, 1),
-    (12, 3, 6, 18, 0);
+    (1, 1, 3, 7, 1),
+    (2, 1, 4, 10, 0),
+    (3, 1, 5, 14, 0),
+    (4, 2, 3, 8, 0),
+    (5, 2, 4, 11, 1),
+    (6, 2, 5, 13, 1),
+    (7, 3, 18, 54, 1),
+    (8, 3, 19, 55, 1),
+    (9, 3, 20, 58, 0);
 
 -- ---------------------------------------------------------------------
 -- I) Informe de ejemplo de Camila en la unidad 1
---    OA 1 -> 2 correctas de 3 -> REFUERZO
---    OA 2 -> 1 correcta de 3 -> REFUERZO
 -- ---------------------------------------------------------------------
-
-INSERT INTO informe_pedagogico (id, estudiante_id, unidad_id, docente_id, fecha_generacion, estado, fecha_validacion) VALUES
-    (1, 3, 1, 2, 1778230800000, 'PENDIENTE_VALIDACION', NULL);
+INSERT INTO informe_pedagogico (
+    id, estudiante_id, unidad_id, docente_id, fecha_generacion, estado,
+    fecha_validacion, estudiante_nombre, unidad_titulo, asignatura_nombre,
+    docente_nombre
+) VALUES
+    (
+        1, 3, 1, 2, 1777852800000, 'PENDIENTE_VALIDACION', NULL,
+        'Camila Rivas', 'Lectura - Comprension',
+        'Lengua y Comunicacion', 'Diego Salinas'
+    );
 
 INSERT INTO detalle_informe_oa (id, informe_id, oa_id, total_preguntas, correctas, nivel) VALUES
-    (1, 1, 1, 3, 2, 'REFUERZO'),
-    (2, 1, 2, 3, 1, 'REFUERZO');
+    (1, 1, 2, 3, 2, 'REFUERZO');
 
--- El SQL de referencia no incluye `estado` en contenidos ni recursos. La app
--- lo agrega con valor por defecto y lo alinea con el estado de su unidad:
--- unidades 1, 3 y 4 publicadas; unidad 2 autorizada.
-UPDATE contenido SET estado = 'PUBLICADO' WHERE oa_id IN (1, 2, 5, 6, 7, 8);
-UPDATE contenido SET estado = 'AUTORIZADO' WHERE oa_id IN (3, 4);
-UPDATE recurso_contenido SET estado = 'PUBLICADO' WHERE contenido_id IN (1, 2, 5, 6, 7, 8);
-UPDATE recurso_contenido SET estado = 'AUTORIZADO' WHERE contenido_id IN (3, 4);
+-- ---------------------------------------------------------------------
+-- J) Estados de contenidos y recursos
+--    Las unidades 1, 4 y 9 están publicadas; Historia sigue en borrador.
+-- ---------------------------------------------------------------------
+UPDATE contenido SET estado = 'PUBLICADO' WHERE id IN (1, 4, 9);
+UPDATE contenido SET estado = 'BORRADOR' WHERE id = 12;
+
+UPDATE recurso_contenido SET estado = 'PUBLICADO' WHERE id IN (1, 4, 9);
+UPDATE recurso_contenido SET estado = 'BORRADOR' WHERE id = 12;

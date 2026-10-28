@@ -19,9 +19,9 @@ de planificación pedagogical (**MPAZ**), servida por un backend Spring Boot que
 
 | Rol (wire) | Identificador en el código | Qué hace en la app |
 |---|---|---|
-| `UTP` | `UserRole.UTP` | Jefe de UTP. Crea asignaturas y cursos, reviza y autoriza/publica unidades, gestiona usuarios. |
-| `DOCENTE` | `UserRole.DOCENTE` | Crea objetivos, contenidos, actividades y preguntas; asigna unidades a cursos; revisa informes de sus estudiantes. |
-| `ESTUDIANTE` | `UserRole.ESTUDIANTE` | Resuelve actividades asignadas, registra intentos y respuestas, consulta sus informes. |
+| `UTP` | `UserRole.UTP` | Jefe de UTP. Crea asignaturas y cursos, revisa y autoriza/publica unidades, gestiona usuarios y docencias. |
+| `DOCENTE` | `UserRole.DOCENTE` | Selecciona OAs y actividades existentes, asigna unidades a sus cursos, configura intentos y prueba final; genera y valida informes de sus estudiantes. |
+| `ESTUDIANTE` | `UserRole.ESTUDIANTE` | Resuelve actividades asignadas, registra intentos y respuestas, y consulta sus resultados. No accede a informes pedagógicos. |
 
 ---
 
@@ -205,7 +205,7 @@ Estas reglas existen para que la app se comporte igual que el backend:
 2. **Crear y editar son formularios distintos.** El `PUT` es parcial: el spec dice *"aplicando solo los
    valores enviados"*. Los `*FormScreen` de edición deben enviar **únicamente los campos modificados**.
 3. **El estado de la unidad gobierna la visibilidad:**
-   `DRAFT` → editable por UTP, oculta al estudiante · `IN_REVIEW` → espera la revisión de la UTP ·
+   `DRAFT` → material de trabajo del docente, oculto a la UTP y al estudiante · `IN_REVIEW` → espera la revisión de la UTP ·
    `AUTHORIZED` → visible al docente, UTP puede publicar ·
    `PUBLISHED` → visible al estudiante, solo lectura.
    El backend usa el mismo enum (`ContentStatus`) para la unidad, el contenido y el
@@ -237,10 +237,10 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 | Gap | Consecuencia |
 |---|---|
 | Los endpoints `/api/auth/*` no aparecen en `specs/endpoints`; están descritos en `specs/implementacion-sqlite.md`. | La app usa login JWT, `/auth/me` y logout; si cambia el contrato, actualizar DTOs y `RemoteAuthRepository`. |
-| No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra por `DRAFT` o `EN_REVISION` en cliente. |
-| No hay listado de estudiantes por curso. | El docente ve el listado de usuarios completo. |
+| No hay endpoint de "unidades pendientes de revisión". | El listado UTP filtra por `EN_REVISION` en cliente; los `BORRADOR` pertenecen al docente. |
+| El listado de estudiantes por curso es una extensión del contrato (`GET /api/cursos/{id}/estudiantes`). | La UTP y el docente lo usan en el detalle del curso y en el selector de informes; el docente solo ve sus cursos. |
 | Las "reglas 1, 2, 4, 7, 9, 11" del modelo no están en el repo. | Los mensajes se apoyan solo en `specs/endpoints`. |
-| `InitialSync` descarga el catálogo completo sin distinguir rol. | Si el backend restringe algún endpoint, la sync falla y se conserva la caché anterior. |
+| `/api/usuarios` está reservado a la UTP. | `InitialSync` cachea solo el usuario de la sesión para docente y estudiante; los nombres de estudiantes llegan en los informes. |
 
 ---
 
@@ -248,11 +248,9 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 - **No hacer commit ni push** salvo que se pida explícitamente. Si se pide, revisar antes
   `git status`, `git diff` y `git log --oneline -10`, y subir solo lo intencionado.
-- **No borrar ni reescribir código funcional existente** sin motivo explícito. Hoy hay 5 pantallas
-  y 13 componentes con implementación real (el vertical slice UTP: `LoginScreen`, `HomeUTPScreen`,
-  `UnitListScreen`, `UnitDetailScreen`, `UnitAuthorizationScreen`, más `UnitCard`, `UnitStatusChip`,
-  `UnitSummaryHeader` y las piezas de `ui/components/common/`), además de la capa de datos completa:
-  son la referencia de estilo de la app.
+- **No borrar ni reescribir código funcional existente** sin motivo explícito. Ya hay pantallas reales
+  para los tres roles (login, homes, unidades, asignaturas, cursos, usuarios, docencias, asignaciones,
+  actividades e informes), además de la capa de datos completa: son la referencia de estilo de la app.
 - **Al crear un archivo nuevo**, dejar en él un comentario en español que describa **qué debe contener**,
   mientras la implementación no esté escrita.
 - **Mantener `specs/components.md` al día.** Al implementar, cambiar o eliminar un componente,
@@ -268,11 +266,19 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 
 ## 7. Estado actual del proyecto
 
-La **capa de datos está completa**: los 8 enums, los 17 modelos, los 24 cuerpos de request y las
-14 interfaces implementan el contrato. Room tiene las 17 entidades, 7 DAOs, conversores, mappers,
-semilla desde `assets/database/seed.sql` e índice parcial de `PRUEBA_FINAL`. Las 14 interfaces
+La **capa de datos está completa**: los 8 enums, los 18 modelos, los 26 cuerpos de request y las
+15 interfaces implementan el contrato. Room tiene las 18 entidades, 8 DAOs, conversores, mappers,
+semilla desde `assets/database/seed.sql` e índice parcial de `PRUEBA_FINAL`. El seed local tiene
+cuatro unidades (una por asignatura), 36 OAs, una unidad de Historia en `BORRADOR` sin asignación
+inicial y contenidos/recursos sincronizados con el estado de su unidad. Al autorizar o publicar una
+unidad, `LocalUnitRepository` y `UnidadService` propagan ese estado a sus contenidos y recursos.
+El MVP limita la creación a una unidad por asignatura. El contenido y el recurso de contenido
+incluyen `estado` también en el backend. El APK release requiere `keystore.properties`; no se firma
+con la clave de debug. Las 15 interfaces
 tienen implementación offline-first en `data/local/repository/`; `AppContainer` las expone todas
 junto con `SessionStore`, `Session`, `AuthRepository`, `InitialSync` y el cliente Retrofit.
+Las asignaciones ya no guardan `docenteId`: el docente se deriva de la docencia del curso y la
+asignatura, y `DocenciaRepository` administra esa relación con caché Room.
 
 La **autenticación es real**: `LoginViewModel` usa `/api/auth/login`, el token persiste en DataStore,
 `Session` restaura y valida con `/auth/me`, un `401` limpia la sesión y un fallo de red conserva la
@@ -280,23 +286,40 @@ sesión. Logout y reset limpian la caché; el reset solo se muestra en debug.
 
 La **capa visual mantiene el vertical slice UTP**: `LoginScreen → HomeUTPScreen → UnitListScreen →
 UnitDetailScreen → UnitAuthorizationScreen`, ahora con datos del backend y respaldo en Room. El
-docente aterriza en `HomeTeacherScreen`, con sus cursos, unidades asignadas, actividades e informes
-pendientes; el estudiante aterriza en `HomeStudentScreen` con sus unidades y actividades pendientes.
-El docente ya cuenta con una **barra de navegación inferior** (`AppBottomBar`) con cuatro destinos:
-Inicio, Unidades, Asignaciones e Informes. El UTP ya muestra sus cinco destinos: Inicio, Unidades,
-Asignaturas, Cursos y Usuarios, con CRUD completo en Asignaturas, Cursos y Usuarios (crear, editar y
-borrar con confirmación y explicación del `409 Conflict`). El estudiante tiene cuatro destinos:
-Inicio, Unidades, Actividades e Informes. Desde Inicio puede iniciar o continuar un intento y ver su
-resultado; en el detalle de una unidad ve el resumen, los contenidos y las actividades. La UTP y el
-docente ven todo el material en modo lectura; el estudiante ve solo contenidos publicados y
-actividades asignadas, y puede resolverlas. La autorización solo se ofrece a la UTP en `EN_REVISION`
-o `AUTORIZADO`. En Actividades ve el estado de cada una y accede a su resultado; en Informes consulta
-sus informes pedagógicos y el detalle por objetivo de aprendizaje en modo lectura. Todas las
-pantallas reales exponen el botón de tema claro/oscuro (`ThemeToggleButton`), cuya elección persiste
-en `data/preferences/`.
+docente aterriza en `HomeTeacherScreen`, con sus asignaturas, cursos y actividades; el estudiante
+aterriza en `HomeStudentScreen` con sus unidades y actividades pendientes.
+El docente cuenta con una **barra de navegación inferior** (`AppBottomBar`) con cinco destinos:
+Inicio, Asignaturas, Cursos, Asignaciones e Informes. Sus asignaturas y cursos salen de las
+docencias; la pestaña Asignaturas es de solo lectura y el detalle filtra las unidades por curso.
+El backend también filtra contenidos, actividades, preguntas y alternativas del estudiante por sus
+OAs y actividades asignadas. El docente puede crear asignaciones solo para sus docencias y editar o borrar las propias; el
+listado se filtra por curso/asignatura. El backend valida ese ownership también en las asociaciones
+de OA y actividades. El docente puede crear contenidos, actividades, preguntas y alternativas en
+unidades `BORRADOR` de sus asignaturas; luego envía la unidad a `EN_REVISION` y la UTP la autoriza.
+El Home docente vuelve a mostrar los informes pendientes: la respuesta incluye
+los nombres del estudiante y la unidad, así que no consulta `/api/usuarios`. La pestaña Informes
+permite generar un informe eligiendo curso, estudiante y unidad; los estudiantes del curso salen de
+`GET /api/cursos/{id}/estudiantes` y las unidades solo de asignaciones del curso. El UTP muestra sus cinco
+destinos: Inicio, Revisión, Asignaturas, Cursos y Usuarios, con CRUD completo en Asignaturas, Cursos
+y Usuarios (crear, editar y borrar con confirmación y explicación del `409 Conflict`). La gestión de
+docencias se abre desde el Home UTP y desde el detalle de un curso; no ocupa una sexta pestaña.
+El estudiante tiene tres destinos: Inicio, Asignaturas y Actividades. No accede a informes.
+Desde Inicio ve su curso como título de contexto, un carrusel con sus asignaturas y puede iniciar o
+continuar un intento. Cada
+asignatura abre su detalle con las unidades publicadas y asignadas a su curso. En el detalle de una
+unidad ve el resumen, los contenidos y la prueba final. Las actividades regulares se abren desde el
+detalle de su contenido. La UTP y el docente ven todo el material en modo lectura; el estudiante ve
+solo contenidos publicados de los OAs asignados y actividades asignadas, y puede resolverlas desde
+el contenido. La autorización solo se ofrece a la UTP en `EN_REVISION` o `AUTORIZADO`.
+En Actividades ve el estado de cada una, accede a su resultado y puede repetir la prueba final
+mientras no alcance `maxIntentos`; también aparece en el Home si todavía quedan intentos. Los
+informes pedagógicos son exclusivos del docente. Todas las pantallas reales exponen el botón de tema claro/oscuro
+(`ThemeToggleButton`), cuya elección persiste en `data/preferences/`.
 El resto de pantallas sigue como esqueleto documentado.
 
-Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red y fallback de caché. Las
+Los tests JVM cubren mocks, conversores, mappers DTO, errores HTTP/red, fallback de caché y el flujo
+docente por docencias (Home, listado de asignaturas, filtro de unidades por curso y creación de
+asignaciones) y el CRUD de docencias de la UTP. Las
 pruebas instrumentadas de Room cubren FK, únicos, PK compuesta, índice parcial, transacción y seed;
 las pruebas de UI de Compose cubren el cambio de alternativa, el scroll del Inicio y las acciones de
 la tarjeta de informe. Todas las pruebas instrumentadas requieren emulador o dispositivo y todavía

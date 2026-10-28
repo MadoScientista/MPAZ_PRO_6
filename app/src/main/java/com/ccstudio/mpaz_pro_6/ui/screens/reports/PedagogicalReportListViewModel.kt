@@ -11,22 +11,19 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
-import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.repository.PedagogicalReportRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
-import com.ccstudio.mpaz_pro_6.data.repository.UserRepository
 import kotlinx.coroutines.launch
 
 /**
  * Estado del listado de informes pedagógicos del docente.
  *
- * El backend no admite el filtro `?docenteId`, así que los informes se cargan
- * completos y se filtran en cliente por [teacherId]. Los usuarios y las unidades
- * se cargan para resolver los nombres que el informe solo trae como ids.
+ * El backend limita el listado al docente autenticado. Las unidades se cargan
+ * para resolver el título cuando la respuesta no trae `unidadTitulo`; el nombre
+ * del estudiante llega en el propio informe.
  */
 class PedagogicalReportListViewModel(
     private val pedagogicalReportRepository: PedagogicalReportRepository,
-    private val userRepository: UserRepository,
     private val unitRepository: UnitRepository,
     private val teacherId: Int
 ) : ViewModel() {
@@ -35,11 +32,7 @@ class PedagogicalReportListViewModel(
     var informes by mutableStateOf<List<PedagogicalReport>>(emptyList())
         private set
 
-    /** Usuarios, para resolver el nombre del estudiante. */
-    var usuarios by mutableStateOf<List<User>>(emptyList())
-        private set
-
-    /** Unidades, para resolver el nombre de la unidad. */
+    /** Unidades, para resolver el título cuando el informe no lo trae. */
     var unidades by mutableStateOf<List<LearningUnit>>(emptyList())
         private set
 
@@ -64,13 +57,6 @@ class PedagogicalReportListViewModel(
                 return@launch
             }
 
-            val usuariosResult = userRepository.list()
-            if (usuariosResult.isFailure) {
-                error = usuariosResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
-            }
-
             val unidadesResult = unitRepository.list()
             if (unidadesResult.isFailure) {
                 error = unidadesResult.exceptionOrNull() as? ApiError
@@ -80,7 +66,6 @@ class PedagogicalReportListViewModel(
 
             informes = informesResult.getOrDefault(emptyList())
                 .filter { it.docenteId == teacherId }
-            usuarios = usuariosResult.getOrDefault(emptyList())
             unidades = unidadesResult.getOrDefault(emptyList())
             isLoading = false
         }
@@ -91,14 +76,12 @@ class PedagogicalReportListViewModel(
         /** Factoría del ViewModel con los repositorios del listado. */
         fun factory(
             pedagogicalReportRepository: PedagogicalReportRepository,
-            userRepository: UserRepository,
             unitRepository: UnitRepository,
             teacherId: Int
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 PedagogicalReportListViewModel(
                     pedagogicalReportRepository = pedagogicalReportRepository,
-                    userRepository = userRepository,
                     unitRepository = unitRepository,
                     teacherId = teacherId
                 )

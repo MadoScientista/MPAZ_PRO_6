@@ -45,6 +45,12 @@ object AppRoutes {
     /** Formulario de curso; sin `courseId` crea, con id edita. */
     const val COURSE_FORM = "courseForm?courseId={courseId}"
 
+    /** Listado de docencias (UTP); el curso es un filtro inicial opcional. */
+    const val DOCENCIAS = "docencias?courseId={courseId}"
+
+    /** Formulario de docencia; sin `docenciaId` crea, con id edita. */
+    const val DOCENCIA_FORM = "docenciaForm?docenciaId={docenciaId}&courseId={courseId}"
+
     /** Listado de usuarios (UTP). */
     const val USERS = "users"
 
@@ -56,6 +62,21 @@ object AppRoutes {
 
     /** Detalle de un contenido. */
     const val CONTENT_DETAIL = "contentDetail/{contentId}"
+
+    /** Formulario de creación de contenido dentro de una unidad. */
+    const val CONTENT_FORM = "contentForm/{unitId}"
+
+    /** Detalle de una actividad para gestionar sus preguntas. */
+    const val ACTIVITY_DETAIL = "activityDetail/{activityId}"
+
+    /** Formulario de creación de actividad dentro de un contenido. */
+    const val ACTIVITY_FORM = "activityForm/{unitId}?contentId={contentId}"
+
+    /** Formulario de creación de una pregunta. */
+    const val QUESTION_FORM = "questionForm/{activityId}/{unitId}"
+
+    /** Formulario de creación de una alternativa. */
+    const val ALTERNATIVE_FORM = "alternativeForm/{questionId}"
 
     /** Resultado de un intento. */
     const val ATTEMPT_RESULT = "attemptResult/{attemptId}"
@@ -72,11 +93,17 @@ object AppRoutes {
     /** Detalle de una asignación. */
     const val ASSIGNMENT_DETAIL = "assignmentDetail/{assignmentId}"
 
+    /** Creación de una asignación. */
+    const val ASSIGNMENT_CREATE = "assignmentCreate"
+
     /** Edición de una asignación. */
     const val ASSIGNMENT_FORM = "assignmentForm/{assignmentId}"
 
     /** Listado de informes pedagógicos (docente). */
     const val REPORTS = "reports"
+
+    /** Generación de un informe pedagógico (docente). */
+    const val REPORT_GENERATE = "reportGenerate"
 
     /** Construye la ruta del detalle de una unidad. */
     fun unitDetail(unitId: Int): String = "unitDetail/$unitId"
@@ -98,6 +125,23 @@ object AppRoutes {
     /** Construye la ruta del detalle de un curso. */
     fun courseDetail(courseId: Int): String = "courseDetail/$courseId"
 
+    /** Construye la ruta del listado de docencias, con filtro inicial opcional. */
+    fun docencias(courseId: Int? = null): String =
+        if (courseId == null) "docencias" else "docencias?courseId=$courseId"
+
+    /** Construye la ruta del formulario de docencia. */
+    fun docenciaForm(docenciaId: Int? = null, courseId: Int? = null): String {
+        val params = buildList {
+            docenciaId?.let { add("docenciaId=$it") }
+            courseId?.let { add("courseId=$it") }
+        }
+        return if (params.isEmpty()) {
+            "docenciaForm"
+        } else {
+            "docenciaForm?${params.joinToString("&")}"
+        }
+    }
+
     /** Construye la ruta del formulario de usuario. */
     fun userForm(userId: Int? = null): String =
         if (userId == null) "userForm" else "userForm?userId=$userId"
@@ -107,6 +151,24 @@ object AppRoutes {
 
     /** Construye la ruta de detalle de un contenido. */
     fun contentDetail(contentId: Int): String = "contentDetail/$contentId"
+
+    /** Construye la ruta del formulario de contenido de una unidad. */
+    fun contentForm(unitId: Int): String = "contentForm/$unitId"
+
+    /** Construye la ruta de detalle de una actividad. */
+    fun activityDetail(activityId: Int): String = "activityDetail/$activityId"
+
+    /** Construye la ruta del formulario de actividad de un contenido. */
+    fun activityForm(unitId: Int, contentId: Int): String =
+        "activityForm/$unitId?contentId=$contentId"
+
+    /** Construye la ruta del formulario de pregunta. */
+    fun questionForm(activityId: Int, unitId: Int): String =
+        "questionForm/$activityId/$unitId"
+
+    /** Construye la ruta del formulario de alternativa. */
+    fun alternativeForm(questionId: Int): String =
+        "alternativeForm/$questionId"
 
     /** Construye la ruta del resultado de un intento. */
     fun attemptResult(attemptId: Int): String = "attemptResult/$attemptId"

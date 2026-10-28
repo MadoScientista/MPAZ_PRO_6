@@ -18,7 +18,7 @@ class RoleBottomDestinationsTest {
         assertEquals(
             listOf(
                 AppRoutes.HOME,
-                AppRoutes.UNITS,
+                AppRoutes.SUBJECTS,
                 AppRoutes.COURSES,
                 AppRoutes.ASSIGNMENTS,
                 AppRoutes.REPORTS
@@ -42,13 +42,12 @@ class RoleBottomDestinationsTest {
     }
 
     @Test
-    fun estudianteTieneLosCuatroDestinosSuperiores() {
+    fun estudianteTieneTresDestinosSuperiores() {
         assertEquals(
             listOf(
                 AppRoutes.HOME,
-                AppRoutes.UNITS,
-                AppRoutes.ACTIVITIES,
-                AppRoutes.REPORTS
+                AppRoutes.SUBJECTS,
+                AppRoutes.ACTIVITIES
             ),
             bottomDestinationsFor(UserRole.ESTUDIANTE).map { it.route }
         )

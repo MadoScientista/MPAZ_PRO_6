@@ -17,6 +17,7 @@ import com.ccstudio.mpaz_pro_6.data.model.Attempt
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.Docencia
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
@@ -31,6 +32,7 @@ import com.ccstudio.mpaz_pro_6.data.model.requests.CreateAssignmentRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateContentRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateContentResourceRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateCourseRequest
+import com.ccstudio.mpaz_pro_6.data.model.requests.CreateDocenciaRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateLearningObjectiveRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateLearningUnitRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreatePedagogicalReportRequest
@@ -44,6 +46,7 @@ import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateAssignmentRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateContentRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateContentResourceRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateCourseRequest
+import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateDocenciaRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateLearningObjectiveRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateLearningUnitRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateQuestionRequest
@@ -64,6 +67,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateAssignmentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateContentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateContentResourceRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateCourseRequestDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateDocenciaRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateLearningObjectiveRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateLearningUnitRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreatePedagogicalReportRequestDto
@@ -71,6 +75,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateQuestionRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateStudentAnswerRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateSubjectRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateUserRequestDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.DocenciaDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.LearningObjectiveDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.LearningUnitDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.PedagogicalReportDto
@@ -84,6 +89,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateAssignmentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateContentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateContentResourceRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateCourseRequestDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateDocenciaRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateLearningObjectiveRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateLearningUnitRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateQuestionRequestDto
@@ -97,6 +103,17 @@ fun SubjectDto.toDomain() = Subject(id = id, nombre = nombre)
 
 /** Convierte un curso wire en modelo de dominio. */
 fun CourseDto.toDomain() = Course(id = id, nombre = nombre, anio = anio)
+
+/** Convierte una docencia wire en modelo de dominio. */
+fun DocenciaDto.toDomain() = Docencia(
+    id = id,
+    docenteId = docenteId,
+    docenteNombre = docenteNombre,
+    cursoId = cursoId,
+    cursoNombre = cursoNombre,
+    asignaturaId = asignaturaId,
+    asignaturaNombre = asignaturaNombre
+)
 
 /** Convierte un usuario wire en modelo de dominio. */
 fun UserDto.toDomain() = User(
@@ -157,6 +174,7 @@ fun ContentResourceDto.toDomain() = ContentResource(
 fun ActivityDto.toDomain() = Activity(
     id = id,
     unidadId = unidadId,
+    contenidoId = contenidoId,
     titulo = titulo,
     tipo = ActivityType.fromWire(tipo) ?: unknown("ActivityType", tipo),
     orden = orden
@@ -187,7 +205,6 @@ fun AssignmentDto.toDomain() = Assignment(
     id = id,
     cursoId = cursoId,
     unidadId = unidadId,
-    docenteId = docenteId,
     maxIntentos = maxIntentos,
     pruebaFinalHabilitada = pruebaFinalHabilitada,
     fecha = fecha.toInstant()
@@ -234,7 +251,11 @@ fun PedagogicalReportDto.toDomain() = PedagogicalReport(
     docenteId = docenteId,
     fechaGeneracion = fechaGeneracion.toInstant(),
     fechaValidacion = fechaValidacion?.toInstant(),
-    estado = ReportStatus.fromWire(estado) ?: unknown("ReportStatus", estado)
+    estado = ReportStatus.fromWire(estado) ?: unknown("ReportStatus", estado),
+    estudianteNombre = estudianteNombre,
+    unidadTitulo = unidadTitulo,
+    asignaturaNombre = asignaturaNombre,
+    docenteNombre = docenteNombre
 )
 
 /** Convierte un detalle de informe wire en modelo de dominio. */
@@ -354,6 +375,7 @@ fun CreateActivityRequest.toDto() = CreateActivityRequestDto(
     unidadId = unidadId,
     titulo = titulo,
     tipo = tipo.wireValue,
+    contenidoId = contenidoId,
     orden = orden
 )
 
@@ -361,7 +383,9 @@ fun CreateActivityRequest.toDto() = CreateActivityRequestDto(
 fun UpdateActivityRequest.toDto() = UpdateActivityRequestDto(
     titulo = titulo,
     tipo = tipo?.wireValue,
-    orden = orden
+    orden = orden,
+    contenidoId = contenidoId,
+    desasociarContenido = desasociarContenido
 )
 
 /** Convierte una solicitud de pregunta al cuerpo wire. */
@@ -400,10 +424,21 @@ fun UpdateAlternativeRequest.toDto() = UpdateAlternativeRequestDto(
 fun CreateAssignmentRequest.toDto() = CreateAssignmentRequestDto(
     cursoId = cursoId,
     unidadId = unidadId,
-    docenteId = docenteId,
     fecha = fecha.toString(),
     maxIntentos = maxIntentos,
     pruebaFinalHabilitada = pruebaFinalHabilitada
+)
+
+/** Convierte una solicitud de docencia al cuerpo wire. */
+fun CreateDocenciaRequest.toDto() = CreateDocenciaRequestDto(
+    docenteId = docenteId,
+    cursoId = cursoId,
+    asignaturaId = asignaturaId
+)
+
+/** Convierte una actualización de docencia al cuerpo wire. */
+fun UpdateDocenciaRequest.toDto() = UpdateDocenciaRequestDto(
+    docenteId = docenteId
 )
 
 /** Convierte una actualización parcial de asignación al cuerpo wire. */

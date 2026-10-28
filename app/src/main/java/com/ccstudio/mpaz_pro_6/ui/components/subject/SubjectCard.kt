@@ -34,10 +34,10 @@ import com.ccstudio.mpaz_pro_6.ui.theme.subjectAccent
 /**
  * Tarjeta de una asignatura en el listado.
  *
- * Muestra el badge con el color de la materia, el nombre, la cantidad de
- * unidades y un chip con las unidades pendientes de revisión. Toda la tarjeta
- * abre el detalle de la asignatura; los iconos de editar y eliminar quedan como
- * acciones separadas.
+ * Muestra el badge con el color de la materia, el nombre, los cursos opcionales,
+ * la cantidad de unidades y, para la UTP, un chip con las unidades pendientes de
+ * revisión. Toda la tarjeta abre el detalle de la asignatura; los iconos de
+ * editar y eliminar quedan como acciones separadas.
  *
  * El borrado siempre se ofrece; si la asignatura tiene unidades asociadas, el
  * backend responde `409 Conflict` y la pantalla lo explica.
@@ -51,7 +51,9 @@ fun SubjectCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
-    showActions: Boolean = true
+    coursesLabel: String = "",
+    showActions: Boolean = true,
+    showPending: Boolean = true
 ) {
     val accent = subjectAccent(subject.nombre) ?: MaterialTheme.colorScheme.primary
     val appColors = LocalAppColors.current
@@ -99,9 +101,14 @@ fun SubjectCard(
                     )
 
                     Text(
-                        text = unitCountLabel(unitCount),
+                        text = listOfNotNull(
+                            coursesLabel.takeIf { it.isNotBlank() },
+                            unitCountLabel(unitCount)
+                        ).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
@@ -123,11 +130,13 @@ fun SubjectCard(
                 }
             }
 
-            StatusChip(
-                label = pendingLabel(pendingCount),
-                containerColor = pendingColors.container,
-                contentColor = pendingColors.content
-            )
+            if (showPending) {
+                StatusChip(
+                    label = pendingLabel(pendingCount),
+                    containerColor = pendingColors.container,
+                    contentColor = pendingColors.content
+                )
+            }
         }
     }
 }

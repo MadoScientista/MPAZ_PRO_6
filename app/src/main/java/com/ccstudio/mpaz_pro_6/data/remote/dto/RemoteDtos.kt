@@ -82,6 +82,7 @@ data class ContentResourceDto(
 data class ActivityDto(
     val id: Int,
     val unidadId: Int,
+    val contenidoId: Int? = null,
     val titulo: String,
     val tipo: String,
     val orden: Int = 1
@@ -112,10 +113,21 @@ data class AssignmentDto(
     val id: Int,
     val cursoId: Int,
     val unidadId: Int,
-    val docenteId: Int,
     val maxIntentos: Int? = null,
     val pruebaFinalHabilitada: Boolean = false,
     val fecha: String
+)
+
+/** Docencia de un docente en un curso y una asignatura. */
+@Serializable
+data class DocenciaDto(
+    val id: Int,
+    val docenteId: Int,
+    val docenteNombre: String,
+    val cursoId: Int,
+    val cursoNombre: String,
+    val asignaturaId: Int,
+    val asignaturaNombre: String
 )
 
 @Serializable
@@ -155,8 +167,12 @@ data class StudentAnswerDto(
 data class PedagogicalReportDto(
     val id: Int,
     val estudianteId: Int,
+    val estudianteNombre: String? = null,
     val unidadId: Int,
+    val unidadTitulo: String? = null,
+    val asignaturaNombre: String? = null,
     val docenteId: Int,
+    val docenteNombre: String? = null,
     val fechaGeneracion: String,
     val fechaValidacion: String? = null,
     val estado: String
@@ -298,6 +314,7 @@ data class CreateActivityRequestDto(
     val unidadId: Int,
     val titulo: String,
     val tipo: String,
+    val contenidoId: Int? = null,
     val orden: Int? = null
 )
 
@@ -305,7 +322,9 @@ data class CreateActivityRequestDto(
 data class UpdateActivityRequestDto(
     val titulo: String? = null,
     val tipo: String? = null,
-    val orden: Int? = null
+    val orden: Int? = null,
+    val contenidoId: Int? = null,
+    val desasociarContenido: Boolean? = null
 )
 
 @Serializable
@@ -344,10 +363,21 @@ data class UpdateAlternativeRequestDto(
 data class CreateAssignmentRequestDto(
     val cursoId: Int,
     val unidadId: Int,
-    val docenteId: Int,
     val fecha: String,
     val maxIntentos: Int? = null,
     val pruebaFinalHabilitada: Boolean? = null
+)
+
+@Serializable
+data class CreateDocenciaRequestDto(
+    val docenteId: Int,
+    val cursoId: Int,
+    val asignaturaId: Int
+)
+
+@Serializable
+data class UpdateDocenciaRequestDto(
+    val docenteId: Int
 )
 
 @Serializable

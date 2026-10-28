@@ -6,8 +6,9 @@ import java.time.Instant
  * Asignación de una unidad a un curso.
  *
  * Refleja 1:1 el `AsignacionResponse` del backend (`/api/asignaciones`): `id`,
- * `cursoId`, `unidadId`, `docenteId`, `maxIntentos`, `pruebaFinalHabilitada` y
- * `fecha`. El par curso-unidad es único y el docente debe tener rol `DOCENTE`.
+ * `cursoId`, `unidadId`, `maxIntentos`, `pruebaFinalHabilitada` y `fecha`. El
+ * docente se deriva de la docencia del curso y la asignatura de la unidad; la
+ * asignación ya no guarda `docenteId`.
  *
  * `maxIntentos` limita los intentos de la `PRUEBA_FINAL` y es `null` cuando la
  * asignación no impone ningún límite. `pruebaFinalHabilitada` decide si la prueba
@@ -18,7 +19,6 @@ data class Assignment(
     val id: Int,
     val cursoId: Int,
     val unidadId: Int,
-    val docenteId: Int,
     val maxIntentos: Int?,
     val pruebaFinalHabilitada: Boolean,
     val fecha: Instant

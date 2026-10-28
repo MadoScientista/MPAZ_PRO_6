@@ -33,6 +33,14 @@ interface UnitRepository {
     suspend fun update(id: Int, request: UpdateLearningUnitRequest): Result<LearningUnit>
 
     /**
+     * Envía una unidad en borrador a revisión de la UTP.
+     *
+     * Solo el docente dueño de la asignatura puede hacerlo. La unidad debe estar
+     * en `DRAFT`; después queda en `IN_REVIEW`.
+     */
+    suspend fun sendToReview(id: Int): Result<LearningUnit>
+
+    /**
      * Elimina una unidad.
      *
      * Falla con `ApiError.Conflict` si tiene objetivos, actividades, asignaciones

@@ -219,6 +219,25 @@ class MockUnitRepository(
         Result.success(updated)
     }
 
+    override suspend fun sendToReview(id: Int): Result<LearningUnit> =
+        store.mutex.withLock {
+            val unit = store.units.find { it.id == id }
+
+            if (unit == null) {
+                return Result.failure(ApiError.NotFound("No existe la unidad con id $id."))
+            }
+
+            if (unit.estado != ContentStatus.DRAFT) {
+                return Result.failure(
+                    ApiError.BadRequest("Solo se puede enviar a revisión una unidad en borrador.")
+                )
+            }
+
+            val updated = unit.copy(estado = ContentStatus.IN_REVIEW)
+            store.units[store.units.indexOf(unit)] = updated
+            Result.success(updated)
+        }
+
     override suspend fun delete(id: Int): Result<Unit> = store.mutex.withLock {
         val unit = store.units.find { it.id == id }
 

@@ -38,8 +38,12 @@ enum class StudentActivityStatus {
  * Tarjeta de una actividad en el listado del estudiante.
  *
  * Muestra el tipo, el título, la unidad y el estado de realización. El texto de
- * acción cambia según el estado: resolver, continuar o ver el resultado. La
- * pantalla decide a dónde navegar; la tarjeta solo emite el toque.
+ * acción cambia según el estado: resolver, continuar, repetir la prueba final o
+ * ver el resultado. La pantalla decide a dónde navegar; la tarjeta solo emite el
+ * toque.
+ *
+ * @param canRetry `true` cuando la prueba final ya se completó pero todavía
+ * quedan intentos disponibles.
  */
 @Composable
 fun StudentActivityCard(
@@ -48,7 +52,8 @@ fun StudentActivityCard(
     status: StudentActivityStatus,
     attemptsCount: Int,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canRetry: Boolean = false
 ) {
     Card(
         onClick = onClick,
@@ -111,7 +116,7 @@ fun StudentActivityCard(
                 )
 
                 Text(
-                    text = status.actionLabel,
+                    text = if (canRetry) "Repetir prueba" else status.actionLabel,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -124,7 +129,11 @@ fun StudentActivityCard(
  * Tarjeta compacta de una actividad para el carrusel del panel del estudiante.
  *
  * Muestra el tipo, el orden, el estado, el título, la unidad y la acción
- * (“Resolver” o “Continuar”). Tocar la tarjeta abre el intento correspondiente.
+ * (“Resolver”, “Continuar” o “Repetir prueba”). Tocar la tarjeta abre el intento
+ * correspondiente.
+ *
+ * @param canRetry `true` cuando la prueba final ya se completó pero todavía
+ * quedan intentos disponibles.
  */
 @Composable
 fun StudentActivityCarouselCard(
@@ -132,7 +141,8 @@ fun StudentActivityCarouselCard(
     unitTitle: String,
     status: StudentActivityStatus,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canRetry: Boolean = false
 ) {
     Card(
         onClick = onClick,
@@ -190,7 +200,7 @@ fun StudentActivityCarouselCard(
             )
 
             Text(
-                text = status.actionLabel,
+                text = if (canRetry) "Repetir prueba" else status.actionLabel,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )

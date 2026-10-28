@@ -36,9 +36,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCard
 /**
  * Listado de asignaturas.
  *
- * Consume `GET /api/asignaturas` (ordenado por nombre) y busca por texto libre
- * en cliente. Permite crear, editar y borrar: el borrado siempre se ofrece y el
- * `409 Conflict` se explica con el mensaje que entrega el ViewModel.
+ * Consume el listado de asignaturas y busca por texto libre en cliente. Para la
+ * UTP permite crear, editar y borrar; para el docente y el estudiante es de solo
+ * lectura y solo recibe las asignaturas con unidades visibles para su curso.
  */
 @Composable
 fun SubjectListScreen(
@@ -53,7 +53,10 @@ fun SubjectListScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
-    error: ApiError? = null
+    error: ApiError? = null,
+    title: String = "Asignaturas del currículo",
+    canManage: Boolean = true,
+    cursosPorAsignatura: Map<Int, List<String>> = emptyMap()
 ) {
     var search by rememberSaveable { mutableStateOf("") }
     var pendienteEliminar by remember { mutableStateOf<Subject?>(null) }
@@ -79,7 +82,7 @@ fun SubjectListScreen(
 
                 else -> {
                     Text(
-                        text = "Asignaturas del currículo",
+                        text = title,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -90,10 +93,12 @@ fun SubjectListScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
 
-                    AppButton(
-                        text = "Nueva asignatura",
-                        onClick = onCreate
-                    )
+                    if (canManage) {
+                        AppButton(
+                            text = "Nueva asignatura",
+                            onClick = onCreate
+                        )
+                    }
 
                     if (mensajeOperacion != null) {
                         Row(
@@ -146,9 +151,14 @@ fun SubjectListScreen(
                                     subject = subject,
                                     unitCount = estadisticasPorAsignatura[subject.id]?.total ?: 0,
                                     pendingCount = estadisticasPorAsignatura[subject.id]?.pending ?: 0,
+                                    coursesLabel = cursosPorAsignatura[subject.id]
+                                        ?.joinToString(" · ")
+                                        .orEmpty(),
                                     onViewDetail = { onViewDetail(subject) },
                                     onEdit = { onEdit(subject) },
-                                    onDelete = { pendienteEliminar = subject }
+                                    onDelete = { pendienteEliminar = subject },
+                                    showActions = canManage,
+                                    showPending = canManage
                                 )
                             }
                         }
@@ -157,16 +167,18 @@ fun SubjectListScreen(
             }
         }
 
-        pendienteEliminar?.let { subject ->
-            ConfirmDialog(
-                title = "Eliminar asignatura",
-                message = "¿Eliminar «${subject.nombre}»? Esta acción no se puede deshacer.",
-                onConfirm = {
-                    onDelete(subject)
-                    pendienteEliminar = null
-                },
-                onDismiss = { pendienteEliminar = null }
-            )
+        if (canManage) {
+            pendienteEliminar?.let { subject ->
+                ConfirmDialog(
+                    title = "Eliminar asignatura",
+                    message = "¿Eliminar «${subject.nombre}»? Esta acción no se puede deshacer.",
+                    onConfirm = {
+                        onDelete(subject)
+                        pendienteEliminar = null
+                    },
+                    onDismiss = { pendienteEliminar = null }
+                )
+            }
         }
     }
 }

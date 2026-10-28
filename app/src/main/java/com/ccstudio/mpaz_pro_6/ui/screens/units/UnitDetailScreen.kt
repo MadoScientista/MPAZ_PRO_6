@@ -11,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
@@ -24,22 +23,23 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.components.content.ContentCard
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 
 /**
  * Detalle de una unidad.
  *
- * Muestra el resumen de la unidad, sus contenidos y sus actividades. La UTP y el
- * docente ven todo el material en modo lectura; el estudiante ve los contenidos
- * publicados y las actividades asignadas a su curso, y puede abrir una actividad
- * para resolverla.
+ * Muestra el resumen de la unidad, sus contenidos y su prueba final. Las
+ * actividades regulares viven dentro del detalle de cada contenido; la prueba
+ * final se mantiene aquí porque es transversal a la unidad. La UTP y el docente
+ * ven todo el material en modo lectura; el estudiante ve los contenidos
+ * publicados y la prueba final habilitada, y puede resolverla.
  *
  * La autorización solo se ofrece a la UTP y solo en los estados que el backend
  * admite: `EN_REVISION` para autorizar y `AUTORIZADO` para publicar.
@@ -52,6 +52,7 @@ fun UnitDetailScreen(
     objetivos: List<LearningObjective>,
     actividades: List<Activity>,
     recursosPorContenido: Map<Int, Int>,
+    actividadesPorContenido: Map<Int, Int>,
     preguntasPorActividad: Map<Int, Int>,
     isLoading: Boolean,
     error: ApiError?,
@@ -61,8 +62,19 @@ fun UnitDetailScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     puedeAutorizar: Boolean = false,
-    puedeResolverActividades: Boolean = false
+    puedeResolverActividades: Boolean = false,
+    puedeCrearContenido: Boolean = false,
+    puedeEnviarRevision: Boolean = false,
+    isSendingReview: Boolean = false,
+    mensajeRevision: String? = null,
+    onCreateContent: (() -> Unit)? = null,
+    onEnviarRevision: (() -> Unit)? = null
 ) {
+    // La prueba final se presenta por separado: es única por unidad y no forma
+    // parte de la lista de actividades regulares.
+    val pruebaFinal = actividades.firstOrNull { it.tipo == ActivityType.FINAL_TEST }
+    val actividadesRegulares = actividades.filter { it.tipo != ActivityType.FINAL_TEST }
+
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -103,31 +115,8 @@ fun UnitDetailScreen(
 
                         CounterCard(
                             titulo = "Actividades",
-                            valor = actividades.size,
+                            valor = actividadesRegulares.size,
                             modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Prueba final",
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        val tienePruebaFinal = actividades.any {
-                            it.tipo == ActivityType.FINAL_TEST
-                        }
-
-                        StatusChip(
-                            label = if (tienePruebaFinal) "Sí" else "No"
                         )
                     }
 
@@ -136,6 +125,18 @@ fun UnitDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         count = contenidos.size
                     )
+
+                    if (puedeCrearContenido &&
+                        unidad.estado == ContentStatus.DRAFT &&
+                        onCreateContent != null
+                    ) {
+                        AppButton(
+                            text = "Crear nuevo contenido",
+                            onClick = onCreateContent,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            variant = AppButtonVariant.OUTLINED
+                        )
+                    }
 
                     if (contenidos.isEmpty()) {
                         EmptyState(
@@ -147,6 +148,7 @@ fun UnitDetailScreen(
                             ContentCard(
                                 content = content,
                                 resourceCount = recursosPorContenido[content.id] ?: 0,
+                                activityCount = actividadesPorContenido[content.id] ?: 0,
                                 onViewContent = { onViewContent(content) },
                                 objectiveLabels = listOfNotNull(
                                     etiquetaObjetivo(content.oaId, objetivos)
@@ -157,31 +159,54 @@ fun UnitDetailScreen(
                     }
 
                     SectionHeader(
-                        title = "Actividades",
+                        title = "Prueba final",
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        count = actividades.size
+                        count = if (pruebaFinal != null) 1 else null
                     )
 
-                    if (actividades.isEmpty()) {
+                    if (pruebaFinal == null) {
                         EmptyState(
-                            message = "Esta unidad todavía no tiene actividades.",
+                            message = "Esta unidad todavía no tiene una prueba final.",
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     } else {
-                        actividades.forEach { activity ->
-                            ActivityCard(
-                                activity = activity,
-                                questionsCount = preguntasPorActividad[activity.id] ?: 0,
-                                unitTitle = null,
-                                onViewDetail = if (puedeResolverActividades) {
-                                    { onOpenActivity(activity) }
-                                } else {
-                                    null
-                                },
-                                detailLabel = "Resolver",
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                        ActivityCard(
+                            activity = pruebaFinal,
+                            questionsCount = preguntasPorActividad[pruebaFinal.id] ?: 0,
+                            unitTitle = null,
+                            onViewDetail = if (puedeResolverActividades) {
+                                { onOpenActivity(pruebaFinal) }
+                            } else {
+                                null
+                            },
+                            detailLabel = "Resolver",
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+
+                    if (mensajeRevision != null) {
+                        Text(
+                            text = mensajeRevision,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    if (puedeEnviarRevision &&
+                        unidad.estado == ContentStatus.DRAFT &&
+                        onEnviarRevision != null
+                    ) {
+                        AppButton(
+                            text = if (isSendingReview) {
+                                "Enviando..."
+                            } else {
+                                "Enviar a revisión"
+                            },
+                            onClick = onEnviarRevision,
+                            enabled = !isSendingReview,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
 
                     if (puedeAutorizar &&

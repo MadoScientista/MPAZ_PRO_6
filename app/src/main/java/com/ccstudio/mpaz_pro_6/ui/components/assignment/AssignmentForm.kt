@@ -26,10 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
-import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
@@ -43,14 +41,14 @@ import java.time.format.DateTimeFormatter
 /**
  * Formulario de asignación.
  *
- * Reúne el curso, la unidad, el docente, la fecha, el máximo de intentos y el
- * interruptor de prueba final habilitada. El estado de los campos llega por
- * parámetro y cada uno expone su callback; la pantalla arma el
- * `CreateAssignmentRequest` o el `UpdateAssignmentRequest`.
+ * Reúne el curso, la unidad, la fecha, el máximo de intentos y el interruptor de
+ * prueba final habilitada. El estado de los campos llega por parámetro y cada uno
+ * expone su callback; la pantalla arma el `CreateAssignmentRequest` o el
+ * `UpdateAssignmentRequest`.
  *
- * El curso, la unidad y el docente solo se eligen al crear: el `PUT` de asignaciones
- * no los admite y por eso quedan deshabilitados en edición. El selector de docente
- * solo ofrece usuarios con rol `DOCENTE`, como exige el contrato.
+ * El curso y la unidad solo se eligen al crear: el `PUT` de asignaciones no los
+ * admite y por eso quedan deshabilitados en edición. El docente se deriva de la
+ * docencia del curso y la asignatura; el formulario no lo pide.
  *
  * La fecha se elige con el selector de Material 3. Como el contrato maneja un
  * instante ISO-8601, el componente conserva la hora del valor actual y solo cambia
@@ -61,16 +59,13 @@ import java.time.format.DateTimeFormatter
 fun AssignmentForm(
     courses: List<Course>,
     units: List<LearningUnit>,
-    teachers: List<User>,
     cursoId: Int?,
     unidadId: Int?,
-    docenteId: Int?,
     fecha: Instant?,
     maxIntentos: String,
     pruebaFinalHabilitada: Boolean,
     onCursoIdChange: (Int?) -> Unit,
     onUnidadIdChange: (Int?) -> Unit,
-    onDocenteIdChange: (Int?) -> Unit,
     onFechaChange: (Instant?) -> Unit,
     onMaxIntentosChange: (String) -> Unit,
     onPruebaFinalHabilitadaChange: (Boolean) -> Unit,
@@ -89,7 +84,6 @@ fun AssignmentForm(
         (maxIntentosValue.toIntOrNull()?.let { it > 0 } == true)
     val canSubmit = cursoId != null &&
         unidadId != null &&
-        docenteId != null &&
         fecha != null &&
         isMaxIntentosValid
 
@@ -99,11 +93,6 @@ fun AssignmentForm(
     val unitOptions = units.map { unit ->
         unit.id to unit.titulo
     }
-    val teacherOptions = teachers
-        .filter { it.rol == UserRole.DOCENTE }
-        .map { teacher ->
-            teacher.id to "${teacher.nombre} (${teacher.username})"
-        }
 
     val selectedCourseLabel = courseOptions
         .firstOrNull { it.first == cursoId }
@@ -111,10 +100,6 @@ fun AssignmentForm(
         .orEmpty()
     val selectedUnitLabel = unitOptions
         .firstOrNull { it.first == unidadId }
-        ?.second
-        .orEmpty()
-    val selectedTeacherLabel = teacherOptions
-        .firstOrNull { it.first == docenteId }
         ?.second
         .orEmpty()
 
@@ -148,16 +133,6 @@ fun AssignmentForm(
             enabled = selectedFieldsEnabled,
             options = unitOptions,
             onSelect = onUnidadIdChange
-        )
-
-        AssignmentDropdownField(
-            label = "Docente",
-            selectedLabel = selectedTeacherLabel,
-            placeholder = "Seleccionar docente",
-            supportingText = selectedFieldsHint,
-            enabled = selectedFieldsEnabled,
-            options = teacherOptions,
-            onSelect = onDocenteIdChange
         )
 
         // Fecha de la asignación.

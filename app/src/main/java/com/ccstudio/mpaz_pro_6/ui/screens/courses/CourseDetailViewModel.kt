@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.User
@@ -20,8 +19,9 @@ import kotlinx.coroutines.launch
  * Estado del detalle de un curso.
  *
  * Carga el curso con `GET /api/cursos/{id}` y sus estudiantes con
- * `GET /api/usuarios`, filtrando en cliente por rol `ESTUDIANTE` y `cursoId`.
- * El contrato no expone un listado de estudiantes por curso.
+ * `GET /api/cursos/{id}/estudiantes`. La UTP puede consultar cualquier curso; el
+ * docente solo los cursos donde tiene docencia. El endpoint está acotado y no
+ * expone el catálogo completo de usuarios.
  */
 class CourseDetailViewModel(
     private val courseRepository: CourseRepository,
@@ -61,16 +61,15 @@ class CourseDetailViewModel(
 
             course = courseResult.getOrNull()
 
-            val usersResult = userRepository.list()
+            val studentsResult = userRepository.listStudentsByCourse(courseId)
 
-            if (usersResult.isFailure) {
-                error = usersResult.exceptionOrNull() as? ApiError
+            if (studentsResult.isFailure) {
+                error = studentsResult.exceptionOrNull() as? ApiError
                 isLoading = false
                 return@launch
             }
 
-            estudiantes = usersResult.getOrDefault(emptyList())
-                .filter { it.rol == UserRole.ESTUDIANTE && it.cursoId == courseId }
+            estudiantes = studentsResult.getOrDefault(emptyList())
                 .sortedBy { it.nombre.lowercase() }
 
             isLoading = false

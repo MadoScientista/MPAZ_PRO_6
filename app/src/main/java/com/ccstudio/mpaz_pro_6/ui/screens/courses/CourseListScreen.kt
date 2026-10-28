@@ -179,7 +179,11 @@ fun CourseListScreen(
                             ) { course ->
                                 CourseCard(
                                     course = course,
-                                    studentCount = estudiantesPorCurso[course.id] ?: 0,
+                                    studentCount = if (canManage) {
+                                        estudiantesPorCurso[course.id] ?: 0
+                                    } else {
+                                        null
+                                    },
                                     onViewDetail = { onViewDetail(course) },
                                     onEdit = { onEdit(course) },
                                     onDelete = { pendienteEliminar = course },

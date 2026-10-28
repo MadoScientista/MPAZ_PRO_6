@@ -28,6 +28,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
  * En modo de solo lectura (`isReadOnly`) las opciones dejan de ser interactivas. Con
  * `showCorrectness` se revela además el estado congelado de cada alternativa; durante
  * la resolución debe quedar en `false` para no anticipar la respuesta correcta.
+ * `showCriterion` permite ocultar el criterio docente en la vista del estudiante.
  */
 @Composable
 fun AttemptQuestionCard(
@@ -40,6 +41,7 @@ fun AttemptQuestionCard(
     isReadOnly: Boolean = false,
     isLocked: Boolean = false,
     showCorrectness: Boolean = false,
+    showCriterion: Boolean = true,
     enabled: Boolean = true
 ) {
     val canSelect = enabled && !isReadOnly && !isLocked
@@ -77,8 +79,8 @@ fun AttemptQuestionCard(
                 fontWeight = FontWeight.SemiBold
             )
 
-            // Criterio de respuesta, solo si está definido.
-            if (!question.criterioRespuesta.isNullOrBlank()) {
+            // Criterio de respuesta, solo si está definido y la vista lo permite.
+            if (showCriterion && !question.criterioRespuesta.isNullOrBlank()) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(4.dp)

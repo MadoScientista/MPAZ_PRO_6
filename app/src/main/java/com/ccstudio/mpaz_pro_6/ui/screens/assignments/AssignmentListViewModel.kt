@@ -12,25 +12,25 @@ import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
-import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
+import com.ccstudio.mpaz_pro_6.data.repository.DocenciaRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
-import com.ccstudio.mpaz_pro_6.data.repository.UserRepository
 import kotlinx.coroutines.launch
 
 /**
  * Estado del listado de asignaciones del docente.
  *
- * Las asignaciones se piden con el filtro `?docenteId` del backend. Los cursos,
- * unidades y usuarios se cargan completos para resolver los nombres que la
- * asignación solo trae como identificadores.
+ * La asignación solo trae `cursoId` y `unidadId`; los cursos y las unidades se
+ * cargan completos para resolver los nombres que muestra la pantalla. El docente
+ * ya no forma parte de la asignación: se resuelve con la docencia del curso y la
+ * asignatura de la unidad, y el listado se filtra por esas docencias.
  */
 class AssignmentListViewModel(
     private val assignmentRepository: AssignmentRepository,
     private val courseRepository: CourseRepository,
     private val unitRepository: UnitRepository,
-    private val userRepository: UserRepository,
+    private val docenciaRepository: DocenciaRepository,
     private val teacherId: Int
 ) : ViewModel() {
 
@@ -44,10 +44,6 @@ class AssignmentListViewModel(
 
     /** Unidades, para resolver el título de la unidad asignada. */
     var unidades by mutableStateOf<List<LearningUnit>>(emptyList())
-        private set
-
-    /** Usuarios, para resolver el nombre del docente. */
-    var docentes by mutableStateOf<List<User>>(emptyList())
         private set
 
     /** Indica que el listado se está cargando. */
@@ -64,7 +60,7 @@ class AssignmentListViewModel(
             isLoading = true
             error = null
 
-            val asignacionesResult = assignmentRepository.list(teacherId = teacherId)
+            val asignacionesResult = assignmentRepository.list()
             if (asignacionesResult.isFailure) {
                 error = asignacionesResult.exceptionOrNull() as? ApiError
                 isLoading = false
@@ -85,17 +81,27 @@ class AssignmentListViewModel(
                 return@launch
             }
 
-            val usuariosResult = userRepository.list()
-            if (usuariosResult.isFailure) {
-                error = usuariosResult.exceptionOrNull() as? ApiError
+            val docenciasResult = docenciaRepository.list(teacherId)
+            if (docenciasResult.isFailure) {
+                error = docenciasResult.exceptionOrNull() as? ApiError
                 isLoading = false
                 return@launch
             }
 
+            val unidadesCargadas = unidadesResult.getOrDefault(emptyList())
+            val unidadesPorId = unidadesCargadas.associateBy { it.id }
+            val docencias = docenciasResult.getOrDefault(emptyList())
+                .map { it.cursoId to it.asignaturaId }
+                .toSet()
+
             asignaciones = asignacionesResult.getOrDefault(emptyList())
+                .filter { assignment ->
+                    val unidad = unidadesPorId[assignment.unidadId]
+                        ?: return@filter false
+                    (assignment.cursoId to unidad.asignaturaId) in docencias
+                }
             cursos = cursosResult.getOrDefault(emptyList())
-            unidades = unidadesResult.getOrDefault(emptyList())
-            docentes = usuariosResult.getOrDefault(emptyList())
+            unidades = unidadesCargadas
             isLoading = false
         }
     }
@@ -107,7 +113,7 @@ class AssignmentListViewModel(
             assignmentRepository: AssignmentRepository,
             courseRepository: CourseRepository,
             unitRepository: UnitRepository,
-            userRepository: UserRepository,
+            docenciaRepository: DocenciaRepository,
             teacherId: Int
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -115,7 +121,7 @@ class AssignmentListViewModel(
                     assignmentRepository = assignmentRepository,
                     courseRepository = courseRepository,
                     unitRepository = unitRepository,
-                    userRepository = userRepository,
+                    docenciaRepository = docenciaRepository,
                     teacherId = teacherId
                 )
             }

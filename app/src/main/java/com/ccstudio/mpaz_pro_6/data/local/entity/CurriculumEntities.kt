@@ -99,12 +99,14 @@ data class ContentResourceEntity(
     indices = [
         Index(value = ["unidad_id"]),
         Index(value = ["id", "unidad_id"], unique = true),
-        Index(value = ["unidad_id", "titulo"], unique = true)
+        Index(value = ["unidad_id", "titulo"], unique = true),
+        Index(value = ["contenido_id"])
     ]
 )
 data class ActivityEntity(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "unidad_id") val unidadId: Int,
+    @ColumnInfo(name = "contenido_id") val contenidoId: Int?,
     val titulo: String,
     val tipo: ActivityType,
     val orden: Int

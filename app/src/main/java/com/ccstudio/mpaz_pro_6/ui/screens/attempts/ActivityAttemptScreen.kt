@@ -171,6 +171,7 @@ fun ActivityAttemptScreen(
                                 isReadOnly = isCompleted,
                                 isLocked = question.id in registeredQuestionIds,
                                 showCorrectness = isCompleted,
+                                showCriterion = false,
                                 enabled = !isSaving && question.id !in registeredQuestionIds
                             )
                         }

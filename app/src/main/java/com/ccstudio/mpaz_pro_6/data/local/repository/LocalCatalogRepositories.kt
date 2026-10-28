@@ -186,4 +186,9 @@ class LocalUserRepository(
         }
         dao.getCoursesForTeacher(userId).map { it.toDomain() }
     }
+
+    override suspend fun listStudentsByCourse(courseId: Int): Result<List<User>> =
+        localCall {
+            dao.getStudentsByCourse(courseId).map { it.toDomain() }
+        }
 }

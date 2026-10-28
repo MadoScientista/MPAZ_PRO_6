@@ -41,8 +41,8 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
  * de asignaturas para resolver el nombre que se muestra y por el que se filtra.
  *
  * El mismo listado sirve a los tres roles; cambia el contenido según el `UserRole`:
- * el UTP ve las unidades `BORRADOR` y `EN_REVISION` pendientes de revisión, el
- * docente las unidades autorizadas y publicadas, y el estudiante solo las
+ * la UTP ve solo las unidades `EN_REVISION` pendientes de su revisión, el docente
+ * las unidades en borrador, autorizadas y publicadas, y el estudiante solo las
  * `PUBLICADO`.
  */
 @Composable

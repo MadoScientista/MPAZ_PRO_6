@@ -10,6 +10,7 @@ import com.ccstudio.mpaz_pro_6.data.local.dao.AssignmentDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.AttemptDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.CatalogDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.CurriculumDao
+import com.ccstudio.mpaz_pro_6.data.local.dao.DocenciaDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.ReportDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnitDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.UserDao
@@ -22,6 +23,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.AttemptEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.ContentEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.ContentResourceEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.CourseEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.DocenciaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningObjectiveEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningUnitEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.PedagogicalReportEntity
@@ -42,6 +44,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.UserEntity
         CourseEntity::class,
         UserEntity::class,
         SubjectEntity::class,
+        DocenciaEntity::class,
         LearningUnitEntity::class,
         LearningObjectiveEntity::class,
         ContentEntity::class,
@@ -57,7 +60,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.UserEntity
         PedagogicalReportEntity::class,
         ReportObjectiveDetailEntity::class
     ],
-    version = 1,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -66,6 +69,8 @@ abstract class MpazDatabase : RoomDatabase() {
     abstract fun catalogDao(): CatalogDao
 
     abstract fun userDao(): UserDao
+
+    abstract fun docenciaDao(): DocenciaDao
 
     abstract fun unitDao(): UnitDao
 
@@ -82,23 +87,50 @@ abstract class MpazDatabase : RoomDatabase() {
         /** Nombre del archivo de base de datos. */
         const val NAME = "mpaz.db"
 
-        /** Construye la instancia única de la base local. */
-        fun build(context: Context): MpazDatabase =
+        /**
+         * Construye la instancia única de la base local.
+         *
+         * @param seedOnEmpty vuelve a cargar la semilla en modo local si una
+         * migración destructiva dejó la base vacía. En modo remoto la caché se
+         * llena con `InitialSync`.
+         */
+        fun build(context: Context, seedOnEmpty: Boolean = false): MpazDatabase =
             Room.databaseBuilder(context, MpazDatabase::class.java, NAME)
-                .addCallback(SeedCallback(context.applicationContext))
+                // La app no tiene datos de producción: si cambia el esquema se
+                // reconstruye la caché y se vuelve a sincronizar.
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .addCallback(
+                    SeedCallback(
+                        context = context.applicationContext,
+                        seedOnEmpty = seedOnEmpty
+                    )
+                )
                 .build()
     }
 }
 
-/** Callback que prepara la base al crearse por primera vez. */
+/** Callback que prepara la base al crearse o al quedar vacía tras una migración. */
 private class SeedCallback(
-    private val context: Context
+    private val context: Context,
+    private val seedOnEmpty: Boolean
 ) : RoomDatabase.Callback() {
 
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
         SeedLoader.load(context, db)
     }
+
+    override fun onOpen(db: SupportSQLiteDatabase) {
+        super.onOpen(db)
+        if (!seedOnEmpty || hasCourses(db)) return
+        SeedLoader.load(context, db)
+    }
+
+    /** Indica si la base ya tiene cursos cargados. */
+    private fun hasCourses(db: SupportSQLiteDatabase): Boolean =
+        db.query("SELECT COUNT(*) FROM curso").use { cursor ->
+            cursor.moveToFirst() && cursor.getInt(0) > 0
+        }
 }
 
 /** Carga la semilla de demostración y crea los índices que Room no expresa. */

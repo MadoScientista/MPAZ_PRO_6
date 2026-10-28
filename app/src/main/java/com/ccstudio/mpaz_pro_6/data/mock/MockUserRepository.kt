@@ -14,8 +14,8 @@ import kotlinx.coroutines.sync.withLock
  *
  * Reproduce las reglas del backend: el `username` es único y admite letras,
  * dígitos, punto, guion y guion bajo; el `cursoId` solo se asigna a estudiantes;
- * y eliminar un usuario con intentos, informes, unidades autorizadas o
- * asignaciones devuelve `ApiError.Conflict`.
+ * y eliminar un usuario con intentos, informes, unidades autorizadas o docencias
+ * devuelve `ApiError.Conflict`.
  */
 class MockUserRepository(
     private val store: MockStore
@@ -191,13 +191,13 @@ class MockUserRepository(
         // Intentos e informes todavía no tienen repositorio mock: la comprobación
         // se completa cuando existan.
         val unidadesAutorizadas = store.units.count { it.autorizadaPorId == id }
-        val asignaciones = store.assignments.count { it.docenteId == id }
+        val docencias = store.docencias.count { it.docenteId == id }
 
-        if (unidadesAutorizadas > 0 || asignaciones > 0) {
+        if (unidadesAutorizadas > 0 || docencias > 0) {
             return Result.failure(
                 ApiError.Conflict(
                     "No se puede eliminar el usuario: tiene $unidadesAutorizadas unidad(es) " +
-                        "autorizada(s) y $asignaciones asignación(es) asociadas."
+                        "autorizada(s) y $docencias docencia(s) asociadas."
                 )
             )
         }
@@ -221,7 +221,7 @@ class MockUserRepository(
             )
         }
 
-        val cursoIds = store.assignments
+        val cursoIds = store.docencias
             .filter { it.docenteId == userId }
             .map { it.cursoId }
             .distinct()
@@ -232,6 +232,23 @@ class MockUserRepository(
 
         Result.success(courses)
     }
+
+    override suspend fun listStudentsByCourse(courseId: Int): Result<List<User>> =
+        store.mutex.withLock {
+            val course = store.courses.find { it.id == courseId }
+
+            if (course == null) {
+                return Result.failure(
+                    ApiError.NotFound("No existe el curso con id $courseId.")
+                )
+            }
+
+            Result.success(
+                store.users
+                    .filter { it.rol == UserRole.ESTUDIANTE && it.cursoId == courseId }
+                    .sortedBy { it.nombre.lowercase() }
+            )
+        }
 
     /**
      * El `username` admite de 3 a 100 caracteres de letras, dígitos, punto, guion

@@ -60,6 +60,16 @@ class MockUserRepositoryTest {
     }
 
     @Test
+    fun listStudentsByCourseDevuelveSoloEstudiantesDelCurso() = runBlocking {
+        val students = repository.listStudentsByCourse(1).getOrThrow()
+
+        assertEquals(1, students.size)
+        assertEquals("Camila Rivas", students.single().nombre)
+        assertEquals(UserRole.ESTUDIANTE, students.single().rol)
+        assertEquals(1, students.single().cursoId)
+    }
+
+    @Test
     fun createConUsernameDuplicadoDevuelveConflict() = runBlocking {
         val result = repository.create(
             CreateUserRequest(

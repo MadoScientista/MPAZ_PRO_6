@@ -23,10 +23,10 @@ import com.ccstudio.mpaz_pro_6.data.model.Content
  * Tarjeta resumen de un contenido.
  *
  * Muestra el título, una descripción breve de la explicación, el número de
- * recursos, los códigos de los objetivos de aprendizaje asociados y el acceso
- * **Ver contenido**. El contenido solo trae `oaId`, así que los códigos de los
- * objetivos los resuelve la pantalla que lista y se entregan como
- * `objectiveLabels`.
+ * recursos, el número de actividades asociadas, los códigos de los objetivos de
+ * aprendizaje y el acceso **Ver contenido**. El contenido solo trae `oaId`, así
+ * que los códigos de los objetivos y el conteo de actividades los resuelve la
+ * pantalla que lista.
  *
  * El orden del contenido no se muestra: solo indica su posición en la lista y no
  * aporta información para la revisión.
@@ -42,6 +42,7 @@ fun ContentCard(
     resourceCount: Int,
     onViewContent: () -> Unit,
     modifier: Modifier = Modifier,
+    activityCount: Int = 0,
     objectiveLabels: List<String> = emptyList(),
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null
@@ -79,12 +80,23 @@ fun ContentCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Recursos asociados.
-            Text(
-                text = if (resourceCount == 1) "1 recurso" else "$resourceCount recursos",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary
-            )
+            // Recursos y actividades asociados.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = resourceCountLabel(resourceCount),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+
+                Text(
+                    text = activityCountLabel(activityCount),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             // Acceso al contenido completo.
             OutlinedButton(
@@ -125,4 +137,16 @@ fun ContentCard(
             }
         }
     }
+}
+
+/** Texto de la cantidad de recursos, con singular y plural. */
+private fun resourceCountLabel(count: Int): String = when (count) {
+    1 -> "1 recurso"
+    else -> "$count recursos"
+}
+
+/** Texto de la cantidad de actividades, con singular y plural. */
+private fun activityCountLabel(count: Int): String = when (count) {
+    1 -> "1 actividad"
+    else -> "$count actividades"
 }

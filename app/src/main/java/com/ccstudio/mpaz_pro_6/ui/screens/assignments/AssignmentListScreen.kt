@@ -22,8 +22,8 @@ import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
-import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.ui.components.assignment.AssignmentCard
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
@@ -33,20 +33,22 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 /**
  * Listado de asignaciones del docente.
  *
- * Consume `GET /api/asignaciones` con el filtro `?docenteId`. La asignación solo
- * trae los identificadores de curso, unidad y docente, así que la pantalla
- * recibe esos catálogos para resolver los nombres que muestra.
+ * Consume `GET /api/asignaciones`. La asignación solo trae los identificadores
+ * de curso y unidad, así que la pantalla recibe esos catálogos para resolver los
+ * nombres que muestra. El docente se deriva de la docencia del curso y la
+ * asignatura de la unidad.
  *
  * La búsqueda por texto es **client-side**; el backend no expone ese filtro.
+ * El botón «Nueva asignación» solo se muestra cuando [onCreate] no es nulo.
  */
 @Composable
 fun AssignmentListScreen(
     asignaciones: List<Assignment>,
     cursos: List<Course>,
     unidades: List<LearningUnit>,
-    docentes: List<User>,
     onViewDetail: (Assignment) -> Unit,
     onRetry: () -> Unit,
+    onCreate: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
@@ -55,19 +57,16 @@ fun AssignmentListScreen(
 
     val courseNames = cursos.associate { it.id to it.nombre }
     val unitTitles = unidades.associate { it.id to it.titulo }
-    val teacherNames = docentes.associate { it.id to it.nombre }
 
     val filteredAssignments = asignaciones.filter { assignment ->
         val query = search.trim()
 
         val courseName = courseNames[assignment.cursoId].orEmpty()
         val unitTitle = unitTitles[assignment.unidadId].orEmpty()
-        val teacherName = teacherNames[assignment.docenteId].orEmpty()
 
         query.isEmpty() ||
                 courseName.contains(query, ignoreCase = true) ||
-                unitTitle.contains(query, ignoreCase = true) ||
-                teacherName.contains(query, ignoreCase = true)
+                unitTitle.contains(query, ignoreCase = true)
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -95,10 +94,17 @@ fun AssignmentListScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
 
+                    if (onCreate != null) {
+                        AppButton(
+                            text = "Nueva asignación",
+                            onClick = onCreate
+                        )
+                    }
+
                     SearchField(
                         value = search,
                         onValueChange = { search = it },
-                        placeholder = "Curso, unidad o docente"
+                        placeholder = "Curso o unidad"
                     )
 
                     SectionHeader(
@@ -130,8 +136,6 @@ fun AssignmentListScreen(
                                         ?: "Sin curso",
                                     unitTitle = unitTitles[assignment.unidadId]
                                         ?: "Sin unidad",
-                                    teacherName = teacherNames[assignment.docenteId]
-                                        ?: "Sin docente",
                                     onViewDetail = { onViewDetail(assignment) },
                                     // La edición y el borrado llegan con sus formularios.
                                     onEdit = {},

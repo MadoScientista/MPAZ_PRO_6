@@ -13,6 +13,7 @@ import com.ccstudio.mpaz_pro_6.data.local.repository.LocalAttemptRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.LocalContentRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.LocalContentResourceRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.LocalCourseRepository
+import com.ccstudio.mpaz_pro_6.data.local.repository.LocalDocenciaRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.LocalLearningObjectiveRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.LocalPedagogicalReportRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.LocalQuestionRepository
@@ -27,6 +28,7 @@ import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstAttemptReposito
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstContentRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstContentResourceRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstCourseRepository
+import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstDocenciaRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstLearningObjectiveRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstPedagogicalReportRepository
 import com.ccstudio.mpaz_pro_6.data.local.repository.OfflineFirstQuestionRepository
@@ -44,6 +46,7 @@ import com.ccstudio.mpaz_pro_6.data.repository.AuthRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentResourceRepository
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
+import com.ccstudio.mpaz_pro_6.data.repository.DocenciaRepository
 import com.ccstudio.mpaz_pro_6.data.repository.LearningObjectiveRepository
 import com.ccstudio.mpaz_pro_6.data.repository.PedagogicalReportRepository
 import com.ccstudio.mpaz_pro_6.data.repository.QuestionRepository
@@ -88,7 +91,10 @@ class AppContainer(context: Context) {
     private val cacheMutex = Mutex()
 
     /** Base de datos local con la semilla de demostración. */
-    val database: MpazDatabase = MpazDatabase.build(appContext)
+    val database: MpazDatabase = MpazDatabase.build(
+        context = appContext,
+        seedOnEmpty = localOnly
+    )
 
     /** Almacenamiento persistente de la sesión. */
     val sessionStore = SessionStore(appContext)
@@ -148,6 +154,7 @@ class AppContainer(context: Context) {
     val unitRepository: UnitRepository = if (localOnly) {
         LocalUnitRepository(
             dao = database.unitDao(),
+            curriculumDao = database.curriculumDao(),
             catalogDao = database.catalogDao(),
             userDao = database.userDao()
         )
@@ -165,6 +172,20 @@ class AppContainer(context: Context) {
         OfflineFirstUserRepository(
             api = apiClient.api,
             dao = database.userDao()
+        )
+    }
+
+    /** Repositorio de docencias con caché Room. */
+    val docenciaRepository: DocenciaRepository = if (localOnly) {
+        LocalDocenciaRepository(
+            dao = database.docenciaDao(),
+            userDao = database.userDao(),
+            catalogDao = database.catalogDao()
+        )
+    } else {
+        OfflineFirstDocenciaRepository(
+            api = apiClient.api,
+            dao = database.docenciaDao()
         )
     }
 
@@ -240,7 +261,6 @@ class AppContainer(context: Context) {
             dao = database.assignmentDao(),
             catalogDao = database.catalogDao(),
             unitDao = database.unitDao(),
-            userDao = database.userDao(),
             curriculumDao = database.curriculumDao()
         )
     } else {
@@ -285,7 +305,8 @@ class AppContainer(context: Context) {
             unitDao = database.unitDao(),
             userDao = database.userDao(),
             curriculumDao = database.curriculumDao(),
-            attemptDao = database.attemptDao()
+            attemptDao = database.attemptDao(),
+            assignmentDao = database.assignmentDao()
         )
     } else {
         OfflineFirstPedagogicalReportRepository(
@@ -305,7 +326,11 @@ class AppContainer(context: Context) {
                         (state as? SessionState.Authenticated)?.session?.token
                     }
                     .distinctUntilChanged()
-                    .collect { cacheMutex.withLock { initialSync.sync() } }
+                    .collect {
+                        cacheMutex.withLock {
+                            initialSync.sync(currentUser = session.user)
+                        }
+                    }
             }
         }
 

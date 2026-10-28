@@ -12,7 +12,7 @@ import kotlinx.coroutines.sync.withLock
  *
  * Reproduce las reglas del backend: el nombre es obligatorio y admite hasta 50
  * caracteres, el año debe estar entre 2000 y 2100, el par nombre-año es único y
- * eliminar un curso con estudiantes o asignaciones asociadas devuelve
+ * eliminar un curso con estudiantes, docencias o asignaciones asociadas devuelve
  * `ApiError.Conflict`.
  */
 class MockCourseRepository(
@@ -138,13 +138,14 @@ class MockCourseRepository(
         }
 
         val estudiantes = store.users.count { it.cursoId == id }
+        val docencias = store.docencias.count { it.cursoId == id }
         val asignaciones = store.assignments.count { it.cursoId == id }
 
-        if (estudiantes > 0 || asignaciones > 0) {
+        if (estudiantes > 0 || docencias > 0 || asignaciones > 0) {
             return Result.failure(
                 ApiError.Conflict(
-                    "No se puede eliminar el curso: tiene $estudiantes estudiante(s) " +
-                        "y $asignaciones asignación(es) asociadas."
+                    "No se puede eliminar el curso: tiene $estudiantes estudiante(s), " +
+                        "$docencias docencia(s) y $asignaciones asignación(es) asociadas."
                 )
             )
         }

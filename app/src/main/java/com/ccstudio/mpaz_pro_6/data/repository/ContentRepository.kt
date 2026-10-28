@@ -28,6 +28,11 @@ interface ContentRepository {
     /** Actualiza título, explicación, ejemplos, instrucciones, orden u origen. */
     suspend fun update(id: Int, request: UpdateContentRequest): Result<Content>
 
-    /** Elimina un contenido. El backend arrastra en cascada sus recursos asociados. */
+    /**
+     * Elimina un contenido y sus recursos asociados.
+     *
+     * Falla con `ApiError.Conflict` si tiene actividades asociadas; primero hay
+     * que desasociarlas o moverlas a otro contenido.
+     */
     suspend fun delete(id: Int): Result<Unit>
 }

@@ -15,67 +15,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
-import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import com.ccstudio.mpaz_pro_6.data.model.Subject
-import com.ccstudio.mpaz_pro_6.data.model.User
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.CardCarousel
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.course.CourseCarouselCard
 import com.ccstudio.mpaz_pro_6.ui.components.report.ReportCarouselCard
-import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
-
+import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCarouselCard
 
 /**
  * Panel de inicio del docente.
  *
- * Muestra un resumen de sus cursos, las unidades que tiene asignadas y los
- * informes que esperan su validación. El carrusel de cursos replica el del panel
- * de UTP y enlaza con la pestaña Cursos. La cantidad de actividades y los
- * informes pendientes se resuelven en el ViewModel.
- * Los cursos que maneja el docente los resuelve el ViewModel con
- * `GET /api/usuarios/{id}/cursos`.
+ * El flujo principal es por asignatura: muestra un resumen de sus asignaturas,
+ * sus cursos y el carrusel de asignaturas que dicta. Las asignaturas y los
+ * cursos se derivan de las docencias; no se consulta el listado completo de
+ * usuarios. Los informes pendientes usan los nombres que entrega el backend.
  *
- * La pantalla no habla con repositorios: recibe los datos ya resueltos y delega
- * las acciones por callback.
+ * Los cursos no se repiten en un carrusel: conservan su pestaña propia en la
+ * barra inferior. El Inicio prioriza las asignaturas, la creación de
+ * asignaciones y los informes por validar.
  */
 @Composable
 fun HomeTeacherScreen(
     cursos: List<Course>,
-    unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
+    cursosPorAsignatura: Map<Int, List<String>>,
+    unidadesPorAsignatura: Map<Int, Int>,
     informesPendientes: List<PedagogicalReport>,
-    estudiantes: List<User>,
     actividades: Int,
-    onViewUnit: (LearningUnit) -> Unit,
-    onViewCourse: (Course) -> Unit,
+    onViewSubject: (Subject) -> Unit,
     onViewReport: (PedagogicalReport) -> Unit,
-    onVerUnidades: () -> Unit,
-    onVerCursos: () -> Unit,
+    onCreateAssignment: () -> Unit,
+    onVerAsignaturas: () -> Unit,
     onVerInformes: () -> Unit,
     onCargar: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null
 ) {
-    val subjectNames = asignaturas.associate { it.id to it.nombre }
-    val unitTitles = unidades.associate { it.id to it.titulo }
-    val studentNames = estudiantes.associate { it.id to it.nombre }
-    val estudiantesPorCurso = estudiantes
-        .mapNotNull { it.cursoId }
-        .groupingBy { it }
-        .eachCount()
-
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         when {
-            isLoading && cursos.isEmpty() && unidades.isEmpty() &&
-                asignaturas.isEmpty() && actividades == 0 &&
-                informesPendientes.isEmpty() ->
+            isLoading && cursos.isEmpty() && asignaturas.isEmpty() ->
                 LoadingState(
                     message = "Cargando tu panel...",
                     modifier = Modifier.padding(16.dp)
@@ -106,20 +91,20 @@ fun HomeTeacherScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CounterCard(
-                        titulo = "Unidades",
-                        valor = unidades.size,
+                        titulo = "Asignaturas",
+                        valor = asignaturas.size,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    CounterCard(
+                        titulo = "Cursos",
+                        valor = cursos.size,
                         modifier = Modifier.weight(1f)
                     )
 
                     CounterCard(
                         titulo = "Actividades",
                         valor = actividades,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    CounterCard(
-                        titulo = "Informes",
-                        valor = informesPendientes.size,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -131,38 +116,32 @@ fun HomeTeacherScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                CardCarousel(
-                    title = "Cursos",
-                    itemCount = cursos.size,
-                    onSeeAll = onVerCursos,
-                    emptyMessage = "Sin cursos"
-                ) { index ->
-                    val course = cursos[index]
+                AppButton(
+                    text = "Nueva asignación",
+                    onClick = onCreateAssignment,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
 
-                    CourseCarouselCard(
-                        course = course,
-                        studentCount = estudiantesPorCurso[course.id] ?: 0,
-                        onClick = { onViewCourse(course) }
+                CardCarousel(
+                    title = "Asignaturas",
+                    itemCount = asignaturas.size,
+                    onSeeAll = onVerAsignaturas,
+                    emptyMessage = "No tienes asignaturas asignadas."
+                ) { index ->
+                    val subject = asignaturas[index]
+
+                    SubjectCarouselCard(
+                        subject = subject,
+                        unitCount = unidadesPorAsignatura[subject.id] ?: 0,
+                        coursesLabel = cursosPorAsignatura[subject.id]
+                            ?.joinToString(" · ")
+                            .orEmpty(),
+                        onClick = { onViewSubject(subject) }
                     )
                 }
 
                 CardCarousel(
-                    title = "Unidades asignadas",
-                    itemCount = unidades.size,
-                    onSeeAll = onVerUnidades,
-                    emptyMessage = "No tienes unidades asignadas."
-                ) { index ->
-                    val unit = unidades[index]
-
-                    UnitCarouselCard(
-                        unit = unit,
-                        subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                        onClick = { onViewUnit(unit) }
-                    )
-                }
-
-                CardCarousel(
-                    title = "Informes de rendimiento",
+                    title = "Informes pendientes",
                     itemCount = informesPendientes.size,
                     onSeeAll = onVerInformes,
                     emptyMessage = "No tienes informes por validar."
@@ -171,9 +150,10 @@ fun HomeTeacherScreen(
 
                     ReportCarouselCard(
                         report = report,
-                        studentName = studentNames[report.estudianteId]
-                            ?: "Sin estudiante",
-                        unitName = unitTitles[report.unidadId] ?: "Sin unidad",
+                        studentName = report.estudianteNombre
+                            ?: "Estudiante #${report.estudianteId}",
+                        unitName = report.unidadTitulo
+                            ?: "Unidad #${report.unidadId}",
                         onClick = { onViewReport(report) }
                     )
                 }
@@ -181,8 +161,3 @@ fun HomeTeacherScreen(
         }
     }
 }
-
-
-
-
-

@@ -10,26 +10,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
-import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.ui.components.assignment.AssignmentForm
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import java.time.Instant
 
 /**
- * Formulario de edición de una asignación.
+ * Formulario de creación o edición de una asignación.
  *
- * Solo edita las reglas que admite el `PUT`: fecha, máximo de intentos y
- * prueba final habilitada. Curso, unidad y docente se muestran bloqueados.
- * El ViewModel envía únicamente los campos modificados.
+ * Al crear se eligen curso y unidad entre las docencias del docente. Al editar,
+ * solo se modifican las reglas que admite el `PUT`: fecha, máximo de intentos y
+ * prueba final habilitada; curso y unidad se muestran bloqueados.
  */
 @Composable
 fun AssignmentFormScreen(
     courses: List<Course>,
     units: List<LearningUnit>,
-    teachers: List<User>,
     cursoId: Int?,
     unidadId: Int?,
-    docenteId: Int?,
     fecha: Instant?,
     maxIntentos: String,
     pruebaFinalHabilitada: Boolean,
@@ -39,7 +36,6 @@ fun AssignmentFormScreen(
     error: String?,
     onCursoIdChange: (Int?) -> Unit,
     onUnidadIdChange: (Int?) -> Unit,
-    onDocenteIdChange: (Int?) -> Unit,
     onFechaChange: (Instant?) -> Unit,
     onMaxIntentosChange: (String) -> Unit,
     onPruebaFinalHabilitadaChange: (Boolean) -> Unit,
@@ -60,16 +56,13 @@ fun AssignmentFormScreen(
                 AssignmentForm(
                     courses = courses,
                     units = units,
-                    teachers = teachers,
                     cursoId = cursoId,
                     unidadId = unidadId,
-                    docenteId = docenteId,
                     fecha = fecha,
                     maxIntentos = maxIntentos,
                     pruebaFinalHabilitada = pruebaFinalHabilitada,
                     onCursoIdChange = onCursoIdChange,
                     onUnidadIdChange = onUnidadIdChange,
-                    onDocenteIdChange = onDocenteIdChange,
                     onFechaChange = onFechaChange,
                     onMaxIntentosChange = onMaxIntentosChange,
                     onPruebaFinalHabilitadaChange = onPruebaFinalHabilitadaChange,

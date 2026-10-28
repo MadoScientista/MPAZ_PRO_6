@@ -10,57 +10,54 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
+import com.ccstudio.mpaz_pro_6.data.model.Docencia
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
-import com.ccstudio.mpaz_pro_6.data.model.User
+import com.ccstudio.mpaz_pro_6.data.model.requests.CreateAssignmentRequest
 import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateAssignmentRequest
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
+import com.ccstudio.mpaz_pro_6.data.repository.DocenciaRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
-import com.ccstudio.mpaz_pro_6.data.repository.UserRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
 
 /**
- * Estado del formulario de edición de una asignación.
+ * Estado del formulario de asignación.
  *
- * Carga la asignación y resuelve curso, unidad y docente para mostrar los
- * selectores bloqueados. El `PUT` es parcial: solo se envían los campos que
- * cambiaron. El curso, la unidad y el docente no se modifican.
+ * Sin `assignmentId` crea una asignación para una docencia del docente. Con id
+ * edita solo las reglas que admite el `PUT`: fecha, máximo de intentos y prueba
+ * final habilitada. En edición el curso y la unidad quedan bloqueados.
  *
- * `maxIntentos` vacío significa "no enviar" y conserva el valor actual. El
- * contrato no permite distinguir entre "no enviar" y "poner en nulo", así que
- * desde la app no se puede quitar un límite ya existente.
+ * Al crear, el curso se limita a las docencias del docente y la unidad a las
+ * asignaturas que dicta en ese curso. El docente no se elige: lo deriva el
+ * backend desde la docencia.
  */
 class AssignmentFormViewModel(
     private val assignmentRepository: AssignmentRepository,
     private val courseRepository: CourseRepository,
     private val unitRepository: UnitRepository,
-    private val userRepository: UserRepository,
-    private val assignmentId: Int
+    private val docenciaRepository: DocenciaRepository,
+    private val assignmentId: Int?,
+    private val teacherId: Int,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
 ) : ViewModel() {
 
-    /** Curso actual, para el selector bloqueado del formulario. */
+    /** Cursos disponibles para crear o el curso actual al editar. */
     var courses by mutableStateOf<List<Course>>(emptyList())
         private set
 
-    /** Unidad actual, para el selector bloqueado del formulario. */
+    /** Unidades disponibles para el curso seleccionado. */
     var units by mutableStateOf<List<LearningUnit>>(emptyList())
         private set
 
-    /** Docente actual, para el selector bloqueado del formulario. */
-    var teachers by mutableStateOf<List<User>>(emptyList())
-        private set
-
-    /** Curso de la asignación. */
+    /** Curso seleccionado. */
     var cursoId by mutableStateOf<Int?>(null)
         private set
 
-    /** Unidad de la asignación. */
+    /** Unidad seleccionada. */
     var unidadId by mutableStateOf<Int?>(null)
-        private set
-
-    /** Docente de la asignación. */
-    var docenteId by mutableStateOf<Int?>(null)
         private set
 
     /** Fecha de la asignación. */
@@ -75,7 +72,7 @@ class AssignmentFormViewModel(
     var pruebaFinalHabilitada by mutableStateOf(false)
         private set
 
-    /** Indica que la asignación se está cargando. */
+    /** Indica que se están cargando los catálogos o la asignación. */
     var isLoading by mutableStateOf(false)
         private set
 
@@ -87,13 +84,30 @@ class AssignmentFormViewModel(
     var error by mutableStateOf<String?>(null)
         private set
 
-    /** `true` porque este formulario solo edita asignaciones existentes. */
-    val isEditMode: Boolean = true
+    /** `true` cuando se edita una asignación existente. */
+    val isEditMode: Boolean = assignmentId != null
 
     private var cargado = false
     private var originalFecha: Instant? = null
     private var originalMaxIntentos: Int? = null
     private var originalPruebaFinal = false
+    private var todasLasUnidades: List<LearningUnit> = emptyList()
+    private var docencias: List<Docencia> = emptyList()
+
+    /** Cambia el curso y recalcula las unidades disponibles. */
+    fun onCursoIdChange(value: Int?) {
+        if (value == cursoId) return
+        cursoId = value
+        unidadId = null
+        actualizarUnidades()
+        error = null
+    }
+
+    /** Cambia la unidad asignada. */
+    fun onUnidadIdChange(value: Int?) {
+        unidadId = value
+        error = null
+    }
 
     /** Cambia el máximo de intentos, solo con dígitos. */
     fun onMaxIntentosChange(value: String) {
@@ -113,70 +127,115 @@ class AssignmentFormViewModel(
         error = null
     }
 
-    /** Carga la asignación y sus entidades relacionadas. */
+    /** Carga la asignación o las docencias y catálogos para crear. */
     fun cargar() {
         if (cargado) return
 
-        viewModelScope.launch {
+        viewModelScope.launch(dispatcher) {
             isLoading = true
             error = null
 
-            val assignmentResult = assignmentRepository.getById(assignmentId)
-
-            if (assignmentResult.isFailure) {
-                error = mensajeDeError(assignmentResult.exceptionOrNull() as? ApiError)
-                isLoading = false
-                return@launch
+            if (assignmentId != null) {
+                cargarEdicion(assignmentId)
+            } else {
+                cargarCreacion()
             }
 
-            val assignment = assignmentResult.getOrThrow()
-
-            val courseResult = courseRepository.getById(assignment.cursoId)
-
-            if (courseResult.isFailure) {
-                error = mensajeDeError(courseResult.exceptionOrNull() as? ApiError)
-                isLoading = false
-                return@launch
+            if (error == null) {
+                cargado = true
             }
-
-            val unitResult = unitRepository.getById(assignment.unidadId)
-
-            if (unitResult.isFailure) {
-                error = mensajeDeError(unitResult.exceptionOrNull() as? ApiError)
-                isLoading = false
-                return@launch
-            }
-
-            val teacherResult = userRepository.getById(assignment.docenteId)
-
-            if (teacherResult.isFailure) {
-                error = mensajeDeError(teacherResult.exceptionOrNull() as? ApiError)
-                isLoading = false
-                return@launch
-            }
-
-            courses = listOf(courseResult.getOrThrow())
-            units = listOf(unitResult.getOrThrow())
-            teachers = listOf(teacherResult.getOrThrow())
-            cursoId = assignment.cursoId
-            unidadId = assignment.unidadId
-            docenteId = assignment.docenteId
-            fecha = assignment.fecha
-            maxIntentos = assignment.maxIntentos?.toString().orEmpty()
-            pruebaFinalHabilitada = assignment.pruebaFinalHabilitada
-
-            originalFecha = assignment.fecha
-            originalMaxIntentos = assignment.maxIntentos
-            originalPruebaFinal = assignment.pruebaFinalHabilitada
-            cargado = true
             isLoading = false
         }
     }
 
-    /** Guarda solo los campos modificados y avisa cuando termina. */
+    private suspend fun cargarEdicion(id: Int) {
+        val assignmentResult = assignmentRepository.getById(id)
+        if (assignmentResult.isFailure) {
+            error = mensajeDeError(assignmentResult.exceptionOrNull() as? ApiError)
+            return
+        }
+
+        val assignment = assignmentResult.getOrThrow()
+        val courseResult = courseRepository.getById(assignment.cursoId)
+        if (courseResult.isFailure) {
+            error = mensajeDeError(courseResult.exceptionOrNull() as? ApiError)
+            return
+        }
+
+        val unitResult = unitRepository.getById(assignment.unidadId)
+        if (unitResult.isFailure) {
+            error = mensajeDeError(unitResult.exceptionOrNull() as? ApiError)
+            return
+        }
+
+        courses = listOf(courseResult.getOrThrow())
+        units = listOf(unitResult.getOrThrow())
+        cursoId = assignment.cursoId
+        unidadId = assignment.unidadId
+        fecha = assignment.fecha
+        maxIntentos = assignment.maxIntentos?.toString().orEmpty()
+        pruebaFinalHabilitada = assignment.pruebaFinalHabilitada
+
+        originalFecha = assignment.fecha
+        originalMaxIntentos = assignment.maxIntentos
+        originalPruebaFinal = assignment.pruebaFinalHabilitada
+    }
+
+    private suspend fun cargarCreacion() {
+        val docenciasResult = docenciaRepository.list(teacherId)
+        if (docenciasResult.isFailure) {
+            error = mensajeDeError(docenciasResult.exceptionOrNull() as? ApiError)
+            return
+        }
+
+        val cursosResult = courseRepository.list()
+        if (cursosResult.isFailure) {
+            error = mensajeDeError(cursosResult.exceptionOrNull() as? ApiError)
+            return
+        }
+
+        val unidadesResult = unitRepository.list()
+        if (unidadesResult.isFailure) {
+            error = mensajeDeError(unidadesResult.exceptionOrNull() as? ApiError)
+            return
+        }
+
+        docencias = docenciasResult.getOrDefault(emptyList())
+        if (docencias.isEmpty()) {
+            error = "No tienes docencias para crear asignaciones."
+            return
+        }
+
+        val courseIds = docencias.map { it.cursoId }.toSet()
+        val subjectIds = docencias.map { it.asignaturaId }.toSet()
+        courses = cursosResult.getOrDefault(emptyList())
+            .filter { it.id in courseIds }
+            .sortedWith(compareBy({ it.anio }, { it.nombre }))
+        todasLasUnidades = unidadesResult.getOrDefault(emptyList())
+            .filter { it.asignaturaId in subjectIds }
+        fecha = Instant.now()
+    }
+
+    /** Ajusta las unidades al curso seleccionado. */
+    private fun actualizarUnidades() {
+        val courseId = cursoId
+        if (courseId == null) {
+            units = emptyList()
+            return
+        }
+
+        val subjectIds = docencias
+            .filter { it.cursoId == courseId }
+            .map { it.asignaturaId }
+            .toSet()
+        units = todasLasUnidades
+            .filter { it.asignaturaId in subjectIds }
+            .sortedWith(compareBy({ it.asignaturaId }, { it.orden }))
+    }
+
+    /** Guarda la asignación y avisa cuando termina. */
     fun guardar(onSaved: () -> Unit) {
         val fechaActual = fecha
-
         if (fechaActual == null) {
             error = "La fecha es obligatoria."
             return
@@ -188,7 +247,6 @@ class AssignmentFormViewModel(
         } else {
             maxIntentosTexto.toIntOrNull()
         }
-
         if (maxIntentosTexto.isNotEmpty() &&
             (maxIntentosValor == null || maxIntentosValor <= 0)
         ) {
@@ -196,25 +254,60 @@ class AssignmentFormViewModel(
             return
         }
 
-        viewModelScope.launch {
+        if (assignmentId == null) {
+            val curso = cursoId
+            val unidad = unidadId
+            if (curso == null) {
+                error = "Selecciona un curso."
+                return
+            }
+            if (unidad == null) {
+                error = "Selecciona una unidad."
+                return
+            }
+
+            viewModelScope.launch(dispatcher) {
+                isSaving = true
+                error = null
+
+                val result = assignmentRepository.create(
+                    CreateAssignmentRequest(
+                        cursoId = curso,
+                        unidadId = unidad,
+                        fecha = fechaActual,
+                        maxIntentos = maxIntentosValor,
+                        pruebaFinalHabilitada = pruebaFinalHabilitada
+                    )
+                )
+
+                isSaving = false
+                if (result.isFailure) {
+                    error = mensajeDeError(result.exceptionOrNull() as? ApiError)
+                    return@launch
+                }
+                onSaved()
+            }
+            return
+        }
+
+        val maxIntentosCambiado = maxIntentosValor
+            ?.takeIf { it != originalMaxIntentos }
+        val pruebaFinalCambiada = pruebaFinalHabilitada
+            .takeIf { it != originalPruebaFinal }
+        val fechaCambiada = fechaActual
+            .takeIf { it != originalFecha }
+
+        if (maxIntentosCambiado == null &&
+            pruebaFinalCambiada == null &&
+            fechaCambiada == null
+        ) {
+            error = "No hay cambios para guardar."
+            return
+        }
+
+        viewModelScope.launch(dispatcher) {
             isSaving = true
             error = null
-
-            val maxIntentosCambiado = maxIntentosValor
-                ?.takeIf { it != originalMaxIntentos }
-            val pruebaFinalCambiada = pruebaFinalHabilitada
-                .takeIf { it != originalPruebaFinal }
-            val fechaCambiada = fechaActual
-                .takeIf { it != originalFecha }
-
-            if (maxIntentosCambiado == null &&
-                pruebaFinalCambiada == null &&
-                fechaCambiada == null
-            ) {
-                error = "No hay cambios para guardar."
-                isSaving = false
-                return@launch
-            }
 
             val result = assignmentRepository.update(
                 assignmentId,
@@ -226,21 +319,19 @@ class AssignmentFormViewModel(
             )
 
             isSaving = false
-
             if (result.isFailure) {
                 error = mensajeDeError(result.exceptionOrNull() as? ApiError)
                 return@launch
             }
-
             onSaved()
         }
     }
 
-    /** Traduce el fallo del repositorio a un mensaje para el formulario. */
+    /** Traduce el fallo del repositorio a un mensaje visible. */
     private fun mensajeDeError(error: ApiError?): String = when (error) {
-        is ApiError.Conflict -> "No se pudo guardar: revisá los datos."
+        is ApiError.Conflict -> "Ya existe una asignación para ese curso y unidad."
         is ApiError.BadRequest -> error.message
-        is ApiError.NotFound -> "La asignación ya no existe."
+        is ApiError.NotFound -> "La asignación, el curso o la unidad ya no existe."
         is ApiError.Network -> "Sin conexión. Revisa tu red e intenta de nuevo."
         is ApiError.Unauthorized -> "Tu sesión venció. Vuelve a iniciar sesión."
         is ApiError.Unknown -> error.message
@@ -249,21 +340,23 @@ class AssignmentFormViewModel(
 
     companion object {
 
-        /** Factoría del formulario con los repositorios y el id. */
+        /** Factoría del formulario con los repositorios y el contexto. */
         fun factory(
             assignmentRepository: AssignmentRepository,
             courseRepository: CourseRepository,
             unitRepository: UnitRepository,
-            userRepository: UserRepository,
-            assignmentId: Int
+            docenciaRepository: DocenciaRepository,
+            assignmentId: Int?,
+            teacherId: Int
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 AssignmentFormViewModel(
                     assignmentRepository = assignmentRepository,
                     courseRepository = courseRepository,
                     unitRepository = unitRepository,
-                    userRepository = userRepository,
-                    assignmentId = assignmentId
+                    docenciaRepository = docenciaRepository,
+                    assignmentId = assignmentId,
+                    teacherId = teacherId
                 )
             }
         }

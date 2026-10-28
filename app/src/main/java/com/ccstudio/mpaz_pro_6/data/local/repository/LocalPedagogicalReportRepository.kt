@@ -1,10 +1,12 @@
 package com.ccstudio.mpaz_pro_6.data.local.repository
 
 import androidx.room.withTransaction
+import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ObjectiveLevel
 import com.ccstudio.mpaz_pro_6.data.enums.ReportStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
+import com.ccstudio.mpaz_pro_6.data.local.dao.AssignmentDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.AttemptDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.CurriculumDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.ReportDao
@@ -26,7 +28,8 @@ class LocalPedagogicalReportRepository(
     private val unitDao: UnitDao,
     private val userDao: UserDao,
     private val curriculumDao: CurriculumDao,
-    private val attemptDao: AttemptDao
+    private val attemptDao: AttemptDao,
+    private val assignmentDao: AssignmentDao
 ) : PedagogicalReportRepository {
 
     override suspend fun list(
@@ -96,8 +99,22 @@ class LocalPedagogicalReportRepository(
     private suspend fun calcularDetalles(
         report: PedagogicalReportEntity
     ): List<ReportObjectiveDetail> {
-        val activities = curriculumDao.getActivitiesByUnit(report.unidadId)
-        val activityIds = activities.map { it.id }.toSet()
+        val student = userDao.getUserById(report.estudianteId)
+        val courseId = student?.cursoId ?: return emptyList()
+        val assignment = assignmentDao.getAssignments().firstOrNull {
+            it.cursoId == courseId && it.unidadId == report.unidadId
+        } ?: return emptyList()
+        val assignedActivityIds = assignmentDao
+            .getAssignmentActivitiesByAssignment(assignment.id)
+            .map { it.actividadId }
+            .toSet()
+        val activityIds = curriculumDao.getActivitiesByUnit(report.unidadId)
+            .filter {
+                it.id in assignedActivityIds &&
+                    it.tipo != ActivityType.FINAL_TEST
+            }
+            .map { it.id }
+            .toSet()
         val attempts = attemptDao.getAttemptsByStudent(report.estudianteId)
             .filter { it.fechaFin != null && it.actividadId in activityIds }
             .groupBy { it.actividadId }

@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performScrollTo
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.model.Activity
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.theme.MPAZ_PRO_6Theme
@@ -48,20 +49,24 @@ class HomeStudentScreenTest {
         rule.setContent {
             MPAZ_PRO_6Theme {
                 HomeStudentScreen(
+                    curso = Course(id = 1, nombre = "6A", anio = 2026),
                     unidades = listOf(unit),
                     asignaturas = listOf(Subject(id = 1, nombre = "Lengua")),
+                    unidadesPorAsignatura = mapOf(1 to 1),
                     actividadesPendientes = listOf(activity),
                     actividadesEnProgreso = emptySet(),
-                    totalInformes = 1,
+                    actividadesParaRepetir = emptySet(),
                     sinCurso = false,
-                    onViewUnit = {},
-                    onVerUnidades = {},
+                    onViewSubject = {},
+                    onVerAsignaturas = {},
                     onVerActividades = {},
                     onResolveActivity = {},
                     onCargar = {}
                 )
             }
         }
+
+        rule.onNodeWithText("Curso 6A").assertIsDisplayed()
 
         rule.onNodeWithText(activity.titulo)
             .performScrollTo()

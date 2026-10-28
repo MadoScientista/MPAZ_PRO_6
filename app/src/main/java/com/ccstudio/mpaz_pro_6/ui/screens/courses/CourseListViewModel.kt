@@ -24,7 +24,8 @@ import kotlinx.coroutines.launch
  *
  * Para el docente, [teacherId] no es nulo: el listado se limita a sus cursos y
  * el filtro por año se aplica en cliente, porque el endpoint de cursos por
- * usuario no recibe `?anio`.
+ * usuario no recibe `?anio`. En ese modo no se consulta `/api/usuarios`, por lo
+ * que la tarjeta no muestra la cantidad de estudiantes.
  */
 class CourseListViewModel(
     private val courseRepository: CourseRepository,
@@ -76,18 +77,25 @@ class CourseListViewModel(
             isLoading = true
             error = null
 
-            val usersResult = userRepository.list()
+            if (teacherId != null) {
+                // El listado de cursos del docente no consulta el conteo de
+                // estudiantes: el detalle del curso lo resuelve con el
+                // endpoint acotado y se evita una consulta por curso aquí.
+                estudiantesPorCurso = emptyMap()
+            } else {
+                val usersResult = userRepository.list()
 
-            if (usersResult.isFailure) {
-                error = usersResult.exceptionOrNull() as? ApiError
-                isLoading = false
-                return@launch
+                if (usersResult.isFailure) {
+                    error = usersResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                estudiantesPorCurso = usersResult.getOrDefault(emptyList())
+                    .filter { it.rol == UserRole.ESTUDIANTE && it.cursoId != null }
+                    .groupBy { it.cursoId!! }
+                    .mapValues { (_, students) -> students.size }
             }
-
-            estudiantesPorCurso = usersResult.getOrDefault(emptyList())
-                .filter { it.rol == UserRole.ESTUDIANTE && it.cursoId != null }
-                .groupBy { it.cursoId!! }
-                .mapValues { (_, students) -> students.size }
 
             if (teacherId != null) {
                 val cursosResult = userRepository.listCourses(teacherId)

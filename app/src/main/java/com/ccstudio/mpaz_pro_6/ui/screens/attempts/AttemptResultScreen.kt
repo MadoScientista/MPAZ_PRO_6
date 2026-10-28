@@ -112,6 +112,7 @@ fun AttemptResultScreen(
                             questionNumber = index + 1,
                             isReadOnly = isCompleted,
                             showCorrectness = isCompleted,
+                            showCriterion = false,
                             enabled = false
                         )
                     }

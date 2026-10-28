@@ -16,8 +16,17 @@ interface ActivityRepository {
      * Lista las actividades ordenadas por unidad y orden.
      *
      * @param unitId filtro opcional del backend (`?unidadId`).
+     * @param contentId filtra las actividades de un contenido (`?contenidoId`).
+     *   Requiere [unitId].
+     * @param onlyTransversal filtra las actividades sin contenido
+     *   (`?soloTransversales=true`). Requiere [unitId] y es excluyente con
+     *   [contentId].
      */
-    suspend fun list(unitId: Int? = null): Result<List<Activity>>
+    suspend fun list(
+        unitId: Int? = null,
+        contentId: Int? = null,
+        onlyTransversal: Boolean = false
+    ): Result<List<Activity>>
 
     /** Obtiene una actividad por id. */
     suspend fun getById(id: Int): Result<Activity>

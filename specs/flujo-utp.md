@@ -8,7 +8,7 @@ pantallas, los datos que consume cada una y las reglas del contrato que aplica.
 ## 1. Objetivo
 
 La UTP entra a la app, ve el estado general de su establecimiento, revisa las
-unidades pendientes, consulta el material de una unidad y la autoriza o publica.
+unidades en revisión, consulta el material de una unidad y la autoriza o publica.
 También gestiona asignaturas, cursos y usuarios.
 
 ---
@@ -51,7 +51,7 @@ Cursos y Usuarios**. Se oculta en detalles, formularios y autorización.
 Muestra:
 
 - Saludo con el nombre de la UTP.
-- Contador de **unidades pendientes**: `BORRADOR` o `EN_REVISION`.
+- Contador de **unidades en revisión**: `EN_REVISION`.
 - Total de cursos.
 - Total de asignaturas.
 - Botón **Revisar unidades pendientes** → `units`.
@@ -62,8 +62,9 @@ Datos: `GET /api/unidades`, `GET /api/cursos`, `GET /api/asignaturas`.
 
 ## 4. Listado de unidades (`UnitListScreen`)
 
-La UTP ve las unidades en `BORRADOR` y `EN_REVISION`. La búsqueda por título o
-asignatura y el filtro por asignatura son **client-side**.
+La UTP ve solo las unidades en `EN_REVISION`. Los `BORRADOR` son material de
+trabajo del docente. La búsqueda por título o asignatura y el filtro por
+asignatura son **client-side**.
 
 Cada `UnitCard` muestra:
 
@@ -75,8 +76,8 @@ Cada `UnitCard` muestra:
 - Acciones **Ver detalle** y **Autorizar**.
 
 La acción **Autorizar** solo se ofrece para unidades `EN_REVISION` o
-`AUTORIZADO`. Las unidades en `BORRADOR` se muestran para seguimiento, pero no
-ofrecen cambio de estado desde este flujo.
+`AUTORIZADO`. Las unidades en `BORRADOR` no aparecen en este listado: pertenecen
+al trabajo del docente.
 
 Los conteos se resuelven en cliente:
 

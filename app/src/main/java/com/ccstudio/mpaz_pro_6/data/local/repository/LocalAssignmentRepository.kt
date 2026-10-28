@@ -1,12 +1,10 @@
 package com.ccstudio.mpaz_pro_6.data.local.repository
 
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
-import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.local.dao.AssignmentDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.CatalogDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.CurriculumDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnitDao
-import com.ccstudio.mpaz_pro_6.data.local.dao.UserDao
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentActivityEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.AssignmentObjectiveEntity
@@ -23,19 +21,16 @@ class LocalAssignmentRepository(
     private val dao: AssignmentDao,
     private val catalogDao: CatalogDao,
     private val unitDao: UnitDao,
-    private val userDao: UserDao,
     private val curriculumDao: CurriculumDao
 ) : AssignmentRepository {
 
     override suspend fun list(
         courseId: Int?,
-        unitId: Int?,
-        teacherId: Int?
+        unitId: Int?
     ): Result<List<Assignment>> = localCall {
         dao.getAssignments()
             .filter { courseId == null || it.cursoId == courseId }
             .filter { unitId == null || it.unidadId == unitId }
-            .filter { teacherId == null || it.docenteId == teacherId }
             .map { it.toDomain() }
     }
 
@@ -47,17 +42,12 @@ class LocalAssignmentRepository(
         localCall {
             catalogDao.getCourseById(request.cursoId).orNotFound("Curso").getOrThrow()
             unitDao.getUnitById(request.unidadId).orNotFound("Unidad").getOrThrow()
-            val teacher = userDao.getUserById(request.docenteId)
-                .orNotFound("Docente")
-                .getOrThrow()
-            require(teacher.rol == UserRole.DOCENTE) { "El usuario debe tener rol DOCENTE." }
 
             val entities = dao.getAssignments()
             val entity = AssignmentEntity(
                 id = entities.nextId { it.id },
                 cursoId = request.cursoId,
                 unidadId = request.unidadId,
-                docenteId = request.docenteId,
                 maxIntentos = request.maxIntentos ?: 1,
                 pruebaFinalHabilitada = request.pruebaFinalHabilitada ?: false,
                 fecha = request.fecha

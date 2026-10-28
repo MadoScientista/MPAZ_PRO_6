@@ -17,24 +17,29 @@ import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.CardCarousel
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.course.CourseCarouselCard
 import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCarouselCard
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
 
 /**
  * Panel de inicio de la jefa de UTP.
  *
- * Muestra el resumen de la gestión (unidades pendientes, cursos y asignaturas) y
- * dos carruseles: las unidades `BORRADOR` o `EN_REVISION` y las asignaturas. Cada
- * carrusel tiene un enlace «Ver todo» a su listado correspondiente.
+ * Muestra el resumen de la gestión (unidades en revisión, cursos y asignaturas) y
+ * dos carruseles: las unidades `EN_REVISION` y las asignaturas. La pestaña
+ * **Revisión** concentra el listado completo de unidades en revisión; el Inicio
+ * muestra solo la cola de trabajo inmediata.
  *
- * Las unidades pendientes se obtienen filtrando por `BORRADOR` o `EN_REVISION`
- * sobre `GET /api/unidades`, porque el backend no expone un listado dedicado.
+ * Las unidades en revisión se obtienen filtrando por `EN_REVISION` sobre
+ * `GET /api/unidades`, porque el backend no expone un listado dedicado. Los
+ * `BORRADOR` pertenecen al docente. Los cursos y las asignaturas tienen sus
+ * propias pestañas, así que el panel no repite el catálogo completo. Desde el
+ * panel se accede a la gestión de docencias sin agregar una sexta pestaña a la
+ * barra inferior.
  */
 @Composable
 fun HomeUTPScreen(
@@ -42,13 +47,11 @@ fun HomeUTPScreen(
     cursos: List<Course>,
     asignaturas: List<Subject>,
     unidadesPorAsignatura: Map<Int, Int>,
-    estudiantesPorCurso: Map<Int, Int>,
     onViewUnit: (LearningUnit) -> Unit,
     onViewSubject: (Subject) -> Unit,
-    onViewCourse: (Course) -> Unit,
     onVerUnidades: () -> Unit,
-    onVerCursos: () -> Unit,
     onVerAsignaturas: () -> Unit,
+    onGestionarDocencias: () -> Unit,
     onCargar: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
@@ -91,7 +94,7 @@ fun HomeUTPScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CounterCard(
-                        titulo = "Pendientes",
+                        titulo = "En revisión",
                         valor = unidadesPendientes.size,
                         modifier = Modifier.weight(1f)
                     )
@@ -109,8 +112,14 @@ fun HomeUTPScreen(
                     )
                 }
 
+                AppButton(
+                    text = "Gestionar docencias",
+                    onClick = onGestionarDocencias,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
                 CardCarousel(
-                    title = "Unidades pendientes",
+                    title = "Unidades en revisión",
                     itemCount = unidadesPendientes.size,
                     onSeeAll = onVerUnidades,
                     emptyMessage = "Sin unidades pendientes"
@@ -121,21 +130,6 @@ fun HomeUTPScreen(
                         unit = unit,
                         subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
                         onClick = { onViewUnit(unit) }
-                    )
-                }
-
-                CardCarousel(
-                    title = "Cursos",
-                    itemCount = cursos.size,
-                    onSeeAll = onVerCursos,
-                    emptyMessage = "Sin cursos"
-                ) { index ->
-                    val course = cursos[index]
-
-                    CourseCarouselCard(
-                        course = course,
-                        studentCount = estudiantesPorCurso[course.id] ?: 0,
-                        onClick = { onViewCourse(course) }
                     )
                 }
 

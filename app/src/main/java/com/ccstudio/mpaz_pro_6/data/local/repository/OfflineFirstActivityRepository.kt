@@ -19,18 +19,33 @@ class OfflineFirstActivityRepository(
     private val dao: CurriculumDao
 ) : ActivityRepository {
 
-    override suspend fun list(unitId: Int?): Result<List<Activity>> =
-        apiCall { api.getActivities(unitId).map { it.toDomain() } }.fold(
+    override suspend fun list(
+        unitId: Int?,
+        contentId: Int?,
+        onlyTransversal: Boolean
+    ): Result<List<Activity>> =
+        apiCall {
+            api.getActivities(
+                unitId = unitId,
+                contentId = contentId,
+                onlyTransversal = onlyTransversal.takeIf { it }
+            ).map { it.toDomain() }
+        }.fold(
             onSuccess = { activities ->
                 dao.upsertActivities(activities.map { it.toEntity() })
                 Result.success(activities)
             },
             onFailure = { error ->
                 cachedValueOrError(error) {
-                    val entities = if (unitId == null) {
-                        dao.getActivities()
-                    } else {
-                        dao.getActivitiesByUnit(unitId)
+                    val entities = when {
+                        contentId != null && unitId != null ->
+                            dao.getActivitiesByUnitAndContent(unitId, contentId)
+
+                        onlyTransversal && unitId != null ->
+                            dao.getTransversalActivitiesByUnit(unitId)
+
+                        unitId == null -> dao.getActivities()
+                        else -> dao.getActivitiesByUnit(unitId)
                     }
                     entities.map { it.toDomain() }.takeIf { it.isNotEmpty() }
                 }

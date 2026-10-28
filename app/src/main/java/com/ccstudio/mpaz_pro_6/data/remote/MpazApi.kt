@@ -15,6 +15,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateAssignmentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateContentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateContentResourceRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateCourseRequestDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateDocenciaRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateLearningObjectiveRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateLearningUnitRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreatePedagogicalReportRequestDto
@@ -22,6 +23,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateQuestionRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateStudentAnswerRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateSubjectRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.CreateUserRequestDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.DocenciaDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.LearningObjectiveDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.LearningUnitDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.LoginRequestDto
@@ -37,6 +39,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateAssignmentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateContentRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateContentResourceRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateCourseRequestDto
+import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateDocenciaRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateLearningObjectiveRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateLearningUnitRequestDto
 import com.ccstudio.mpaz_pro_6.data.remote.dto.UpdateQuestionRequestDto
@@ -94,6 +97,9 @@ interface MpazApi {
     @GET("api/cursos/{id}")
     suspend fun getCourse(@Path("id") id: Int): CourseDto
 
+    @GET("api/cursos/{id}/estudiantes")
+    suspend fun getCourseStudents(@Path("id") id: Int): List<UserDto>
+
     @POST("api/cursos")
     suspend fun createCourse(@Body body: CreateCourseRequestDto): CourseDto
 
@@ -120,6 +126,9 @@ interface MpazApi {
         @Path("id") id: Int,
         @Body body: UpdateLearningUnitRequestDto
     ): LearningUnitDto
+
+    @PATCH("api/unidades/{id}/envio-revision")
+    suspend fun sendUnitToReview(@Path("id") id: Int): LearningUnitDto
 
     @DELETE("api/unidades/{id}")
     suspend fun deleteUnit(@Path("id") id: Int): Response<Unit>
@@ -208,7 +217,11 @@ interface MpazApi {
     suspend fun deleteContentResource(@Path("id") id: Int): Response<Unit>
 
     @GET("api/actividades")
-    suspend fun getActivities(@Query("unidadId") unitId: Int? = null): List<ActivityDto>
+    suspend fun getActivities(
+        @Query("unidadId") unitId: Int? = null,
+        @Query("contenidoId") contentId: Int? = null,
+        @Query("soloTransversales") onlyTransversal: Boolean? = null
+    ): List<ActivityDto>
 
     @GET("api/actividades/{id}")
     suspend fun getActivity(@Path("id") id: Int): ActivityDto
@@ -268,11 +281,30 @@ interface MpazApi {
     @DELETE("api/alternativas/{id}")
     suspend fun deleteAlternative(@Path("id") id: Int): Response<Unit>
 
+    @GET("api/docencias")
+    suspend fun getDocencias(
+        @Query("docenteId") docenteId: Int? = null
+    ): List<DocenciaDto>
+
+    @GET("api/docencias/{id}")
+    suspend fun getDocencia(@Path("id") id: Int): DocenciaDto
+
+    @POST("api/docencias")
+    suspend fun createDocencia(@Body body: CreateDocenciaRequestDto): DocenciaDto
+
+    @PUT("api/docencias/{id}")
+    suspend fun updateDocencia(
+        @Path("id") id: Int,
+        @Body body: UpdateDocenciaRequestDto
+    ): DocenciaDto
+
+    @DELETE("api/docencias/{id}")
+    suspend fun deleteDocencia(@Path("id") id: Int): Response<Unit>
+
     @GET("api/asignaciones")
     suspend fun getAssignments(
         @Query("cursoId") courseId: Int? = null,
-        @Query("unidadId") unitId: Int? = null,
-        @Query("docenteId") teacherId: Int? = null
+        @Query("unidadId") unitId: Int? = null
     ): List<AssignmentDto>
 
     @GET("api/asignaciones/{id}")

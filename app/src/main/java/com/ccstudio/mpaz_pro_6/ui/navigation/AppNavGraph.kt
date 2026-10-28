@@ -52,12 +52,17 @@ import androidx.navigation.navArgument
 import com.ccstudio.mpaz_pro_6.data.AppContainer
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
+import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.User
 import com.ccstudio.mpaz_pro_6.data.session.SessionState
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppBottomBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.ProfileHeader
 import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
+import com.ccstudio.mpaz_pro_6.ui.screens.activities.ActivityDetailScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.activities.ActivityDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.activities.ActivityFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.activities.ActivityFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentDetailScreen
@@ -72,6 +77,8 @@ import com.ccstudio.mpaz_pro_6.ui.screens.attempts.AttemptResultScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.attempts.AttemptResultViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentDetailScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseDetailScreen
@@ -80,6 +87,10 @@ import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseFormScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.docencias.DocenciaFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.docencias.DocenciaFormViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.docencias.DocenciaListScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.docencias.DocenciaListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeStudentScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeStudentViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeTeacherScreen
@@ -88,16 +99,25 @@ import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.home.HomeUTPViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportDetailScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.questions.AlternativeFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.questions.AlternativeFormViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.questions.QuestionFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.questions.QuestionFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.reports.PedagogicalReportListViewModel
-import com.ccstudio.mpaz_pro_6.ui.screens.reports.StudentReportListScreen
-import com.ccstudio.mpaz_pro_6.ui.screens.reports.StudentReportListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.reports.ReportGenerateScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.reports.ReportGenerateViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.StudentSubjectDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.StudentSubjectListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectDetailScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectDetailViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectFormScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.TeacherSubjectDetailScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.TeacherSubjectDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.subjects.TeacherSubjectListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitDetailScreen
@@ -183,7 +203,19 @@ private fun AppNavHost(
     val topLevelRoutes = remember(rol) { bottomDestinations.map { it.route }.toSet() }
 
     // Pestaña a la que pertenece el detalle vigente, solo si el rol la tiene.
-    val parentTab = CHILD_ROUTE_PARENT_TAB[currentRoute]?.takeIf { it in topLevelRoutes }
+    // Para el docente, unidad y contenido cuelgan de Asignaturas porque el
+    // catálogo de unidades ya no es una pestaña propia de su barra inferior.
+    val parentTab = when (currentRoute) {
+        AppRoutes.UNIT_DETAIL,
+        AppRoutes.CONTENT_DETAIL -> when (rol) {
+            UserRole.DOCENTE,
+            UserRole.ESTUDIANTE -> AppRoutes.SUBJECTS
+
+            UserRole.UTP -> AppRoutes.UNITS
+        }
+
+        else -> CHILD_ROUTE_PARENT_TAB[currentRoute]
+    }?.takeIf { it in topLevelRoutes }
     val showBottomBar = authenticated && (currentRoute in topLevelRoutes || parentTab != null)
 
     // En un detalle la barra marca su pestaña padre; en una pestaña, la vigente.
@@ -206,6 +238,7 @@ private fun AppNavHost(
     val editingSubject = (backStackEntry?.arguments?.getInt("subjectId") ?: -1) > 0
     val editingCourse = (backStackEntry?.arguments?.getInt("courseId") ?: -1) > 0
     val editingUser = (backStackEntry?.arguments?.getInt("userId") ?: -1) > 0
+    val editingDocencia = (backStackEntry?.arguments?.getInt("docenciaId") ?: -1) > 0
 
     // Título de la barra superior para los destinos profundos (detalles y
     // formularios). Las pestañas muestran la identidad del usuario en su lugar:
@@ -215,6 +248,7 @@ private fun AppNavHost(
         AppRoutes.SUBJECTS -> "Asignaturas"
         AppRoutes.COURSES -> "Cursos"
         AppRoutes.USERS -> "Usuarios"
+        AppRoutes.DOCENCIAS -> "Docencias"
         AppRoutes.ACTIVITIES -> "Actividades"
         AppRoutes.ASSIGNMENTS -> "Mis asignaciones"
         AppRoutes.REPORTS -> if (rol == UserRole.ESTUDIANTE) {
@@ -227,6 +261,11 @@ private fun AppNavHost(
         AppRoutes.COURSE_DETAIL -> "Curso"
         AppRoutes.SUBJECT_DETAIL -> "Asignatura"
         AppRoutes.CONTENT_DETAIL -> "Detalle del contenido"
+        AppRoutes.CONTENT_FORM -> "Nuevo contenido"
+        AppRoutes.ACTIVITY_DETAIL -> "Actividad"
+        AppRoutes.ACTIVITY_FORM -> "Nueva actividad"
+        AppRoutes.QUESTION_FORM -> "Nueva pregunta"
+        AppRoutes.ALTERNATIVE_FORM -> "Nueva alternativa"
         AppRoutes.UNIT_AUTHORIZATION -> "Autorización de unidad"
         AppRoutes.SUBJECT_FORM -> if (editingSubject) {
             "Editar asignatura"
@@ -235,11 +274,18 @@ private fun AppNavHost(
         }
 
         AppRoutes.COURSE_FORM -> if (editingCourse) "Editar curso" else "Nuevo curso"
+        AppRoutes.DOCENCIA_FORM -> if (editingDocencia) {
+            "Editar docencia"
+        } else {
+            "Nueva docencia"
+        }
         AppRoutes.USER_FORM -> if (editingUser) "Editar usuario" else "Nuevo usuario"
         AppRoutes.ACTIVITY_ATTEMPT -> "Resolver actividad"
         AppRoutes.ATTEMPT_RESULT -> "Resultado del intento"
         AppRoutes.REPORT_DETAIL -> "Informe pedagógico"
+        AppRoutes.REPORT_GENERATE -> "Generar informe"
         AppRoutes.ASSIGNMENT_DETAIL -> "Detalle de la asignación"
+        AppRoutes.ASSIGNMENT_CREATE -> "Nueva asignación"
         AppRoutes.ASSIGNMENT_FORM -> "Editar asignación"
         else -> ""
     }
@@ -402,8 +448,7 @@ private fun AppNavHost(
                                 factory = HomeUTPViewModel.factory(
                                     unitRepository = container.unitRepository,
                                     courseRepository = container.courseRepository,
-                                    subjectRepository = container.subjectRepository,
-                                    userRepository = container.userRepository
+                                    subjectRepository = container.subjectRepository
                                 )
                             )
 
@@ -416,7 +461,6 @@ private fun AppNavHost(
                                 cursos = viewModel.cursos,
                                 asignaturas = viewModel.asignaturas,
                                 unidadesPorAsignatura = viewModel.unidadesPorAsignatura,
-                                estudiantesPorCurso = viewModel.estudiantesPorCurso,
                                 isLoading = viewModel.isLoading,
                                 error = viewModel.error,
                                 onViewUnit = { unit ->
@@ -425,12 +469,11 @@ private fun AppNavHost(
                                 onViewSubject = { subject ->
                                     navController.navigate(AppRoutes.subjectDetail(subject.id))
                                 },
-                                onViewCourse = { course ->
-                                    navController.navigate(AppRoutes.courseDetail(course.id))
-                                },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                                onVerCursos = { navController.navigate(AppRoutes.COURSES) },
                                 onVerAsignaturas = { navController.navigate(AppRoutes.SUBJECTS) },
+                                onGestionarDocencias = {
+                                    navController.navigate(AppRoutes.docencias())
+                                },
                                 onCargar = { viewModel.cargar() }
                             )
                         }
@@ -438,10 +481,10 @@ private fun AppNavHost(
                         UserRole.DOCENTE -> {
                             val viewModel: HomeTeacherViewModel = viewModel(
                                 factory = HomeTeacherViewModel.factory(
-                                    userRepository = container.userRepository,
+                                    docenciaRepository = container.docenciaRepository,
+                                    courseRepository = container.courseRepository,
                                     assignmentRepository = container.assignmentRepository,
                                     unitRepository = container.unitRepository,
-                                    subjectRepository = container.subjectRepository,
                                     activityRepository = container.activityRepository,
                                     pedagogicalReportRepository = container.pedagogicalReportRepository,
                                     teacherId = user.id
@@ -466,19 +509,16 @@ private fun AppNavHost(
 
                             HomeTeacherScreen(
                                 cursos = viewModel.cursos,
-                                unidades = viewModel.unidades,
                                 asignaturas = viewModel.asignaturas,
+                                cursosPorAsignatura = viewModel.cursosPorAsignatura,
+                                unidadesPorAsignatura = viewModel.unidadesPorAsignatura,
                                 informesPendientes = viewModel.informesPendientes,
-                                estudiantes = viewModel.estudiantes,
                                 actividades = viewModel.actividades,
                                 isLoading = viewModel.isLoading,
                                 error = viewModel.error,
-                                onViewUnit = { unit ->
-                                    navController.navigate(AppRoutes.unitDetail(unit.id))
-                                },
-                                onViewCourse = { course ->
+                                onViewSubject = { subject ->
                                     navController.navigate(
-                                        AppRoutes.courseDetail(course.id)
+                                        AppRoutes.subjectDetail(subject.id)
                                     )
                                 },
                                 onViewReport = { report ->
@@ -486,8 +526,12 @@ private fun AppNavHost(
                                         AppRoutes.reportDetail(report.id)
                                     )
                                 },
-                                onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
-                                onVerCursos = { navController.navigate(AppRoutes.COURSES) },
+                                onCreateAssignment = {
+                                    navController.navigate(AppRoutes.ASSIGNMENT_CREATE)
+                                },
+                                onVerAsignaturas = {
+                                    navController.navigate(AppRoutes.SUBJECTS)
+                                },
                                 onVerInformes = { navController.navigate(AppRoutes.REPORTS) },
                                 onCargar = viewModel::cargar,
                             )
@@ -498,11 +542,13 @@ private fun AppNavHost(
                                 container = container,
                                 navController = navController,
                                 user = user,
-                                onViewUnit = { unit ->
-                                    navController.navigate(AppRoutes.unitDetail(unit.id))
+                                onViewSubject = { subject ->
+                                    navController.navigate(
+                                        AppRoutes.subjectDetail(subject.id)
+                                    )
                                 },
-                                onVerUnidades = {
-                                    navController.navigate(AppRoutes.UNITS)
+                                onVerAsignaturas = {
+                                    navController.navigate(AppRoutes.SUBJECTS)
                                 },
                                 onVerActividades = {
                                     navController.navigate(AppRoutes.ACTIVITIES)
@@ -654,66 +700,188 @@ private fun AppNavHost(
                 ) { entry ->
                     val subjectId = entry.arguments?.getInt("subjectId") ?: 0
 
-                    val viewModel: SubjectDetailViewModel = viewModel(
-                        factory = SubjectDetailViewModel.factory(
-                            subjectRepository = container.subjectRepository,
-                            unitRepository = container.unitRepository,
-                            subjectId = subjectId
+                    if (rol == UserRole.DOCENTE) {
+                        val viewModel: TeacherSubjectDetailViewModel = viewModel(
+                            factory = TeacherSubjectDetailViewModel.factory(
+                                docenciaRepository = container.docenciaRepository,
+                                subjectRepository = container.subjectRepository,
+                                courseRepository = container.courseRepository,
+                                unitRepository = container.unitRepository,
+                                assignmentRepository = container.assignmentRepository,
+                                teacherId = user.id,
+                                subjectId = subjectId
+                            )
                         )
-                    )
 
-                    LaunchedEffect(Unit) {
-                        viewModel.cargar()
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        TeacherSubjectDetailScreen(
+                            subject = viewModel.subject,
+                            cursos = viewModel.cursos,
+                            unidades = viewModel.unidades,
+                            selectedCourseId = viewModel.selectedCourseId,
+                            onSelectCourse = viewModel::seleccionarCurso,
+                            onViewUnit = { unit ->
+                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                            },
+                            onRetry = viewModel::cargar,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error
+                        )
+                    } else if (rol == UserRole.ESTUDIANTE) {
+                        val viewModel: StudentSubjectDetailViewModel = viewModel(
+                            factory = StudentSubjectDetailViewModel.factory(
+                                subjectRepository = container.subjectRepository,
+                                unitRepository = container.unitRepository,
+                                assignmentRepository = container.assignmentRepository,
+                                courseId = user.cursoId,
+                                subjectId = subjectId
+                            )
+                        )
+
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        SubjectDetailScreen(
+                            subject = viewModel.subject,
+                            unidades = viewModel.unidades,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error,
+                            onViewUnit = { unit ->
+                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                            },
+                            onAuthorize = null,
+                            onRetry = viewModel::cargar
+                        )
+                    } else {
+                        val viewModel: SubjectDetailViewModel = viewModel(
+                            factory = SubjectDetailViewModel.factory(
+                                subjectRepository = container.subjectRepository,
+                                unitRepository = container.unitRepository,
+                                subjectId = subjectId
+                            )
+                        )
+
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        SubjectDetailScreen(
+                            subject = viewModel.subject,
+                            unidades = viewModel.unidades,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error,
+                            onViewUnit = { unit ->
+                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                            },
+                            onAuthorize = { unit ->
+                                navController.navigate(AppRoutes.unitAuthorization(unit.id))
+                            },
+                            onRetry = viewModel::cargar
+                        )
                     }
-
-                    SubjectDetailScreen(
-                        subject = viewModel.subject,
-                        unidades = viewModel.unidades,
-                        isLoading = viewModel.isLoading,
-                        error = viewModel.error,
-                        onViewUnit = { unit ->
-                            navController.navigate(AppRoutes.unitDetail(unit.id))
-                        },
-                        onAuthorize = { unit ->
-                            navController.navigate(AppRoutes.unitAuthorization(unit.id))
-                        },
-                        onRetry = viewModel::cargar
-                    )
                 }
 
                 composable(AppRoutes.SUBJECTS) {
-                    val viewModel: SubjectListViewModel = viewModel(
-                        factory = SubjectListViewModel.factory(
-                            subjectRepository = container.subjectRepository,
-                            unitRepository = container.unitRepository
+                    if (rol == UserRole.DOCENTE) {
+                        val viewModel: TeacherSubjectListViewModel = viewModel(
+                            factory = TeacherSubjectListViewModel.factory(
+                                docenciaRepository = container.docenciaRepository,
+                                unitRepository = container.unitRepository,
+                                teacherId = user.id
+                            )
                         )
-                    )
 
-                    LaunchedEffect(Unit) {
-                        viewModel.cargar()
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        SubjectListScreen(
+                            asignaturas = viewModel.asignaturas,
+                            estadisticasPorAsignatura = viewModel.estadisticasPorAsignatura,
+                            cursosPorAsignatura = viewModel.cursosPorAsignatura,
+                            onCreate = {},
+                            onViewDetail = { subject ->
+                                navController.navigate(AppRoutes.subjectDetail(subject.id))
+                            },
+                            onEdit = {},
+                            onDelete = {},
+                            mensajeOperacion = null,
+                            onDismissMensaje = {},
+                            onRetry = viewModel::cargar,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error,
+                            title = "Mis asignaturas",
+                            canManage = false
+                        )
+                    } else if (rol == UserRole.ESTUDIANTE) {
+                        val viewModel: StudentSubjectListViewModel = viewModel(
+                            factory = StudentSubjectListViewModel.factory(
+                                subjectRepository = container.subjectRepository,
+                                unitRepository = container.unitRepository,
+                                assignmentRepository = container.assignmentRepository,
+                                courseId = user.cursoId
+                            )
+                        )
+
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        SubjectListScreen(
+                            asignaturas = viewModel.asignaturas,
+                            estadisticasPorAsignatura = viewModel.estadisticasPorAsignatura,
+                            onCreate = {},
+                            onViewDetail = { subject ->
+                                navController.navigate(AppRoutes.subjectDetail(subject.id))
+                            },
+                            onEdit = {},
+                            onDelete = {},
+                            mensajeOperacion = null,
+                            onDismissMensaje = {},
+                            onRetry = viewModel::cargar,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error,
+                            title = "Mis asignaturas",
+                            canManage = false
+                        )
+                    } else {
+                        val viewModel: SubjectListViewModel = viewModel(
+                            factory = SubjectListViewModel.factory(
+                                subjectRepository = container.subjectRepository,
+                                unitRepository = container.unitRepository
+                            )
+                        )
+
+                        LaunchedEffect(Unit) {
+                            viewModel.cargar()
+                        }
+
+                        SubjectListScreen(
+                            asignaturas = viewModel.asignaturas,
+                            estadisticasPorAsignatura = viewModel.estadisticasPorAsignatura,
+                            onCreate = {
+                                navController.navigate(AppRoutes.subjectForm())
+                            },
+                            onViewDetail = { subject ->
+                                navController.navigate(AppRoutes.subjectDetail(subject.id))
+                            },
+                            onEdit = { subject ->
+                                navController.navigate(AppRoutes.subjectForm(subject.id))
+                            },
+                            onDelete = { subject ->
+                                viewModel.eliminar(subject.id)
+                            },
+                            mensajeOperacion = viewModel.mensajeOperacion,
+                            onDismissMensaje = viewModel::limpiarMensaje,
+                            onRetry = viewModel::cargar,
+                            isLoading = viewModel.isLoading,
+                            error = viewModel.error
+                        )
                     }
-
-                    SubjectListScreen(
-                        asignaturas = viewModel.asignaturas,
-                        estadisticasPorAsignatura = viewModel.estadisticasPorAsignatura,
-                        onCreate = {
-                            navController.navigate(AppRoutes.subjectForm())
-                        },
-                        onViewDetail = { subject ->
-                            navController.navigate(AppRoutes.subjectDetail(subject.id))
-                        },
-                        onEdit = { subject ->
-                            navController.navigate(AppRoutes.subjectForm(subject.id))
-                        },
-                        onDelete = { subject ->
-                            viewModel.eliminar(subject.id)
-                        },
-                        mensajeOperacion = viewModel.mensajeOperacion,
-                        onDismissMensaje = viewModel::limpiarMensaje,
-                        onRetry = viewModel::cargar,
-                        isLoading = viewModel.isLoading,
-                        error = viewModel.error
-                    )
                 }
 
                 composable(
@@ -825,7 +993,16 @@ private fun AppNavHost(
                         estudiantes = viewModel.estudiantes,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
-                        onRetry = viewModel::cargar
+                        onRetry = viewModel::cargar,
+                        onManageDocencias = if (rol == UserRole.UTP) {
+                            {
+                                navController.navigate(
+                                    AppRoutes.docencias(courseId)
+                                )
+                            }
+                        } else {
+                            null
+                        }
                     )
                 }
 
@@ -868,6 +1045,133 @@ private fun AppNavHost(
                             }
                         },
                         onCancel = { navController.popBackStack() },
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.DOCENCIAS,
+                    arguments = listOf(
+                        navArgument("courseId") {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
+                ) { entry ->
+                    val initialCourseId = entry.arguments
+                        ?.getInt("courseId")
+                        ?.takeIf { it > 0 }
+
+                    val viewModel: DocenciaListViewModel = viewModel(
+                        factory = DocenciaListViewModel.factory(
+                            docenciaRepository = container.docenciaRepository,
+                            userRepository = container.userRepository,
+                            courseRepository = container.courseRepository,
+                            subjectRepository = container.subjectRepository,
+                            initialCourseId = initialCourseId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_DOCENCIAS_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle.set(REFRESH_DOCENCIAS_KEY, false)
+                        }
+                    }
+
+                    DocenciaListScreen(
+                        docencias = viewModel.docencias,
+                        cursos = viewModel.cursos,
+                        selectedCourseId = viewModel.selectedCourseId,
+                        onSelectCourse = viewModel::seleccionarCurso,
+                        onCreate = {
+                            navController.navigate(
+                                AppRoutes.docenciaForm(
+                                    courseId = viewModel.selectedCourseId
+                                )
+                            )
+                        },
+                        onEdit = { docencia ->
+                            navController.navigate(
+                                AppRoutes.docenciaForm(docenciaId = docencia.id)
+                            )
+                        },
+                        onDelete = { docencia ->
+                            viewModel.eliminar(docencia.id)
+                        },
+                        mensajeOperacion = viewModel.mensajeOperacion,
+                        onDismissMensaje = viewModel::limpiarMensaje,
+                        onRetry = viewModel::cargar,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.DOCENCIA_FORM,
+                    arguments = listOf(
+                        navArgument("docenciaId") {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        },
+                        navArgument("courseId") {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
+                ) { entry ->
+                    val docenciaId = entry.arguments
+                        ?.getInt("docenciaId")
+                        ?.takeIf { it > 0 }
+                    val initialCourseId = entry.arguments
+                        ?.getInt("courseId")
+                        ?.takeIf { it > 0 }
+
+                    val viewModel: DocenciaFormViewModel = viewModel(
+                        factory = DocenciaFormViewModel.factory(
+                            docenciaRepository = container.docenciaRepository,
+                            userRepository = container.userRepository,
+                            courseRepository = container.courseRepository,
+                            subjectRepository = container.subjectRepository,
+                            docenciaId = docenciaId,
+                            initialCourseId = initialCourseId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    DocenciaFormScreen(
+                        docentes = viewModel.docentes,
+                        cursos = viewModel.cursos,
+                        asignaturas = viewModel.asignaturas,
+                        docenteId = viewModel.docenteId,
+                        cursoId = viewModel.cursoId,
+                        asignaturaId = viewModel.asignaturaId,
+                        isEditMode = viewModel.isEditMode,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        error = viewModel.error,
+                        onDocenteIdChange = viewModel::onDocenteIdChange,
+                        onCursoIdChange = viewModel::onCursoIdChange,
+                        onAsignaturaIdChange = viewModel::onAsignaturaIdChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_DOCENCIAS_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() }
                     )
                 }
 
@@ -959,7 +1263,7 @@ private fun AppNavHost(
                             assignmentRepository = container.assignmentRepository,
                             courseRepository = container.courseRepository,
                             unitRepository = container.unitRepository,
-                            userRepository = container.userRepository,
+                            docenciaRepository = container.docenciaRepository,
                             teacherId = user.id
                         )
                     )
@@ -983,15 +1287,61 @@ private fun AppNavHost(
                         asignaciones = viewModel.asignaciones,
                         cursos = viewModel.cursos,
                         unidades = viewModel.unidades,
-                        docentes = viewModel.docentes,
                         onViewDetail = { assignment ->
                             navController.navigate(
                                 AppRoutes.assignmentDetail(assignment.id)
                             )
                         },
+                        onCreate = {
+                            navController.navigate(AppRoutes.ASSIGNMENT_CREATE)
+                        },
                         onRetry = viewModel::cargar,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error
+                    )
+                }
+
+                composable(AppRoutes.ASSIGNMENT_CREATE) {
+                    val viewModel: AssignmentFormViewModel = viewModel(
+                        factory = AssignmentFormViewModel.factory(
+                            assignmentRepository = container.assignmentRepository,
+                            courseRepository = container.courseRepository,
+                            unitRepository = container.unitRepository,
+                            docenciaRepository = container.docenciaRepository,
+                            assignmentId = null,
+                            teacherId = user.id
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    AssignmentFormScreen(
+                        courses = viewModel.courses,
+                        units = viewModel.units,
+                        cursoId = viewModel.cursoId,
+                        unidadId = viewModel.unidadId,
+                        fecha = viewModel.fecha,
+                        maxIntentos = viewModel.maxIntentos,
+                        pruebaFinalHabilitada = viewModel.pruebaFinalHabilitada,
+                        isEditMode = viewModel.isEditMode,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        error = viewModel.error,
+                        onCursoIdChange = viewModel::onCursoIdChange,
+                        onUnidadIdChange = viewModel::onUnidadIdChange,
+                        onFechaChange = viewModel::onFechaChange,
+                        onMaxIntentosChange = viewModel::onMaxIntentosChange,
+                        onPruebaFinalHabilitadaChange =
+                            viewModel::onPruebaFinalHabilitadaChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                markAssignmentsChanged(navController)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() }
                     )
                 }
 
@@ -1008,7 +1358,6 @@ private fun AppNavHost(
                             assignmentRepository = container.assignmentRepository,
                             courseRepository = container.courseRepository,
                             unitRepository = container.unitRepository,
-                            userRepository = container.userRepository,
                             learningObjectiveRepository = container.learningObjectiveRepository,
                             activityRepository = container.activityRepository,
                             assignmentId = assignmentId
@@ -1038,7 +1387,6 @@ private fun AppNavHost(
                         assignment = viewModel.assignment,
                         courseName = viewModel.courseName,
                         unitTitle = viewModel.unitTitle,
-                        teacherName = viewModel.teacherName,
                         objectives = viewModel.objectives,
                         activities = viewModel.activities,
                         associatedObjectiveIds = viewModel.associatedObjectiveIds,
@@ -1095,8 +1443,9 @@ private fun AppNavHost(
                             assignmentRepository = container.assignmentRepository,
                             courseRepository = container.courseRepository,
                             unitRepository = container.unitRepository,
-                            userRepository = container.userRepository,
-                            assignmentId = assignmentId
+                            docenciaRepository = container.docenciaRepository,
+                            assignmentId = assignmentId,
+                            teacherId = user.id
                         )
                     )
 
@@ -1107,10 +1456,8 @@ private fun AppNavHost(
                     AssignmentFormScreen(
                         courses = viewModel.courses,
                         units = viewModel.units,
-                        teachers = viewModel.teachers,
                         cursoId = viewModel.cursoId,
                         unidadId = viewModel.unidadId,
-                        docenteId = viewModel.docenteId,
                         fecha = viewModel.fecha,
                         maxIntentos = viewModel.maxIntentos,
                         pruebaFinalHabilitada = viewModel.pruebaFinalHabilitada,
@@ -1120,7 +1467,6 @@ private fun AppNavHost(
                         error = viewModel.error,
                         onCursoIdChange = {},
                         onUnidadIdChange = {},
-                        onDocenteIdChange = {},
                         onFechaChange = viewModel::onFechaChange,
                         onMaxIntentosChange = viewModel::onMaxIntentosChange,
                         onPruebaFinalHabilitadaChange =
@@ -1137,56 +1483,87 @@ private fun AppNavHost(
                     )
                 }
 
-                composable(AppRoutes.REPORTS) {
-                    if (rol == UserRole.ESTUDIANTE) {
-                        val viewModel: StudentReportListViewModel = viewModel(
-                            factory = StudentReportListViewModel.factory(
-                                pedagogicalReportRepository = container.pedagogicalReportRepository,
-                                unitRepository = container.unitRepository,
-                                studentId = user.id
-                            )
+                composable(AppRoutes.REPORTS) { entry ->
+                    val viewModel: PedagogicalReportListViewModel = viewModel(
+                        factory = PedagogicalReportListViewModel.factory(
+                            pedagogicalReportRepository = container.pedagogicalReportRepository,
+                            unitRepository = container.unitRepository,
+                            teacherId = user.id
                         )
+                    )
 
-                        LaunchedEffect(Unit) {
-                            viewModel.cargar()
-                        }
-
-                        StudentReportListScreen(
-                            informes = viewModel.informes,
-                            unitTitles = viewModel.unitTitles,
-                            onViewDetail = { report ->
-                                navController.navigate(AppRoutes.reportDetail(report.id))
-                            },
-                            onRetry = viewModel::cargar,
-                            isLoading = viewModel.isLoading,
-                            error = viewModel.error
-                        )
-                    } else {
-                        val viewModel: PedagogicalReportListViewModel = viewModel(
-                            factory = PedagogicalReportListViewModel.factory(
-                                pedagogicalReportRepository = container.pedagogicalReportRepository,
-                                userRepository = container.userRepository,
-                                unitRepository = container.unitRepository,
-                                teacherId = user.id
-                            )
-                        )
-
-                        LaunchedEffect(Unit) {
-                            viewModel.cargar()
-                        }
-
-                        PedagogicalReportListScreen(
-                            informes = viewModel.informes,
-                            usuarios = viewModel.usuarios,
-                            unidades = viewModel.unidades,
-                            onViewDetail = { report ->
-                                navController.navigate(AppRoutes.reportDetail(report.id))
-                            },
-                            onRetry = viewModel::cargar,
-                            isLoading = viewModel.isLoading,
-                            error = viewModel.error
-                        )
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
                     }
+
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_REPORTS_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle.set(REFRESH_REPORTS_KEY, false)
+                        }
+                    }
+
+                    PedagogicalReportListScreen(
+                        informes = viewModel.informes,
+                        unidades = viewModel.unidades,
+                        onViewDetail = { report ->
+                            navController.navigate(AppRoutes.reportDetail(report.id))
+                        },
+                        onCreate = {
+                            navController.navigate(AppRoutes.REPORT_GENERATE)
+                        },
+                        onRetry = viewModel::cargar,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error
+                    )
+                }
+
+                composable(AppRoutes.REPORT_GENERATE) {
+                    val viewModel: ReportGenerateViewModel = viewModel(
+                        factory = ReportGenerateViewModel.factory(
+                            assignmentRepository = container.assignmentRepository,
+                            courseRepository = container.courseRepository,
+                            unitRepository = container.unitRepository,
+                            docenciaRepository = container.docenciaRepository,
+                            userRepository = container.userRepository,
+                            pedagogicalReportRepository = container.pedagogicalReportRepository,
+                            teacherId = user.id
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    ReportGenerateScreen(
+                        courses = viewModel.courses,
+                        students = viewModel.students,
+                        units = viewModel.units,
+                        cursoId = viewModel.cursoId,
+                        estudianteId = viewModel.estudianteId,
+                        unidadId = viewModel.unidadId,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        error = viewModel.error,
+                        onCursoIdChange = viewModel::onCursoIdChange,
+                        onEstudianteIdChange = viewModel::onEstudianteIdChange,
+                        onUnidadIdChange = viewModel::onUnidadIdChange,
+                        onSubmit = {
+                            viewModel.generar { reportId ->
+                                markReportsChanged(navController)
+                                navController.navigate(AppRoutes.reportDetail(reportId)) {
+                                    popUpTo(AppRoutes.REPORTS) {
+                                        inclusive = false
+                                    }
+                                }
+                            }
+                        },
+                        onCancel = { navController.popBackStack() }
+                    )
                 }
 
                 composable(
@@ -1250,6 +1627,17 @@ private fun AppNavHost(
                     viewModel.cargar()
                 }
 
+                val refresh by entry.savedStateHandle
+                    .getStateFlow(REFRESH_UNIT_DETAIL_KEY, false)
+                    .collectAsState()
+
+                LaunchedEffect(refresh) {
+                    if (refresh) {
+                        viewModel.cargar()
+                        entry.savedStateHandle.set(REFRESH_UNIT_DETAIL_KEY, false)
+                    }
+                }
+
                 UnitDetailScreen(
                     unidad = viewModel.unidad,
                     asignatura = viewModel.asignatura,
@@ -1257,6 +1645,7 @@ private fun AppNavHost(
                     objetivos = viewModel.objetivos,
                     actividades = viewModel.actividades,
                     recursosPorContenido = viewModel.recursosPorContenido,
+                    actividadesPorContenido = viewModel.actividadesPorContenido,
                     preguntasPorActividad = viewModel.preguntasPorActividad,
                     isLoading = viewModel.isLoading,
                     error = viewModel.error,
@@ -1271,8 +1660,71 @@ private fun AppNavHost(
                     },
                     onRetry = viewModel::cargar,
                     puedeAutorizar = rol == UserRole.UTP,
-                    puedeResolverActividades = rol == UserRole.ESTUDIANTE
+                    puedeResolverActividades = rol == UserRole.ESTUDIANTE,
+                    puedeCrearContenido = rol == UserRole.DOCENTE,
+                    puedeEnviarRevision = rol == UserRole.DOCENTE,
+                    isSendingReview = viewModel.isSendingReview,
+                    mensajeRevision = viewModel.mensajeRevision,
+                    onCreateContent = if (rol == UserRole.DOCENTE) {
+                        { navController.navigate(AppRoutes.contentForm(unitId)) }
+                    } else {
+                        null
+                    },
+                    onEnviarRevision = if (rol == UserRole.DOCENTE) {
+                        viewModel::enviarARevision
+                    } else {
+                        null
+                    }
                 )
+                }
+
+                composable(
+                    route = AppRoutes.CONTENT_FORM,
+                    arguments = listOf(navArgument("unitId") { type = NavType.IntType })
+                ) { entry ->
+                    val unitId = entry.arguments?.getInt("unitId") ?: 0
+
+                    val viewModel: ContentFormViewModel = viewModel(
+                        factory = ContentFormViewModel.factory(
+                            contentRepository = container.contentRepository,
+                            learningObjectiveRepository = container.learningObjectiveRepository,
+                            unitId = unitId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    ContentFormScreen(
+                        objetivos = viewModel.objetivos,
+                        selectedObjectiveId = viewModel.selectedObjectiveId,
+                        titulo = viewModel.titulo,
+                        explicacion = viewModel.explicacion,
+                        ejemplos = viewModel.ejemplos,
+                        instrucciones = viewModel.instrucciones,
+                        orden = viewModel.orden,
+                        origen = viewModel.origen,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        loadError = viewModel.loadError,
+                        error = viewModel.error,
+                        onObjectiveChange = viewModel::onObjectiveChange,
+                        onTituloChange = viewModel::onTituloChange,
+                        onExplicacionChange = viewModel::onExplicacionChange,
+                        onEjemplosChange = viewModel::onEjemplosChange,
+                        onInstruccionesChange = viewModel::onInstruccionesChange,
+                        onOrdenChange = viewModel::onOrdenChange,
+                        onOrigenChange = viewModel::onOrigenChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_UNIT_DETAIL_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() },
+                        onRetry = viewModel::cargar
+                    )
                 }
 
                 composable(
@@ -1287,7 +1739,12 @@ private fun AppNavHost(
                             contentRepository = container.contentRepository,
                             learningObjectiveRepository = container.learningObjectiveRepository,
                             contentResourceRepository = container.contentResourceRepository,
+                            activityRepository = container.activityRepository,
+                            questionRepository = container.questionRepository,
+                            assignmentRepository = container.assignmentRepository,
+                            unitRepository = container.unitRepository,
                             rol = rol,
+                            courseId = user.cursoId,
                             contentId = contentId
                         )
                     )
@@ -1296,10 +1753,23 @@ private fun AppNavHost(
                         viewModel.cargar()
                     }
 
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_CONTENT_DETAIL_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle.set(REFRESH_CONTENT_DETAIL_KEY, false)
+                        }
+                    }
+
                     ContentDetailScreen(
                         contenido = viewModel.contenido,
                         objetivo = viewModel.objetivo,
                         recursos = viewModel.recursos,
+                        actividades = viewModel.actividades,
+                        preguntasPorActividad = viewModel.preguntasPorActividad,
                         isLoading = viewModel.isLoading,
                         error = viewModel.error,
                         onOpenResource = { url ->
@@ -1315,7 +1785,234 @@ private fun AppNavHost(
                                 ).show()
                             }
                         },
+                        onOpenActivity = if (rol == UserRole.ESTUDIANTE) {
+                            { activity ->
+                                navController.navigate(
+                                    AppRoutes.activityAttempt(activity.id)
+                                )
+                            }
+                        } else {
+                            { activity ->
+                                navController.navigate(
+                                    AppRoutes.activityDetail(activity.id)
+                                )
+                            }
+                        },
+                        onCreateActivity = if (viewModel.puedeCrearActividad) {
+                            {
+                                val content = viewModel.contenido
+                                val unitId = viewModel.objetivo?.unidadId
+                                if (content != null && unitId != null) {
+                                    navController.navigate(
+                                        AppRoutes.activityForm(
+                                            unitId = unitId,
+                                            contentId = content.id
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        },
+                        activityActionLabel = if (rol == UserRole.ESTUDIANTE) {
+                            "Resolver"
+                        } else {
+                            "Ver detalle"
+                        },
                         onRetry = viewModel::cargar,
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ACTIVITY_FORM,
+                    arguments = listOf(
+                        navArgument("unitId") { type = NavType.IntType },
+                        navArgument("contentId") {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
+                ) { entry ->
+                    val unitId = entry.arguments?.getInt("unitId") ?: 0
+                    val contentId = entry.arguments
+                        ?.getInt("contentId")
+                        ?.takeIf { it > 0 }
+
+                    val viewModel: ActivityFormViewModel = viewModel(
+                        factory = ActivityFormViewModel.factory(
+                            activityRepository = container.activityRepository,
+                            contentRepository = container.contentRepository,
+                            unitId = unitId,
+                            lockedContentId = contentId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    ActivityFormScreen(
+                        contenidos = viewModel.contenidos,
+                        titulo = viewModel.titulo,
+                        tipo = viewModel.tipo,
+                        orden = viewModel.orden,
+                        contenidoId = viewModel.contenidoId,
+                        hasFinalTest = viewModel.hasFinalTest,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        loadError = viewModel.loadError,
+                        error = viewModel.error,
+                        onTituloChange = viewModel::onTituloChange,
+                        onTipoChange = viewModel::onTipoChange,
+                        onOrdenChange = viewModel::onOrdenChange,
+                        onContenidoChange = viewModel::onContenidoChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_CONTENT_DETAIL_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() },
+                        onRetry = viewModel::cargar,
+                        isContentLocked = viewModel.isContentLocked
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ACTIVITY_DETAIL,
+                    arguments = listOf(navArgument("activityId") { type = NavType.IntType })
+                ) { entry ->
+                    val activityId = entry.arguments?.getInt("activityId") ?: 0
+
+                    val viewModel: ActivityDetailViewModel = viewModel(
+                        factory = ActivityDetailViewModel.factory(
+                            activityRepository = container.activityRepository,
+                            questionRepository = container.questionRepository,
+                            alternativeRepository = container.alternativeRepository,
+                            unitRepository = container.unitRepository,
+                            activityId = activityId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_ACTIVITY_DETAIL_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle
+                                .set(REFRESH_ACTIVITY_DETAIL_KEY, false)
+                        }
+                    }
+
+                    ActivityDetailScreen(
+                        activity = viewModel.activity,
+                        questions = viewModel.questions,
+                        alternativesByQuestion = viewModel.alternativesByQuestion,
+                        canManage = rol == UserRole.DOCENTE && viewModel.puedeGestionar,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error,
+                        onAddQuestion = {
+                            viewModel.activity?.let { activity ->
+                                navController.navigate(
+                                    AppRoutes.questionForm(
+                                        activityId = activity.id,
+                                        unitId = activity.unidadId
+                                    )
+                                )
+                            }
+                        },
+                        onAddAlternative = { question ->
+                            navController.navigate(
+                                AppRoutes.alternativeForm(question.id)
+                            )
+                        },
+                        onRetry = viewModel::cargar
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.QUESTION_FORM,
+                    arguments = listOf(
+                        navArgument("activityId") { type = NavType.IntType },
+                        navArgument("unitId") { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    val activityId = entry.arguments?.getInt("activityId") ?: 0
+                    val unitId = entry.arguments?.getInt("unitId") ?: 0
+
+                    val viewModel: QuestionFormViewModel = viewModel(
+                        factory = QuestionFormViewModel.factory(
+                            questionRepository = container.questionRepository,
+                            learningObjectiveRepository = container.learningObjectiveRepository,
+                            activityId = activityId,
+                            unitId = unitId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    QuestionFormScreen(
+                        objetivos = viewModel.objetivos,
+                        selectedObjectiveId = viewModel.selectedObjectiveId,
+                        enunciado = viewModel.enunciado,
+                        criterioRespuesta = viewModel.criterioRespuesta,
+                        dificultad = viewModel.dificultad,
+                        orden = viewModel.orden,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        loadError = viewModel.loadError,
+                        error = viewModel.error,
+                        onObjectiveChange = viewModel::onObjectiveChange,
+                        onEnunciadoChange = viewModel::onEnunciadoChange,
+                        onCriterioRespuestaChange = viewModel::onCriterioRespuestaChange,
+                        onDificultadChange = viewModel::onDificultadChange,
+                        onOrdenChange = viewModel::onOrdenChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_ACTIVITY_DETAIL_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() },
+                        onRetry = viewModel::cargar
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ALTERNATIVE_FORM,
+                    arguments = listOf(navArgument("questionId") { type = NavType.IntType })
+                ) { entry ->
+                    val questionId = entry.arguments?.getInt("questionId") ?: 0
+
+                    val viewModel: AlternativeFormViewModel = viewModel(
+                        factory = AlternativeFormViewModel.factory(
+                            alternativeRepository = container.alternativeRepository,
+                            questionId = questionId
+                        )
+                    )
+
+                    AlternativeFormScreen(
+                        texto = viewModel.texto,
+                        esCorrecta = viewModel.esCorrecta,
+                        isSaving = viewModel.isSaving,
+                        error = viewModel.error,
+                        onTextoChange = viewModel::onTextoChange,
+                        onEsCorrectaChange = viewModel::onEsCorrectaChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_ACTIVITY_DETAIL_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() }
                     )
                 }
 
@@ -1440,15 +2137,16 @@ private fun UnitListDestination(
 /**
  * Destino del panel del estudiante.
  *
- * Carga sus unidades y actividades derivadas de las asignaciones de su curso.
+ * Carga sus asignaturas visibles y actividades derivadas de las asignaciones de
+ * su curso.
  */
 @Composable
 private fun HomeStudentDestination(
     container: AppContainer,
     navController: NavHostController,
     user: User,
-    onViewUnit: (LearningUnit) -> Unit,
-    onVerUnidades: () -> Unit,
+    onViewSubject: (Subject) -> Unit,
+    onVerAsignaturas: () -> Unit,
     onVerActividades: () -> Unit
 ) {
     val viewModel: HomeStudentViewModel = viewModel(
@@ -1456,9 +2154,9 @@ private fun HomeStudentDestination(
             assignmentRepository = container.assignmentRepository,
             unitRepository = container.unitRepository,
             subjectRepository = container.subjectRepository,
+            courseRepository = container.courseRepository,
             activityRepository = container.activityRepository,
             attemptRepository = container.attemptRepository,
-            pedagogicalReportRepository = container.pedagogicalReportRepository,
             studentId = user.id,
             courseId = user.cursoId
         )
@@ -1469,14 +2167,16 @@ private fun HomeStudentDestination(
     }
 
     HomeStudentScreen(
+        curso = viewModel.curso,
         unidades = viewModel.unidades,
         asignaturas = viewModel.asignaturas,
+        unidadesPorAsignatura = viewModel.unidadesPorAsignatura,
         actividadesPendientes = viewModel.actividadesPendientes,
         actividadesEnProgreso = viewModel.actividadesEnProgreso,
-        totalInformes = viewModel.totalInformes,
+        actividadesParaRepetir = viewModel.actividadesParaRepetir,
         sinCurso = viewModel.sinCurso,
-        onViewUnit = { unit -> onViewUnit(unit) },
-        onVerUnidades = onVerUnidades,
+        onViewSubject = { subject -> onViewSubject(subject) },
+        onVerAsignaturas = onVerAsignaturas,
         onVerActividades = onVerActividades,
         onResolveActivity = { activity ->
             navController.navigate(AppRoutes.activityAttempt(activity.id))
@@ -1490,11 +2190,26 @@ private fun HomeStudentDestination(
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
 
+/** Clave con la que el detalle de unidad recibe el aviso de recarga. */
+private const val REFRESH_UNIT_DETAIL_KEY = "refrescarDetalleUnidad"
+
+/** Clave con la que el detalle de contenido recibe el aviso de recarga. */
+private const val REFRESH_CONTENT_DETAIL_KEY = "refrescarDetalleContenido"
+
+/** Clave con la que el detalle de actividad recibe el aviso de recarga. */
+private const val REFRESH_ACTIVITY_DETAIL_KEY = "refrescarDetalleActividad"
+
 /** Clave con la que el detalle de una asignación recibe el aviso de recarga. */
 private const val REFRESH_ASSIGNMENT_DETAIL_KEY = "refrescarAsignacion"
 
 /** Clave con la que el Home y el listado de asignaciones reciben el aviso de recarga. */
 private const val REFRESH_ASSIGNMENTS_KEY = "refrescarAsignaciones"
+
+/** Clave con la que el listado de docencias recibe el aviso de recarga. */
+private const val REFRESH_DOCENCIAS_KEY = "refrescarDocencias"
+
+/** Clave con la que el listado de informes recibe el aviso de recarga. */
+private const val REFRESH_REPORTS_KEY = "refrescarInformes"
 
 /**
  * Marca el Home y el listado de asignaciones para que recarguen.
@@ -1511,20 +2226,46 @@ private fun markAssignmentsChanged(navController: NavHostController) {
     }
 }
 
+/**
+ * Marca el listado de informes y el Home del docente para que recarguen tras
+ * generar un informe.
+ */
+private fun markReportsChanged(navController: NavHostController) {
+    listOf(AppRoutes.REPORTS, AppRoutes.HOME).forEach { route ->
+        runCatching {
+            val handle = navController.getBackStackEntry(route).savedStateHandle
+            if (route == AppRoutes.REPORTS) {
+                handle.set(REFRESH_REPORTS_KEY, true)
+            } else {
+                handle.set(REFRESH_ASSIGNMENTS_KEY, true)
+            }
+        }
+    }
+}
+
 /** Rutas hijas que muestran la flecha de retroceso en la barra superior. */
 private val ROUTES_WITH_BACK = setOf(
     AppRoutes.UNIT_DETAIL,
     AppRoutes.SUBJECT_DETAIL,
     AppRoutes.COURSE_DETAIL,
     AppRoutes.CONTENT_DETAIL,
+    AppRoutes.CONTENT_FORM,
+    AppRoutes.ACTIVITY_FORM,
+    AppRoutes.ACTIVITY_DETAIL,
+    AppRoutes.QUESTION_FORM,
+    AppRoutes.ALTERNATIVE_FORM,
     AppRoutes.UNIT_AUTHORIZATION,
     AppRoutes.SUBJECT_FORM,
     AppRoutes.COURSE_FORM,
+    AppRoutes.DOCENCIAS,
+    AppRoutes.DOCENCIA_FORM,
     AppRoutes.USER_FORM,
     AppRoutes.ACTIVITY_ATTEMPT,
     AppRoutes.ATTEMPT_RESULT,
     AppRoutes.REPORT_DETAIL,
+    AppRoutes.REPORT_GENERATE,
     AppRoutes.ASSIGNMENT_DETAIL,
+    AppRoutes.ASSIGNMENT_CREATE,
     AppRoutes.ASSIGNMENT_FORM
 )
 
@@ -1537,10 +2278,8 @@ private val ROUTES_WITH_BACK = setOf(
  * propias y la barra podría descartar lo que se está editando.
  */
 private val CHILD_ROUTE_PARENT_TAB = mapOf(
-    AppRoutes.UNIT_DETAIL to AppRoutes.UNITS,
     AppRoutes.SUBJECT_DETAIL to AppRoutes.SUBJECTS,
     AppRoutes.COURSE_DETAIL to AppRoutes.COURSES,
-    AppRoutes.CONTENT_DETAIL to AppRoutes.UNITS,
     AppRoutes.REPORT_DETAIL to AppRoutes.REPORTS,
     AppRoutes.ASSIGNMENT_DETAIL to AppRoutes.ASSIGNMENTS
 )

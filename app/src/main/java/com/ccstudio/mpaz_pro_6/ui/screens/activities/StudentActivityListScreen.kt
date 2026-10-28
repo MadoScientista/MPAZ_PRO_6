@@ -34,8 +34,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
  * Listado de actividades del estudiante.
  *
  * Muestra todas las actividades disponibles con su estado y permite filtrarlas.
- * Una actividad pendiente o en progreso abre el intento; una completada abre su
- * último resultado.
+ * Una actividad pendiente o en progreso abre el intento; una prueba final
+ * completada abre un intento nuevo mientras queden intentos; cualquier otra
+ * actividad completada abre su último resultado.
  */
 @Composable
 fun StudentActivityListScreen(
@@ -154,10 +155,13 @@ fun StudentActivityListScreen(
                             unitTitle = item.unitTitle,
                             status = item.status,
                             attemptsCount = item.attemptsCount,
+                            canRetry = item.canRetry,
                             onClick = {
                                 val completedAttemptId = item.latestCompletedAttemptId
 
-                                if (item.status == StudentActivityStatus.COMPLETED &&
+                                if (item.canRetry) {
+                                    onOpenActivity(item.activity)
+                                } else if (item.status == StudentActivityStatus.COMPLETED &&
                                     completedAttemptId != null
                                 ) {
                                     onViewResult(completedAttemptId)

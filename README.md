@@ -70,6 +70,43 @@ La URL base y el modo local se toman de propiedades de Gradle o variables de ent
 
 Las llamadas autenticadas usan `Authorization: Bearer <token>` (JWT en DataStore).
 
+En modo local, la base Room solo se siembra al crearse. Si cambia `assets/database/seed.sql`,
+hay que borrar los datos de la app o desinstalarla para que se vuelva a cargar la semilla:
+
+```bash
+adb shell pm clear com.ccstudio.mpaz_pro_6
+```
+
+## Firma del APK release
+
+El APK de release no usa la firma de debug. La configuración se toma de
+`keystore.properties`, un archivo local que no se versiona:
+
+```properties
+storeFile=/ruta/a/mpaz-release.jks
+storePassword=...
+keyAlias=mpaz-release
+keyPassword=...
+```
+
+Generación de ejemplo:
+
+```bash
+keytool -genkeypair -v \
+  -keystore ~/mpaz-release.jks \
+  -alias mpaz-release \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Luego:
+
+```bash
+./gradlew assembleRelease
+```
+
+Sin `keystore.properties`, el build de debug sigue funcionando, pero
+`assembleRelease` falla con un mensaje explícito.
+
 ## Documentación
 
 - [`AGENTS.md`](AGENTS.md): arquitectura, convenciones, reglas de trabajo y estado del proyecto.

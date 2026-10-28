@@ -22,18 +22,11 @@ import java.time.Instant
             parentColumns = ["id"],
             childColumns = ["unidad_id"],
             onDelete = ForeignKey.RESTRICT
-        ),
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["docente_id"],
-            onDelete = ForeignKey.RESTRICT
         )
     ],
     indices = [
         Index(value = ["curso_id"]),
         Index(value = ["unidad_id"]),
-        Index(value = ["docente_id"]),
         Index(value = ["curso_id", "unidad_id"], unique = true),
         Index(value = ["id", "unidad_id"], unique = true)
     ]
@@ -42,7 +35,6 @@ data class AssignmentEntity(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "curso_id") val cursoId: Int,
     @ColumnInfo(name = "unidad_id") val unidadId: Int,
-    @ColumnInfo(name = "docente_id") val docenteId: Int,
     @ColumnInfo(name = "max_intentos") val maxIntentos: Int?,
     @ColumnInfo(name = "prueba_final_habilitada", defaultValue = "0")
     val pruebaFinalHabilitada: Boolean,

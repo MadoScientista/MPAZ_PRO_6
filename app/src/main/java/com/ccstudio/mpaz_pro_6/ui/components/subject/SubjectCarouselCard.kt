@@ -33,15 +33,16 @@ import com.ccstudio.mpaz_pro_6.ui.theme.subjectAccent
  * Tarjeta compacta de una asignatura para el carrusel del panel de inicio.
  *
  * Muestra un badge con el icono de asignaturas en el color representativo de la
- * materia, el nombre, la cantidad de unidades y un chevron de navegación. Tocar
- * la tarjeta lleva al listado de asignaturas.
+ * materia, el nombre, los cursos opcionales, la cantidad de unidades y un chevron
+ * de navegación. Tocar la tarjeta lleva al detalle de la asignatura.
  */
 @Composable
 fun SubjectCarouselCard(
     subject: Subject,
     unitCount: Int,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    coursesLabel: String = ""
 ) {
     val accent = subjectAccent(subject.nombre) ?: MaterialTheme.colorScheme.primary
 
@@ -87,9 +88,14 @@ fun SubjectCarouselCard(
                 )
 
                 Text(
-                    text = unitCountLabel(unitCount),
+                    text = listOfNotNull(
+                        coursesLabel.takeIf { it.isNotBlank() },
+                        unitCountLabel(unitCount)
+                    ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 

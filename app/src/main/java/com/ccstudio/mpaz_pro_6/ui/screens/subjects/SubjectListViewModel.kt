@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 /** Resumen de unidades de una asignatura para la tarjeta del listado. */
 data class SubjectStats(
     val total: Int,
+    /** Unidades `EN_REVISION` que esperan la revisión de la UTP. */
     val pending: Int
 )
 
@@ -35,7 +37,7 @@ class SubjectListViewModel(
     var asignaturas by mutableStateOf<List<Subject>>(emptyList())
         private set
 
-    /** Total y pendientes de unidades por asignatura, para la tarjeta. */
+    /** Total y unidades en revisión por asignatura, para la tarjeta. */
     var estadisticasPorAsignatura by mutableStateOf<Map<Int, SubjectStats>>(emptyMap())
         private set
 
@@ -79,7 +81,7 @@ class SubjectListViewModel(
                 .mapValues { (_, units) ->
                     SubjectStats(
                         total = units.size,
-                        pending = units.count { it.estado.esPendienteDeRevision() }
+                        pending = units.count { it.estado == ContentStatus.IN_REVIEW }
                     )
                 }
 

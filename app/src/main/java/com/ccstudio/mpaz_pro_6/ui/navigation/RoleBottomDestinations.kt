@@ -19,9 +19,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.BottomDestination
  * `NavHost`. Los detalles, formularios, la resolución de intentos y el detalle de
  * contenido quedan fuera de la barra y se alcanzan desde su listado.
  *
- * - UTP: Inicio, Unidades, Asignaturas, Cursos y Usuarios.
- * - Docente: Inicio, Unidades, Cursos, Asignaciones e Informes.
- * - Estudiante: Inicio, Unidades, Actividades e Informes.
+ * - UTP: Inicio, Revisión, Asignaturas, Cursos y Usuarios.
+ * - Docente: Inicio, Asignaturas, Cursos, Asignaciones e Informes.
+ * - Estudiante: Inicio, Asignaturas y Actividades. No accede a informes.
  */
 fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role) {
     UserRole.UTP -> listOf(
@@ -32,7 +32,7 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
         ),
         BottomDestination(
             route = AppRoutes.UNITS,
-            label = "Unidades",
+            label = "Revisión",
             icon = Icons.AutoMirrored.Filled.MenuBook
         ),
         BottomDestination(
@@ -59,9 +59,9 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
             icon = Icons.Filled.Home
         ),
         BottomDestination(
-            route = AppRoutes.UNITS,
-            label = "Unidades",
-            icon = Icons.AutoMirrored.Filled.MenuBook
+            route = AppRoutes.SUBJECTS,
+            label = "Asignaturas",
+            icon = Icons.Filled.Category
         ),
         BottomDestination(
             route = AppRoutes.COURSES,
@@ -70,7 +70,7 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
         ),
         BottomDestination(
             route = AppRoutes.ASSIGNMENTS,
-            label = "Asignación",
+            label = "Asignaciones",
             icon = Icons.AutoMirrored.Filled.Assignment
         ),
         BottomDestination(
@@ -87,19 +87,14 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
             icon = Icons.Filled.Home
         ),
         BottomDestination(
-            route = AppRoutes.UNITS,
-            label = "Unidades",
-            icon = Icons.AutoMirrored.Filled.MenuBook
+            route = AppRoutes.SUBJECTS,
+            label = "Asignaturas",
+            icon = Icons.Filled.Category
         ),
         BottomDestination(
             route = AppRoutes.ACTIVITIES,
             label = "Actividades",
             icon = Icons.Filled.Checklist
-        ),
-        BottomDestination(
-            route = AppRoutes.REPORTS,
-            label = "Informes",
-            icon = Icons.Filled.Assessment
         )
     )
 }

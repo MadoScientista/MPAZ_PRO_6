@@ -22,19 +22,22 @@ interface AssignmentRepository {
      *
      * @param courseId filtro opcional del backend (`?cursoId`).
      * @param unitId filtro opcional del backend (`?unidadId`).
-     * @param teacherId filtro opcional del backend (`?docenteId`).
-     * Los tres filtros son combinables.
+     * Los dos filtros son combinables.
      */
     suspend fun list(
         courseId: Int? = null,
-        unitId: Int? = null,
-        teacherId: Int? = null
+        unitId: Int? = null
     ): Result<List<Assignment>>
 
     /** Obtiene una asignación por id. */
     suspend fun getById(id: Int): Result<Assignment>
 
-    /** Crea la asignación de una unidad a un curso, con su docente. */
+    /**
+     * Crea la asignación de una unidad a un curso.
+     *
+     * El docente se deriva de la docencia del curso y la asignatura de la unidad
+     * del usuario autenticado.
+     */
     suspend fun create(request: CreateAssignmentRequest): Result<Assignment>
 
     /** Actualiza `maxIntentos`, `pruebaFinalHabilitada`, `fecha` o una combinación. */

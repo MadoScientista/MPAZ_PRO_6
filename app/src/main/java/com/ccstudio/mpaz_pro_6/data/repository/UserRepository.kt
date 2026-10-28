@@ -43,4 +43,13 @@ interface UserRepository {
      * Falla con `ApiError.BadRequest` si el usuario no tiene rol `DOCENTE`.
      */
     suspend fun listCourses(userId: Int): Result<List<Course>>
+
+    /**
+     * Lista los estudiantes de un curso (`GET /api/cursos/{id}/estudiantes`).
+     *
+     * El backend solo permite a la UTP consultar cualquier curso y a un docente
+     * los cursos donde tiene docencia. Alimenta el selector de estudiante del
+     * formulario de generación de informes.
+     */
+    suspend fun listStudentsByCourse(courseId: Int): Result<List<User>>
 }
