@@ -7,10 +7,10 @@ package com.ccstudio.mpaz_pro_6.data.enums
  * `PENDIENTE_VALIDACION` y `VALIDADO`. El backend genera el informe en
  * `PENDIENTE_VALIDACION` y lo mueve a `VALIDADO` al validarlo.
  */
-enum class ReportStatus(val wireValue: String) {
-    GENERATED("GENERADO"),
-    PENDING_VALIDATION("PENDIENTE_VALIDACION"),
-    VALIDATED("VALIDADO");
+enum class ReportStatus(val wireValue: String, val label: String) {
+    GENERATED("GENERADO", "Generado"),
+    PENDING_VALIDATION("PENDIENTE_VALIDACION", "Pendiente de validación"),
+    VALIDATED("VALIDADO", "Validado");
 
     companion object {
         /**

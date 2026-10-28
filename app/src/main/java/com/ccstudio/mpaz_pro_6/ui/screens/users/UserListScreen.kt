@@ -62,13 +62,13 @@ fun UserListScreen(
     var roleFilter by rememberSaveable { mutableStateOf("Todos") }
     var pendienteEliminar by remember { mutableStateOf<User?>(null) }
 
-    val roleOptions = listOf("Todos") + UserRole.entries.map { it.wireValue }
+    val roleOptions = listOf("Todos") + UserRole.entries.map { it.label }
     val courseNames = cursos.associate { it.id to it.nombre }
 
     val filteredUsers = usuarios.filter { user ->
         val query = search.trim()
 
-        val matchesRole = roleFilter == "Todos" || user.rol.wireValue == roleFilter
+        val matchesRole = roleFilter == "Todos" || user.rol.label == roleFilter
         val matchesSearch = query.isEmpty() ||
                 user.nombre.contains(query, ignoreCase = true) ||
                 user.username.contains(query, ignoreCase = true)

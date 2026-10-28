@@ -12,7 +12,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ReportStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
-import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
@@ -58,10 +57,6 @@ class HomeTeacherViewModel(
 
     /** Cursos en los que el docente tiene alguna asignación. */
     var cursos by mutableStateOf<List<Course>>(emptyList())
-        private set
-
-    /** Asignaciones del docente, de la más reciente a la más antigua. */
-    var asignaciones by mutableStateOf<List<Assignment>>(emptyList())
         private set
 
     /** Unidades en las que el docente tiene alguna asignación. */
@@ -150,8 +145,6 @@ class HomeTeacherViewModel(
                 .map { it.unidadId }
                 .toSet()
 
-            asignaciones = asignacionesResult.getOrDefault(emptyList())
-                .sortedByDescending { it.fecha }
             cursos = cursosResult.getOrDefault(emptyList())
             unidades = unidadesResult.getOrDefault(emptyList())
                 .filter { it.id in unidadIdsAsignadas }

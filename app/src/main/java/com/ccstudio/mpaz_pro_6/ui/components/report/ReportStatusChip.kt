@@ -35,7 +35,7 @@ fun ReportStatusChip(
         contentColor = colors.content
     ) {
         Text(
-            text = status.wireValue,
+            text = status.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp

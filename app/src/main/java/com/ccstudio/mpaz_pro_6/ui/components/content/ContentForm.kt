@@ -123,10 +123,11 @@ fun ContentForm(
             )
 
             FilterChipRow(
-                options = ContentOrigin.entries.map { it.wireValue },
-                selected = origen.wireValue,
-                onSelect = { wireValue ->
-                    val newOrigin = ContentOrigin.fromWire(wireValue)
+                options = ContentOrigin.entries.map { it.label },
+                selected = origen.label,
+                onSelect = { label ->
+                    val newOrigin = ContentOrigin.entries
+                        .firstOrNull { it.label == label }
                     if (newOrigin != null && !isReadOnly && !isSaving) {
                         onOrigenChange(newOrigin)
                     }

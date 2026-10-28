@@ -14,13 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
-import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.PedagogicalReport
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.model.User
-import com.ccstudio.mpaz_pro_6.ui.components.assignment.AssignmentCarouselCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.CardCarousel
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
@@ -34,10 +32,10 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
 /**
  * Panel de inicio del docente.
  *
- * Muestra un resumen de sus cursos, las unidades que tiene asignadas, las
- * asignaciones por curso y los informes que esperan su validación. El carrusel
- * de cursos replica el del panel de UTP y enlaza con la pestaña Cursos. La
- * cantidad de actividades y los informes pendientes se resuelven en el ViewModel.
+ * Muestra un resumen de sus cursos, las unidades que tiene asignadas y los
+ * informes que esperan su validación. El carrusel de cursos replica el del panel
+ * de UTP y enlaza con la pestaña Cursos. La cantidad de actividades y los
+ * informes pendientes se resuelven en el ViewModel.
  * Los cursos que maneja el docente los resuelve el ViewModel con
  * `GET /api/usuarios/{id}/cursos`.
  *
@@ -49,17 +47,14 @@ fun HomeTeacherScreen(
     cursos: List<Course>,
     unidades: List<LearningUnit>,
     asignaturas: List<Subject>,
-    asignaciones: List<Assignment>,
     informesPendientes: List<PedagogicalReport>,
     estudiantes: List<User>,
     actividades: Int,
     onViewUnit: (LearningUnit) -> Unit,
     onViewCourse: (Course) -> Unit,
-    onViewAssignment: (Assignment) -> Unit,
     onViewReport: (PedagogicalReport) -> Unit,
     onVerUnidades: () -> Unit,
     onVerCursos: () -> Unit,
-    onVerAsignaciones: () -> Unit,
     onVerInformes: () -> Unit,
     onCargar: () -> Unit,
     modifier: Modifier = Modifier,
@@ -68,7 +63,6 @@ fun HomeTeacherScreen(
 ) {
     val subjectNames = asignaturas.associate { it.id to it.nombre }
     val unitTitles = unidades.associate { it.id to it.titulo }
-    val courseNames = cursos.associate { it.id to it.nombre }
     val studentNames = estudiantes.associate { it.id to it.nombre }
     val estudiantesPorCurso = estudiantes
         .mapNotNull { it.cursoId }
@@ -138,23 +132,6 @@ fun HomeTeacherScreen(
                 )
 
                 CardCarousel(
-                    title = "Informes por validar",
-                    itemCount = informesPendientes.size,
-                    onSeeAll = onVerInformes,
-                    emptyMessage = "No tienes informes por validar."
-                ) { index ->
-                    val report = informesPendientes[index]
-
-                    ReportCarouselCard(
-                        report = report,
-                        studentName = studentNames[report.estudianteId]
-                            ?: "Sin estudiante",
-                        unitName = unitTitles[report.unidadId] ?: "Sin unidad",
-                        onClick = { onViewReport(report) }
-                    )
-                }
-
-                CardCarousel(
                     title = "Cursos",
                     itemCount = cursos.size,
                     onSeeAll = onVerCursos,
@@ -185,18 +162,19 @@ fun HomeTeacherScreen(
                 }
 
                 CardCarousel(
-                    title = "Asignaciones",
-                    itemCount = asignaciones.size,
-                    onSeeAll = onVerAsignaciones,
-                    emptyMessage = "No tienes asignaciones."
+                    title = "Informes de rendimiento",
+                    itemCount = informesPendientes.size,
+                    onSeeAll = onVerInformes,
+                    emptyMessage = "No tienes informes por validar."
                 ) { index ->
-                    val assignment = asignaciones[index]
+                    val report = informesPendientes[index]
 
-                    AssignmentCarouselCard(
-                        assignment = assignment,
-                        courseName = courseNames[assignment.cursoId] ?: "Sin curso",
-                        unitTitle = unitTitles[assignment.unidadId] ?: "Sin unidad",
-                        onClick = { onViewAssignment(assignment) }
+                    ReportCarouselCard(
+                        report = report,
+                        studentName = studentNames[report.estudianteId]
+                            ?: "Sin estudiante",
+                        unitName = unitTitles[report.unidadId] ?: "Sin unidad",
+                        onClick = { onViewReport(report) }
                     )
                 }
             }

@@ -169,10 +169,11 @@ fun UnitForm(
         if (isEditMode) {
             if (estado.esPendienteDeRevision()) {
                 FilterChipRow(
-                    options = INITIAL_STATUSES.map { it.wireValue },
-                    selected = estado.wireValue,
-                    onSelect = { wireValue ->
-                        val newStatus = ContentStatus.fromWire(wireValue)
+                    options = INITIAL_STATUSES.map { it.label },
+                    selected = estado.label,
+                    onSelect = { label ->
+                        val newStatus = INITIAL_STATUSES
+                            .firstOrNull { it.label == label }
                         if (newStatus != null && !isReadOnly && !isSaving) {
                             onEstadoChange(newStatus)
                         }

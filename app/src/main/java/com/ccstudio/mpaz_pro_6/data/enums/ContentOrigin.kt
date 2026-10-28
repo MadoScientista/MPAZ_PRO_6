@@ -6,10 +6,10 @@
  * Debe mapear 1:1 el enum `OrigenMaterial` del backend: `PROPIO`, `PUBLICO` y
  * `AUTORIZADO`. Describe si el material es propio, público o autorizado.
  */
-enum class ContentOrigin(val wireValue: String) {
-    OWN("PROPIO"),
-    PUBLIC("PUBLICO"),
-    AUTHORIZED("AUTORIZADO");
+enum class ContentOrigin(val wireValue: String, val label: String) {
+    OWN("PROPIO", "Propio"),
+    PUBLIC("PUBLICO", "Público"),
+    AUTHORIZED("AUTORIZADO", "Autorizado");
 
     companion object {
         /**

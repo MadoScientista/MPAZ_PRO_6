@@ -7,9 +7,9 @@ package com.ccstudio.mpaz_pro_6.data.enums
  * backend asigna `FORTALEZA` si `correctas * 100.0 / total >= 70` y `REFUERZO` en
  * caso contrario.
  */
-enum class ObjectiveLevel(val wireValue: String) {
-    STRENGTH("FORTALEZA"),
-    SUPPORT("REFUERZO");
+enum class ObjectiveLevel(val wireValue: String, val label: String) {
+    STRENGTH("FORTALEZA", "Fortaleza"),
+    SUPPORT("REFUERZO", "Refuerzo");
 
     companion object {
         /**

@@ -56,8 +56,9 @@ fun ActivityForm(
         titulo.length <= MAX_TITLE_LENGTH &&
         isOrdenValid
 
+    val activityTypeOptions = ActivityType.entries
     val disabledTypes = if (hasFinalTest) {
-        setOf(ActivityType.FINAL_TEST.wireValue)
+        setOf(ActivityType.FINAL_TEST.label)
     } else {
         emptySet()
     }
@@ -88,10 +89,11 @@ fun ActivityForm(
             )
 
             FilterChipRow(
-                options = ActivityType.entries.map { it.wireValue },
-                selected = tipo.wireValue,
-                onSelect = { wireValue ->
-                    val newType = ActivityType.fromWire(wireValue)
+                options = activityTypeOptions.map { it.label },
+                selected = tipo.label,
+                onSelect = { label ->
+                    val newType = activityTypeOptions
+                        .firstOrNull { it.label == label }
                     if (newType != null && !isReadOnly && !isSaving) {
                         onTipoChange(newType)
                     }
@@ -101,13 +103,13 @@ fun ActivityForm(
 
             if (hasFinalTest) {
                 Text(
-                    text = "La unidad ya tiene una PRUEBA_FINAL: no se puede elegir ese tipo.",
+                    text = "La unidad ya tiene una prueba final: no se puede elegir ese tipo.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
             } else if (tipo == ActivityType.FINAL_TEST) {
                 Text(
-                    text = "Solo se admite una PRUEBA_FINAL por unidad.",
+                    text = "Solo se admite una prueba final por unidad.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

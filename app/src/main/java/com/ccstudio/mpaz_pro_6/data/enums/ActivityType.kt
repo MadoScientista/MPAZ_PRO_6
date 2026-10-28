@@ -7,10 +7,10 @@
  * `PRUEBA_FINAL`. Solo se admite una `PRUEBA_FINAL` por unidad y no se puede
  * asociar como actividad de una asignación.
  */
-enum class ActivityType(val wireValue: String) {
-    ACTIVITY("ACTIVIDAD"),
-    CHALLENGE("DESAFIO"),
-    FINAL_TEST("PRUEBA_FINAL");
+enum class ActivityType(val wireValue: String, val label: String) {
+    ACTIVITY("ACTIVIDAD", "Actividad"),
+    CHALLENGE("DESAFIO", "Desafío"),
+    FINAL_TEST("PRUEBA_FINAL", "Prueba final");
 
     companion object {
         /**

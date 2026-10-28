@@ -159,7 +159,7 @@ private fun QuestionDifficultyChip(
         contentColor = colors.content
     ) {
         Text(
-            text = difficulty.wireValue,
+            text = difficulty.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp

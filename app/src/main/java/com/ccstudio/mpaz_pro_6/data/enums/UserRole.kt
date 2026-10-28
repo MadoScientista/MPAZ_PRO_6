@@ -7,10 +7,10 @@
  * El valor que viaja al servidor es exactamente ese texto en español; el nombre de
  * la constante es en inglés.
  */
-enum class UserRole(val wireValue: String) {
-    UTP("UTP"),
-    DOCENTE("DOCENTE"),
-    ESTUDIANTE("ESTUDIANTE");
+enum class UserRole(val wireValue: String, val label: String) {
+    UTP("UTP", "Jefe de UTP"),
+    DOCENTE("DOCENTE", "Docente"),
+    ESTUDIANTE("ESTUDIANTE", "Estudiante");
 
     companion object {
         /**

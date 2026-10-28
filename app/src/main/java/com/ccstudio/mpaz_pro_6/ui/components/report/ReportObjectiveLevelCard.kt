@@ -117,7 +117,7 @@ private fun ObjectiveLevelChip(
         contentColor = colors.content
     ) {
         Text(
-            text = level.wireValue,
+            text = level.label,
             modifier = Modifier.padding(
                 horizontal = 10.dp,
                 vertical = 5.dp
