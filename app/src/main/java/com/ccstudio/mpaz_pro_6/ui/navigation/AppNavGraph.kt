@@ -468,7 +468,6 @@ private fun AppNavHost(
                                 cursos = viewModel.cursos,
                                 unidades = viewModel.unidades,
                                 asignaturas = viewModel.asignaturas,
-                                asignaciones = viewModel.asignaciones,
                                 informesPendientes = viewModel.informesPendientes,
                                 estudiantes = viewModel.estudiantes,
                                 actividades = viewModel.actividades,
@@ -482,11 +481,6 @@ private fun AppNavHost(
                                         AppRoutes.courseDetail(course.id)
                                     )
                                 },
-                                onViewAssignment = { assignment ->
-                                    navController.navigate(
-                                        AppRoutes.assignmentDetail(assignment.id)
-                                    )
-                                },
                                 onViewReport = { report ->
                                     navController.navigate(
                                         AppRoutes.reportDetail(report.id)
@@ -494,9 +488,6 @@ private fun AppNavHost(
                                 },
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
                                 onVerCursos = { navController.navigate(AppRoutes.COURSES) },
-                                onVerAsignaciones = {
-                                    navController.navigate(AppRoutes.ASSIGNMENTS)
-                                },
                                 onVerInformes = { navController.navigate(AppRoutes.REPORTS) },
                                 onCargar = viewModel::cargar,
                             )
