@@ -264,6 +264,8 @@ private fun AppNavHost(
         AppRoutes.CONTENT_FORM -> "Nuevo contenido"
         AppRoutes.ACTIVITY_DETAIL -> "Actividad"
         AppRoutes.ACTIVITY_FORM -> "Nueva actividad"
+        AppRoutes.ACTIVITY_EDIT -> "Editar actividad"
+        AppRoutes.ACTIVITY_PREVIEW -> "Vista previa de actividad"
         AppRoutes.QUESTION_FORM -> "Nueva pregunta"
         AppRoutes.ALTERNATIVE_FORM -> "Nueva alternativa"
         AppRoutes.UNIT_AUTHORIZATION -> "Autorización de unidad"
@@ -724,7 +726,12 @@ private fun AppNavHost(
                             selectedCourseId = viewModel.selectedCourseId,
                             onSelectCourse = viewModel::seleccionarCurso,
                             onViewUnit = { unit ->
-                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                                navController.navigate(
+                                    AppRoutes.unitDetail(
+                                        unitId = unit.id,
+                                        courseId = viewModel.selectedCourseId
+                                    )
+                                )
                             },
                             onRetry = viewModel::cargar,
                             isLoading = viewModel.isLoading,
@@ -751,7 +758,12 @@ private fun AppNavHost(
                             isLoading = viewModel.isLoading,
                             error = viewModel.error,
                             onViewUnit = { unit ->
-                                navController.navigate(AppRoutes.unitDetail(unit.id))
+                                navController.navigate(
+                                    AppRoutes.unitDetail(
+                                        unitId = unit.id,
+                                        courseId = user.cursoId
+                                    )
+                                )
                             },
                             onAuthorize = null,
                             onRetry = viewModel::cargar
@@ -1399,7 +1411,10 @@ private fun AppNavHost(
                         onViewUnit = {
                             viewModel.assignment?.let { assignment ->
                                 navController.navigate(
-                                    AppRoutes.unitDetail(assignment.unidadId)
+                                    AppRoutes.unitDetail(
+                                        unitId = assignment.unidadId,
+                                        courseId = assignment.cursoId
+                                    )
                                 )
                             }
                         },
@@ -1603,9 +1618,18 @@ private fun AppNavHost(
 
                 composable(
                     route = AppRoutes.UNIT_DETAIL,
-                    arguments = listOf(navArgument("unitId") { type = NavType.IntType })
+                    arguments = listOf(
+                        navArgument("unitId") { type = NavType.IntType },
+                        navArgument("courseId") {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
                 ) { entry ->
                     val unitId = entry.arguments?.getInt("unitId") ?: 0
+                    val courseId = entry.arguments?.getInt("courseId")
+                        ?.takeIf { it > 0 }
+                        ?: user.cursoId
 
                 val viewModel: UnitDetailViewModel = viewModel(
                     factory = UnitDetailViewModel.factory(
@@ -1618,7 +1642,7 @@ private fun AppNavHost(
                         questionRepository = container.questionRepository,
                         assignmentRepository = container.assignmentRepository,
                         rol = rol,
-                        courseId = user.cursoId,
+                        courseId = courseId,
                         unitId = unitId
                     )
                 )
@@ -1672,6 +1696,28 @@ private fun AppNavHost(
                     },
                     onEnviarRevision = if (rol == UserRole.DOCENTE) {
                         viewModel::enviarARevision
+                    } else {
+                        null
+                    },
+                    maxIntentosPruebaFinal = viewModel.maxIntentosPruebaFinal,
+                    onPreviewActivity = if (rol == UserRole.ESTUDIANTE) {
+                        null
+                    } else {
+                        { activity ->
+                            navController.navigate(
+                                AppRoutes.activityPreview(activity.id)
+                            )
+                        }
+                    },
+                    onEditActivity = if (rol == UserRole.DOCENTE) {
+                        { activity ->
+                            navController.navigate(
+                                AppRoutes.activityEdit(
+                                    unitId = activity.unidadId,
+                                    activityId = activity.id
+                                )
+                            )
+                        }
                     } else {
                         null
                     }
@@ -1874,7 +1920,91 @@ private fun AppNavHost(
                         },
                         onCancel = { navController.popBackStack() },
                         onRetry = viewModel::cargar,
-                        isContentLocked = viewModel.isContentLocked
+                        isContentLocked = viewModel.isContentLocked,
+                        isEditMode = viewModel.isEditMode
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ACTIVITY_EDIT,
+                    arguments = listOf(
+                        navArgument("unitId") { type = NavType.IntType },
+                        navArgument("activityId") { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    val unitId = entry.arguments?.getInt("unitId") ?: 0
+                    val activityId = entry.arguments?.getInt("activityId") ?: 0
+
+                    val viewModel: ActivityFormViewModel = viewModel(
+                        factory = ActivityFormViewModel.factory(
+                            activityRepository = container.activityRepository,
+                            contentRepository = container.contentRepository,
+                            unitId = unitId,
+                            lockedContentId = null,
+                            activityId = activityId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    ActivityFormScreen(
+                        contenidos = viewModel.contenidos,
+                        titulo = viewModel.titulo,
+                        tipo = viewModel.tipo,
+                        orden = viewModel.orden,
+                        contenidoId = viewModel.contenidoId,
+                        hasFinalTest = viewModel.hasFinalTest,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        loadError = viewModel.loadError,
+                        error = viewModel.error,
+                        onTituloChange = viewModel::onTituloChange,
+                        onTipoChange = viewModel::onTipoChange,
+                        onOrdenChange = viewModel::onOrdenChange,
+                        onContenidoChange = viewModel::onContenidoChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_ACTIVITY_DETAIL_KEY, true)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() },
+                        onRetry = viewModel::cargar,
+                        isContentLocked = viewModel.isContentLocked,
+                        isEditMode = viewModel.isEditMode
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ACTIVITY_PREVIEW,
+                    arguments = listOf(navArgument("activityId") { type = NavType.IntType })
+                ) { entry ->
+                    val activityId = entry.arguments?.getInt("activityId") ?: 0
+
+                    val viewModel: ActivityDetailViewModel = viewModel(
+                        factory = ActivityDetailViewModel.factory(
+                            activityRepository = container.activityRepository,
+                            questionRepository = container.questionRepository,
+                            alternativeRepository = container.alternativeRepository,
+                            unitRepository = container.unitRepository,
+                            activityId = activityId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    ActivityDetailScreen(
+                        activity = viewModel.activity,
+                        questions = viewModel.questions,
+                        alternativesByQuestion = viewModel.alternativesByQuestion,
+                        canManage = false,
+                        isLoading = viewModel.isLoading,
+                        error = viewModel.error,
+                        onAddQuestion = {},
+                        onAddAlternative = {},
+                        onRetry = viewModel::cargar
                     )
                 }
 
@@ -1930,7 +2060,21 @@ private fun AppNavHost(
                                 AppRoutes.alternativeForm(question.id)
                             )
                         },
-                        onRetry = viewModel::cargar
+                        onRetry = viewModel::cargar,
+                        onEdit = if (rol == UserRole.DOCENTE && viewModel.puedeGestionar) {
+                            viewModel.activity?.let { activity ->
+                                {
+                                    navController.navigate(
+                                        AppRoutes.activityEdit(
+                                            unitId = activity.unidadId,
+                                            activityId = activity.id
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        }
                     )
                 }
 
@@ -2251,6 +2395,8 @@ private val ROUTES_WITH_BACK = setOf(
     AppRoutes.CONTENT_DETAIL,
     AppRoutes.CONTENT_FORM,
     AppRoutes.ACTIVITY_FORM,
+    AppRoutes.ACTIVITY_EDIT,
+    AppRoutes.ACTIVITY_PREVIEW,
     AppRoutes.ACTIVITY_DETAIL,
     AppRoutes.QUESTION_FORM,
     AppRoutes.ALTERNATIVE_FORM,

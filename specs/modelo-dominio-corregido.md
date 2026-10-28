@@ -6,7 +6,7 @@
 > Correcciones respecto del caso original:
 >
 > - El MVP admite **máximo una unidad por asignatura**.
-> - No exige los cursos 6A y 6B; basta un curso ficticio.
+> - Los cursos 6A y 6B son una extensión de demo; el caso no exige dos.
 > - La autoría docente y la creación de asignaciones se mantienen como
 >   extensiones del MVP, no como requisitos del caso.
 > - El contenido y sus recursos tienen estado propio y acompañan el estado de
@@ -19,7 +19,7 @@
 
 ## 1. Alcance del MVP
 
-- Cursos: un curso ficticio; el seed actual usa **6A**.
+- Cursos: el seed actual usa **6A y 6B**; 6B se mantiene como extensión de demostración.
 - Asignaturas: **Lenguaje y Comunicación**, **Matemática**, **Ciencias Naturales**
   e **Historia, Geografía y Ciencias Sociales**.
 - Material pedagógico base: viene del **seed/currículo**. La autoría docente se mantiene como extensión del MVP.
@@ -111,7 +111,7 @@ Usuario
 
 ### Curso
 
-- Existe al menos un curso ficticio (`6A` en el seed actual).
+- Existen los cursos ficticios `6A` y `6B` en el seed actual.
 - Vienen del seed.
 - El curso del estudiante se guarda en `Usuario.cursoId`.
 
@@ -297,7 +297,7 @@ El estudiante no tiene endpoints de informes pedagógicos.
 
 ## 7. Seed mínimo
 
-- Cursos: al menos un curso ficticio (`6A` en el seed actual).
+- Cursos: `6A` y `6B` en el seed actual.
 - Asignaturas: las cuatro del caso.
 - Docentes: al menos uno con varias asignaturas y cursos.
 - Docencias: filas que relacionan docentes con curso y asignatura.
@@ -359,4 +359,4 @@ El estudiante no tiene endpoints de informes pedagógicos.
 - El estudiante solo ve contenidos de OAs seleccionados y actividades asignadas.
 - El estudiante no puede acceder a informes.
 - El docente puede validar informes de sus estudiantes.
-- El seed permite demostrar el flujo completo con el curso ficticio `6A`.
+- El seed permite demostrar el flujo completo con los cursos ficticios `6A` y `6B`.

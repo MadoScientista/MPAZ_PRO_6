@@ -68,7 +68,10 @@ fun UnitDetailScreen(
     isSendingReview: Boolean = false,
     mensajeRevision: String? = null,
     onCreateContent: (() -> Unit)? = null,
-    onEnviarRevision: (() -> Unit)? = null
+    onEnviarRevision: (() -> Unit)? = null,
+    maxIntentosPruebaFinal: Int? = null,
+    onPreviewActivity: ((Activity) -> Unit)? = null,
+    onEditActivity: ((Activity) -> Unit)? = null
 ) {
     // La prueba final se presenta por separado: es única por unidad y no forma
     // parte de la lista de actividades regulares.
@@ -174,12 +177,21 @@ fun UnitDetailScreen(
                             activity = pruebaFinal,
                             questionsCount = preguntasPorActividad[pruebaFinal.id] ?: 0,
                             unitTitle = null,
-                            onViewDetail = if (puedeResolverActividades) {
-                                { onOpenActivity(pruebaFinal) }
+                            detailLabel = if (puedeResolverActividades) "Resolver" else "Vista previa",
+                            maxAttempts = maxIntentosPruebaFinal,
+                            onEdit = if (unidad.estado == ContentStatus.DRAFT &&
+                                puedeCrearContenido &&
+                                onEditActivity != null
+                            ) {
+                                { onEditActivity(pruebaFinal) }
                             } else {
                                 null
                             },
-                            detailLabel = "Resolver",
+                            onViewDetail = when {
+                                puedeResolverActividades -> { { onOpenActivity(pruebaFinal) } }
+                                onPreviewActivity != null -> { { onPreviewActivity(pruebaFinal) } }
+                                else -> null
+                            },
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }

@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.AssignmentDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.AttemptDao
@@ -98,6 +99,7 @@ abstract class MpazDatabase : RoomDatabase() {
             Room.databaseBuilder(context, MpazDatabase::class.java, NAME)
                 // La app no tiene datos de producción: si cambia el esquema se
                 // reconstruye la caché y se vuelve a sincronizar.
+                .addMigrations(MIGRATION_3_4)
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .addCallback(
                     SeedCallback(
@@ -232,5 +234,22 @@ object SeedLoader {
             ?.let(statements::add)
 
         return statements
+    }
+}
+
+
+/**
+ * Migración 3 → 4.
+ *
+ * Agrega `actividad.contenido_id`, que relaciona una actividad con un contenido
+ * de la misma unidad. Las actividades existentes quedan transversales.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE actividad ADD COLUMN contenido_id INTEGER")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_actividad_contenido_id " +
+                "ON actividad (contenido_id)"
+        )
     }
 }

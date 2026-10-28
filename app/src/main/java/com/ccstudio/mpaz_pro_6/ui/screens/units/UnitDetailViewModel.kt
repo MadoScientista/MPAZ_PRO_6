@@ -103,6 +103,10 @@ class UnitDetailViewModel(
     var mensajeRevision by mutableStateOf<String?>(null)
         private set
 
+    /** Intentos máximos de la prueba final para el curso en contexto. */
+    var maxIntentosPruebaFinal by mutableStateOf<Int?>(null)
+        private set
+
     /** Carga la unidad y su material según el rol. */
     fun cargar() {
         viewModelScope.launch {
@@ -114,6 +118,7 @@ class UnitDetailViewModel(
             preguntasPorActividad = emptyMap()
             recursosPorContenido = emptyMap()
             actividadesPorContenido = emptyMap()
+            maxIntentosPruebaFinal = null
 
             val unitResult = unitRepository.getById(unitId)
 
@@ -155,15 +160,13 @@ class UnitDetailViewModel(
             objetivos = unitObjectives
             val objectiveIds = unitObjectives.map { it.id }.toSet()
 
-            val assignment = if (rol == UserRole.ESTUDIANTE) {
-                cargarAsignacionEstudiante()
-            } else {
-                null
-            }
-            if (rol == UserRole.ESTUDIANTE && error != null) {
+            val assignment = cargarAsignacionCurso()
+            if (courseId != null && error != null) {
                 isLoading = false
                 return@launch
             }
+
+            maxIntentosPruebaFinal = assignment?.maxIntentos
 
             val assignedObjectiveIds = if (rol == UserRole.ESTUDIANTE && assignment != null) {
                 val linksResult = assignmentRepository.listObjectives(assignment.id)
@@ -259,8 +262,14 @@ class UnitDetailViewModel(
         }
     }
 
-    /** Carga la asignación del curso del estudiante para esta unidad. */
-    private suspend fun cargarAsignacionEstudiante(): Assignment? {
+    /**
+     * Carga la asignación del curso en contexto.
+     *
+     * Para el estudiante es obligatoria para filtrar contenidos y actividades.
+     * Para el docente/UTP solo se usa para mostrar el límite de intentos de la
+     * prueba final; si la pantalla se abrió sin curso, no hay valor único.
+     */
+    private suspend fun cargarAsignacionCurso(): Assignment? {
         val idCurso = courseId ?: return null
 
         val assignmentsResult = assignmentRepository.list(

@@ -47,6 +47,7 @@ fun ActivityCard(
     modifier: Modifier = Modifier,
     unitTitle: String? = null,
     contentTitle: String? = null,
+    maxAttempts: Int? = null,
     onViewDetail: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
@@ -104,6 +105,14 @@ fun ActivityCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            if (maxAttempts != null) {
+                Text(
+                    text = "Máximo de intentos: $maxAttempts",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             // Acceso al detalle, solo si la pantalla lo habilita.
             if (onViewDetail != null) {

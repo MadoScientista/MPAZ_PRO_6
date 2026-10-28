@@ -10,8 +10,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateActivityRequest
+import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateActivityRequest
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
 import kotlinx.coroutines.launch
@@ -26,13 +28,15 @@ import kotlinx.coroutines.launch
  *
  * La unidad no se elige: la fija la pantalla que abre el formulario. `orden` es
  * opcional; si queda vacío, el backend aplica `1`. El título es único dentro de
- * la unidad.
+ * la unidad. Con `activityId` entra en modo edición; el contenido de una
+ * actividad existente queda fijado para no alterar su relación por accidente.
  */
 class ActivityFormViewModel(
     private val activityRepository: ActivityRepository,
     private val contentRepository: ContentRepository,
     private val unitId: Int,
-    private val lockedContentId: Int?
+    private val lockedContentId: Int?,
+    private val activityId: Int? = null
 ) : ViewModel() {
 
     /** Contenidos de la unidad, ordenados por objetivo y orden. */
@@ -82,9 +86,13 @@ class ActivityFormViewModel(
 
     private var cargado = false
 
+    /** `true` cuando se edita una actividad existente. */
+    val isEditMode: Boolean
+        get() = activityId != null
+
     /** Indica si el contenido está fijado por la pantalla de origen. */
     val isContentLocked: Boolean
-        get() = lockedContentId != null
+        get() = lockedContentId != null || (isEditMode && contenidoId != null)
 
     /** Cambia el título. */
     fun onTituloChange(value: String) {
@@ -128,10 +136,41 @@ class ActivityFormViewModel(
             isLoading = true
             loadError = null
 
-            // La creación se abre desde un contenido concreto. No se carga el
-            // catálogo completo de la unidad: solo el contenido que se va a
-            // asociar a la nueva actividad.
-            if (lockedContentId != null) {
+            val activitiesResult = activityRepository.list(unitId = unitId)
+            val activities = activitiesResult.getOrDefault(emptyList())
+
+            if (activityId != null) {
+                val activityResult = activityRepository.getById(activityId)
+                if (activityResult.isFailure) {
+                    loadError = activityResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                val activity = activityResult.getOrNull()
+                if (activity == null) {
+                    loadError = ApiError.NotFound("La actividad ya no existe.")
+                    isLoading = false
+                    return@launch
+                }
+
+                titulo = activity.titulo
+                tipo = activity.tipo
+                orden = activity.orden.toString()
+                contenidoId = activity.contenidoId
+
+                activity.contenidoId?.let { id ->
+                    val contentResult = contentRepository.getById(id)
+                    if (contentResult.isFailure) {
+                        loadError = contentResult.exceptionOrNull() as? ApiError
+                        isLoading = false
+                        return@launch
+                    }
+                    contenidos = listOfNotNull(contentResult.getOrNull())
+                }
+            } else if (lockedContentId != null) {
+                // La creación se abre desde un contenido concreto. No se carga
+                // el catálogo completo de la unidad.
                 val contentResult = contentRepository.getById(lockedContentId)
                 if (contentResult.isFailure) {
                     loadError = contentResult.exceptionOrNull() as? ApiError
@@ -141,11 +180,9 @@ class ActivityFormViewModel(
                 contenidos = listOfNotNull(contentResult.getOrNull())
             }
 
-            val activitiesResult = activityRepository.list(unitId = unitId)
-
-            hasFinalTest = activitiesResult
-                .getOrDefault(emptyList())
-                .any { it.tipo == ActivityType.FINAL_TEST }
+            hasFinalTest = activities.any {
+                it.tipo == ActivityType.FINAL_TEST && it.id != activityId
+            }
 
             cargado = true
             isLoading = false
@@ -185,15 +222,27 @@ class ActivityFormViewModel(
             isSaving = true
             error = null
 
-            val result = activityRepository.create(
-                CreateActivityRequest(
-                    unidadId = unitId,
-                    titulo = tituloLimpio,
-                    tipo = tipo,
-                    contenidoId = contenidoId,
-                    orden = ordenNumber
+            val result = if (activityId != null) {
+                activityRepository.update(
+                    id = activityId,
+                    request = UpdateActivityRequest(
+                        titulo = tituloLimpio,
+                        tipo = tipo,
+                        orden = ordenNumber,
+                        contenidoId = contenidoId
+                    )
                 )
-            )
+            } else {
+                activityRepository.create(
+                    CreateActivityRequest(
+                        unidadId = unitId,
+                        titulo = tituloLimpio,
+                        tipo = tipo,
+                        contenidoId = contenidoId,
+                        orden = ordenNumber
+                    )
+                )
+            }
 
             isSaving = false
 
@@ -227,14 +276,16 @@ class ActivityFormViewModel(
             activityRepository: ActivityRepository,
             contentRepository: ContentRepository,
             unitId: Int,
-            lockedContentId: Int?
+            lockedContentId: Int?,
+            activityId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 ActivityFormViewModel(
                     activityRepository = activityRepository,
                     contentRepository = contentRepository,
                     unitId = unitId,
-                    lockedContentId = lockedContentId
+                    lockedContentId = lockedContentId,
+                    activityId = activityId
                 )
             }
         }

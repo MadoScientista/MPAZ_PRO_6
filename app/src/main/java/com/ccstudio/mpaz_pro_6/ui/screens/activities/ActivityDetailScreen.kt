@@ -44,7 +44,9 @@ fun ActivityDetailScreen(
     onAddQuestion: () -> Unit,
     onAddAlternative: (Question) -> Unit,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEdit: (() -> Unit)? = null,
+    maxAttempts: Int? = null
 ) {
     when {
         isLoading && activity == null -> LoadingState(
@@ -80,6 +82,23 @@ fun ActivityDetailScreen(
                         text = activity.tipo.label,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (maxAttempts != null) {
+                        Text(
+                            text = "Máximo de intentos: $maxAttempts",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            if (canManage && onEdit != null) {
+                item {
+                    AppButton(
+                        text = "Editar actividad",
+                        onClick = onEdit
                     )
                 }
             }

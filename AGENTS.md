@@ -269,8 +269,8 @@ Pendientes de confirmar con el backend. **No inventar valores** para estos casos
 La **capa de datos está completa**: los 8 enums, los 18 modelos, los 26 cuerpos de request y las
 15 interfaces implementan el contrato. Room tiene las 18 entidades, 8 DAOs, conversores, mappers,
 semilla desde `assets/database/seed.sql` e índice parcial de `PRUEBA_FINAL`. El seed local tiene
-cuatro unidades (una por asignatura), 36 OAs, una unidad de Historia en `BORRADOR` sin asignación
-inicial y contenidos/recursos sincronizados con el estado de su unidad. Al autorizar o publicar una
+cuatro unidades (una por asignatura), 36 OAs, los cursos 6A y 6B, una unidad de Historia en
+`BORRADOR` sin asignación inicial y contenidos/recursos sincronizados con el estado de su unidad. Al autorizar o publicar una
 unidad, `LocalUnitRepository` y `UnidadService` propagan ese estado a sus contenidos y recursos.
 El MVP limita la creación a una unidad por asignatura. El contenido y el recurso de contenido
 incluyen `estado` también en el backend. El APK release requiere `keystore.properties`; no se firma

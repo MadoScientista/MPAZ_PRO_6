@@ -180,7 +180,7 @@ class MpazDatabaseInstrumentedTest {
             .build()
 
         try {
-            assertTrue(seeded.catalogDao().getCourses().isNotEmpty())
+            assertEquals(2, seeded.catalogDao().getCourses().size)
             assertTrue(seeded.catalogDao().getSubjects().isNotEmpty())
             assertTrue(seeded.userDao().getUsers().isNotEmpty())
             assertTrue(seeded.docenciaDao().getDocencias().isNotEmpty())
@@ -188,9 +188,10 @@ class MpazDatabaseInstrumentedTest {
             assertTrue(seeded.curriculumDao().getActivities().isNotEmpty())
             assertNotNull(seeded.unitDao().getUnitById(1))
             assertEquals(4, seeded.unitDao().getUnits().size)
+            assertEquals(10, seeded.userDao().getUsers().size)
             assertEquals(36, seeded.curriculumDao().getObjectives().size)
             assertEquals(9, seeded.curriculumDao().getObjectivesByUnit(12).size)
-            assertEquals(3, seeded.assignmentDao().getAssignments().size)
+            assertEquals(6, seeded.assignmentDao().getAssignments().size)
         } finally {
             seeded.close()
         }

@@ -16,7 +16,8 @@
 -- ---------------------------------------------------------------------
 
 INSERT INTO curso (id, nombre, anio) VALUES
-    (1, '6A', 2026);
+    (1, '6A', 2026),
+    (2, '6B', 2026);
 
 INSERT INTO usuario (id, nombre, username, rol, curso_id) VALUES
     (1, 'Patricia Anilin', 'utp', 'UTP', NULL),
@@ -24,7 +25,11 @@ INSERT INTO usuario (id, nombre, username, rol, curso_id) VALUES
     (3, 'Camila Rivas', 'camila', 'ESTUDIANTE', 1),
     (4, 'Mateo Cortes', 'mateo', 'ESTUDIANTE', 1),
     (5, 'Javiera Munoz', 'javiera', 'ESTUDIANTE', 1),
-    (6, 'Benjamin Ortiz', 'benjamin', 'ESTUDIANTE', 1);
+    (6, 'Benjamin Ortiz', 'benjamin', 'ESTUDIANTE', 1),
+    (7, 'Sofia Herrera', 'sofia', 'ESTUDIANTE', 2),
+    (8, 'Tomas Vega', 'tomas', 'ESTUDIANTE', 2),
+    (9, 'Antonia Paredes', 'antonia', 'ESTUDIANTE', 2),
+    (10, 'Vicente Silva', 'vicente', 'ESTUDIANTE', 2);
 
 -- ---------------------------------------------------------------------
 -- B) Asignaturas, docencias y unidades
@@ -40,7 +45,11 @@ INSERT INTO docencia (id, docente_id, curso_id, asignatura_id) VALUES
     (1, 2, 1, 1),
     (2, 2, 1, 2),
     (3, 2, 1, 3),
-    (4, 2, 1, 4);
+    (4, 2, 1, 4),
+    (5, 2, 2, 1),
+    (6, 2, 2, 2),
+    (7, 2, 2, 3),
+    (8, 2, 2, 4);
 
 INSERT INTO unidad (id, asignatura_id, titulo, orden, estado, autorizada_por_id, fecha_autorizacion) VALUES
     (1, 1, 'Lectura - Comprension', 1, 'PUBLICADO', 1, 1772409600000),
@@ -214,12 +223,18 @@ INSERT INTO alternativa (id, pregunta_id, texto, es_correcta) VALUES
 INSERT INTO asignacion (id, curso_id, unidad_id, max_intentos, prueba_final_habilitada, fecha) VALUES
     (1, 1, 1, 2, 1, 1775462400000),
     (2, 1, 4, 2, 1, 1775462700000),
-    (3, 1, 9, 2, 1, 1775463000000);
+    (3, 1, 9, 2, 1, 1775463000000),
+    (4, 2, 1, 1, 1, 1775463300000),
+    (5, 2, 4, 2, 1, 1775463600000),
+    (6, 2, 9, 1, 1, 1775463900000);
 
 INSERT INTO asignacion_oa (asignacion_id, unidad_id, oa_id) VALUES
     (1, 1, 2),
     (2, 4, 35),
-    (3, 9, 57);
+    (3, 9, 57),
+    (4, 1, 2),
+    (5, 4, 35),
+    (6, 9, 57);
 
 INSERT INTO asignacion_actividad (asignacion_id, unidad_id, actividad_id) VALUES
     (1, 1, 1),
@@ -227,7 +242,13 @@ INSERT INTO asignacion_actividad (asignacion_id, unidad_id, actividad_id) VALUES
     (2, 4, 10),
     (2, 4, 11),
     (3, 9, 25),
-    (3, 9, 26);
+    (3, 9, 26),
+    (4, 1, 1),
+    (4, 1, 2),
+    (5, 4, 10),
+    (5, 4, 11),
+    (6, 9, 25),
+    (6, 9, 26);
 
 -- ---------------------------------------------------------------------
 -- H) Intentos y respuestas de ejemplo

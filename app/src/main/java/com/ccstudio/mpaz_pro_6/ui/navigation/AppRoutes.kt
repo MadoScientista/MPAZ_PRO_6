@@ -21,8 +21,8 @@ object AppRoutes {
     /** Listado de unidades. */
     const val UNITS = "units"
 
-    /** Detalle de una unidad. */
-    const val UNIT_DETAIL = "unitDetail/{unitId}"
+    /** Detalle de una unidad; `courseId` es opcional para mostrar intentos. */
+    const val UNIT_DETAIL = "unitDetail/{unitId}?courseId={courseId}"
 
     /** Autorización y publicación de una unidad. */
     const val UNIT_AUTHORIZATION = "unitAuthorization/{unitId}"
@@ -72,6 +72,12 @@ object AppRoutes {
     /** Formulario de creación de actividad dentro de un contenido. */
     const val ACTIVITY_FORM = "activityForm/{unitId}?contentId={contentId}"
 
+    /** Edición de una actividad existente. */
+    const val ACTIVITY_EDIT = "activityEdit/{unitId}/{activityId}"
+
+    /** Vista previa de solo lectura de una actividad. */
+    const val ACTIVITY_PREVIEW = "activityPreview/{activityId}"
+
     /** Formulario de creación de una pregunta. */
     const val QUESTION_FORM = "questionForm/{activityId}/{unitId}"
 
@@ -106,7 +112,8 @@ object AppRoutes {
     const val REPORT_GENERATE = "reportGenerate"
 
     /** Construye la ruta del detalle de una unidad. */
-    fun unitDetail(unitId: Int): String = "unitDetail/$unitId"
+    fun unitDetail(unitId: Int, courseId: Int? = null): String =
+        if (courseId == null) "unitDetail/$unitId" else "unitDetail/$unitId?courseId=$courseId"
 
     /** Construye la ruta de autorización de una unidad. */
     fun unitAuthorization(unitId: Int): String = "unitAuthorization/$unitId"
@@ -161,6 +168,14 @@ object AppRoutes {
     /** Construye la ruta del formulario de actividad de un contenido. */
     fun activityForm(unitId: Int, contentId: Int): String =
         "activityForm/$unitId?contentId=$contentId"
+
+    /** Construye la ruta de edición de una actividad. */
+    fun activityEdit(unitId: Int, activityId: Int): String =
+        "activityEdit/$unitId/$activityId"
+
+    /** Construye la ruta de vista previa de una actividad. */
+    fun activityPreview(activityId: Int): String =
+        "activityPreview/$activityId"
 
     /** Construye la ruta del formulario de pregunta. */
     fun questionForm(activityId: Int, unitId: Int): String =
