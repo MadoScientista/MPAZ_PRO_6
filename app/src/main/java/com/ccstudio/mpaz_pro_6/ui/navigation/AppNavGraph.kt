@@ -58,6 +58,8 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.AppBottomBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTopBar
 import com.ccstudio.mpaz_pro_6.ui.components.common.ProfileHeader
 import com.ccstudio.mpaz_pro_6.ui.components.common.ThemeToggleButton
+import com.ccstudio.mpaz_pro_6.ui.screens.activities.ActivityFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.activities.ActivityFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.activities.StudentActivityListViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.assignments.AssignmentDetailScreen
@@ -72,6 +74,8 @@ import com.ccstudio.mpaz_pro_6.ui.screens.attempts.AttemptResultScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.attempts.AttemptResultViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentDetailScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentDetailViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentFormScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.contents.ContentFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.auth.LoginViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.courses.CourseDetailScreen
@@ -227,6 +231,8 @@ private fun AppNavHost(
         AppRoutes.COURSE_DETAIL -> "Curso"
         AppRoutes.SUBJECT_DETAIL -> "Asignatura"
         AppRoutes.CONTENT_DETAIL -> "Detalle del contenido"
+        AppRoutes.CONTENT_FORM -> "Nuevo contenido"
+        AppRoutes.ACTIVITY_FORM -> "Nueva actividad"
         AppRoutes.UNIT_AUTHORIZATION -> "Autorización de unidad"
         AppRoutes.SUBJECT_FORM -> if (editingSubject) {
             "Editar asignatura"
@@ -1248,6 +1254,18 @@ private fun AppNavHost(
 
                     LaunchedEffect(Unit) { viewModel.cargar() }
 
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_UNIT_DETAIL_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle
+                                .set(REFRESH_UNIT_DETAIL_KEY, false)
+                        }
+                    }
+
                     UnitDetailScreen(
                         unidad = viewModel.unidad,
                         asignatura = viewModel.asignatura,
@@ -1270,7 +1288,65 @@ private fun AppNavHost(
                         },
                         onRetry = viewModel::cargar,
                         puedeAutorizar = rol == UserRole.UTP,
-                        puedeResolverActividades = rol == UserRole.ESTUDIANTE
+                        puedeResolverActividades = rol == UserRole.ESTUDIANTE,
+                        // Solo el docente crea el material de trabajo de la unidad.
+                        onCreateContent = if (rol == UserRole.DOCENTE) {
+                            { navController.navigate(AppRoutes.contentForm(unitId)) }
+                        } else {
+                            null
+                        }
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.CONTENT_FORM,
+                    arguments = listOf(navArgument("unitId") { type = NavType.IntType })
+                ) { entry ->
+                    val unitId = entry.arguments?.getInt("unitId") ?: 0
+
+                    val viewModel: ContentFormViewModel = viewModel(
+                        factory = ContentFormViewModel.factory(
+                            contentRepository = container.contentRepository,
+                            learningObjectiveRepository = container.learningObjectiveRepository,
+                            unitId = unitId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    ContentFormScreen(
+                        objetivos = viewModel.objetivos,
+                        selectedObjectiveId = viewModel.selectedObjectiveId,
+                        titulo = viewModel.titulo,
+                        explicacion = viewModel.explicacion,
+                        ejemplos = viewModel.ejemplos,
+                        instrucciones = viewModel.instrucciones,
+                        orden = viewModel.orden,
+                        origen = viewModel.origen,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        loadError = viewModel.loadError,
+                        error = viewModel.error,
+                        onObjectiveChange = viewModel::onObjectiveChange,
+                        onTituloChange = viewModel::onTituloChange,
+                        onExplicacionChange = viewModel::onExplicacionChange,
+                        onEjemplosChange = viewModel::onEjemplosChange,
+                        onInstruccionesChange = viewModel::onInstruccionesChange,
+                        onOrdenChange = viewModel::onOrdenChange,
+                        onOrigenChange = viewModel::onOrigenChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                // El detalle de la unidad recarga para mostrar
+                                // el contenido recién creado.
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_UNIT_DETAIL_KEY, true)
+
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() },
+                        onRetry = viewModel::cargar,
                     )
                 }
 
@@ -1297,6 +1373,18 @@ private fun AppNavHost(
 
                     LaunchedEffect(Unit) { viewModel.cargar() }
 
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_CONTENT_DETAIL_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle
+                                .set(REFRESH_CONTENT_DETAIL_KEY, false)
+                        }
+                    }
+
                     ContentDetailScreen(
                         contenido = viewModel.contenido,
                         objetivo = viewModel.objetivo,
@@ -1316,7 +1404,81 @@ private fun AppNavHost(
                         onOpenActivity = { activity ->
                             navController.navigate(AppRoutes.activityAttempt(activity.id))
                         },
-                        activityActionLabel = if (rol == UserRole.ESTUDIANTE) "Resolver" else "Vista previa"
+                        activityActionLabel = if (rol == UserRole.ESTUDIANTE) "Resolver" else "Vista previa",
+                        // Solo el docente crea actividades; el contenido se
+                        // preselecciona y queda bloqueado en el formulario.
+                        onCreateActivity = if (rol == UserRole.DOCENTE) {
+                            {
+                                viewModel.contenido?.let { content ->
+                                    navController.navigate(
+                                        AppRoutes.activityForm(
+                                            unitId = content.unidadId,
+                                            contentId = content.id
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        }
+                    )
+                }
+
+                composable(
+                    route = AppRoutes.ACTIVITY_FORM,
+                    arguments = listOf(
+                        navArgument("unitId") { type = NavType.IntType },
+                        navArgument("contentId") {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
+                ) { entry ->
+                    val unitId = entry.arguments?.getInt("unitId") ?: 0
+                    val lockedContentId = entry.arguments
+                        ?.getInt("contentId")
+                        ?.takeIf { it > 0 }
+
+                    val viewModel: ActivityFormViewModel = viewModel(
+                        factory = ActivityFormViewModel.factory(
+                            activityRepository = container.activityRepository,
+                            contentRepository = container.contentRepository,
+                            unitId = unitId,
+                            lockedContentId = lockedContentId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) { viewModel.cargar() }
+
+                    ActivityFormScreen(
+                        contenidos = viewModel.contenidos,
+                        titulo = viewModel.titulo,
+                        tipo = viewModel.tipo,
+                        orden = viewModel.orden,
+                        contenidoId = viewModel.contenidoId,
+                        hasFinalTest = viewModel.hasFinalTest,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        loadError = viewModel.loadError,
+                        error = viewModel.error,
+                        isContentLocked = viewModel.isContentLocked,
+                        onTituloChange = viewModel::onTituloChange,
+                        onTipoChange = viewModel::onTipoChange,
+                        onOrdenChange = viewModel::onOrdenChange,
+                        onContenidoChange = viewModel::onContenidoChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                // El detalle del contenido recarga para mostrar
+                                // la actividad recién creada.
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_CONTENT_DETAIL_KEY, true)
+
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() },
+                        onRetry = viewModel::cargar
                     )
                 }
 
@@ -1491,6 +1653,12 @@ private fun HomeStudentDestination(
 /** Clave con la que el listado de unidades recibe el aviso de recarga. */
 private const val REFRESH_UNITS_KEY = "refrescarUnidades"
 
+/** Clave con la que el detalle de una unidad recibe el aviso de recarga. */
+private const val REFRESH_UNIT_DETAIL_KEY = "refrescarDetalleUnidad"
+
+/** Clave con la que el detalle de un contenido recibe el aviso de recarga. */
+private const val REFRESH_CONTENT_DETAIL_KEY = "refrescarDetalleContenido"
+
 /** Clave con la que el detalle de una asignación recibe el aviso de recarga. */
 private const val REFRESH_ASSIGNMENT_DETAIL_KEY = "refrescarAsignacion"
 
@@ -1518,6 +1686,8 @@ private val ROUTES_WITH_BACK = setOf(
     AppRoutes.SUBJECT_DETAIL,
     AppRoutes.COURSE_DETAIL,
     AppRoutes.CONTENT_DETAIL,
+    AppRoutes.CONTENT_FORM,
+    AppRoutes.ACTIVITY_FORM,
     AppRoutes.UNIT_AUTHORIZATION,
     AppRoutes.SUBJECT_FORM,
     AppRoutes.COURSE_FORM,

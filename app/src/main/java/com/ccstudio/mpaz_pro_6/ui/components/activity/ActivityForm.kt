@@ -46,6 +46,10 @@ import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
  * `contenidoId` nulo significa que la actividad es transversal. La `PRUEBA_FINAL`
  * se propone sin contenido y el selector queda deshabilitado para ese tipo.
  *
+ * `isContentLocked` fija el contenido elegido por la pantalla de origen (por
+ * ejemplo, el detalle de un contenido): el selector se bloquea y la prueba final
+ * no se ofrece, porque se gestiona fuera del contenido.
+ *
  * `orden` es opcional: al crear, vacío deja que el backend aplique `1`; al editar,
  * vacío conserva el orden actual.
  */
@@ -68,7 +72,8 @@ fun ActivityForm(
     isReadOnly: Boolean = false,
     isSaving: Boolean = false,
     error: String? = null,
-    hasFinalTest: Boolean = false
+    hasFinalTest: Boolean = false,
+    isContentLocked: Boolean = false
 ) {
     val ordenValue = orden.trim()
     val isOrdenValid = ordenValue.isEmpty() ||
@@ -78,13 +83,15 @@ fun ActivityForm(
         isOrdenValid
 
     val activityTypeOptions = ActivityType.entries
-    val disabledTypes = if (hasFinalTest) {
-        setOf(ActivityType.FINAL_TEST.label)
-    } else {
-        emptySet()
+    val disabledTypes = buildSet {
+        if (hasFinalTest) add(ActivityType.FINAL_TEST.label)
+        if (isContentLocked) add(ActivityType.FINAL_TEST.label)
     }
 
-    val canChooseContent = !isReadOnly && !isSaving && tipo != ActivityType.FINAL_TEST
+    val canChooseContent = !isReadOnly &&
+        !isSaving &&
+        !isContentLocked &&
+        tipo != ActivityType.FINAL_TEST
     var contentMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val selectedContentTitle = contents.firstOrNull { it.id == contenidoId }?.titulo
     val contentFieldValue = when {
@@ -137,6 +144,12 @@ fun ActivityForm(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
+            } else if (isContentLocked) {
+                Text(
+                    text = "La prueba final se gestiona fuera del contenido.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             } else if (tipo == ActivityType.FINAL_TEST) {
                 Text(
                     text = "Solo se admite una prueba final por unidad.",
@@ -163,10 +176,15 @@ fun ActivityForm(
                 label = { Text(text = "Contenido") },
                 supportingText = {
                     Text(
-                        text = if (tipo == ActivityType.FINAL_TEST) {
-                            "La prueba final se propone sin contenido."
-                        } else {
-                            "Opcional; sin contenido la actividad es transversal."
+                        text = when {
+                            isContentLocked ->
+                                "La actividad queda asociada a este contenido."
+
+                            tipo == ActivityType.FINAL_TEST ->
+                                "La prueba final se propone sin contenido."
+
+                            else ->
+                                "Opcional; sin contenido la actividad es transversal."
                         }
                     )
                 },

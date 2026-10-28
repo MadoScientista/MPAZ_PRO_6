@@ -57,6 +57,17 @@ object AppRoutes {
     /** Detalle de un contenido. */
     const val CONTENT_DETAIL = "contentDetail/{contentId}"
 
+    /** Formulario de creación de contenido dentro de una unidad. */
+    const val CONTENT_FORM = "contentForm/{unitId}"
+
+    /**
+     * Formulario de creación de actividad dentro de una unidad.
+     *
+     * `contentId` es opcional: si llega, el contenido queda preseleccionado y
+     * bloqueado (creación desde el detalle de un contenido).
+     */
+    const val ACTIVITY_FORM = "activityForm/{unitId}?contentId={contentId}"
+
     /** Resultado de un intento. */
     const val ATTEMPT_RESULT = "attemptResult/{attemptId}"
 
@@ -117,6 +128,22 @@ object AppRoutes {
 
     /** Construye la ruta de detalle de un contenido. */
     fun contentDetail(contentId: Int): String = "contentDetail/$contentId"
+
+    /** Construye la ruta del formulario de contenido de una unidad. */
+    fun contentForm(unitId: Int): String = "contentForm/$unitId"
+
+    /**
+     * Construye la ruta del formulario de actividad de una unidad.
+     *
+     * @param contentId contenido que se preselecciona y bloquea; `null` deja la
+     *   actividad como transversal y permite elegir el contenido en el formulario.
+     */
+    fun activityForm(unitId: Int, contentId: Int? = null): String =
+        if (contentId == null) {
+            "activityForm/$unitId"
+        } else {
+            "activityForm/$unitId?contentId=$contentId"
+        }
 
     /** Construye la ruta del resultado de un intento. */
     fun attemptResult(attemptId: Int): String = "attemptResult/$attemptId"

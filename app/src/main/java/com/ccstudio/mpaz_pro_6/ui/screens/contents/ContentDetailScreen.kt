@@ -19,6 +19,8 @@ import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.ContentResource
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityCard
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
@@ -37,6 +39,9 @@ import com.ccstudio.mpaz_pro_6.ui.components.content.ContentResourceCard
  * `Context` ni de un `Intent`. Las actividades también se abren por callback: la
  * UTP y el docente entran en modo de vista previa (sin guardar intentos) y el
  * estudiante en modo de resolución normal.
+ *
+ * El docente además ve el botón «Crear nueva actividad» cuando la pantalla pasa
+ * `onCreateActivity`: abre el formulario con este contenido preseleccionado.
  */
 @Composable
 fun ContentDetailScreen(
@@ -51,7 +56,8 @@ fun ContentDetailScreen(
     actividades: List<Activity> = emptyList(),
     preguntasPorActividad: Map<Int, Int> = emptyMap(),
     onOpenActivity: ((Activity) -> Unit)? = null,
-    activityActionLabel: String = "Ver detalle"
+    activityActionLabel: String = "Ver detalle",
+    onCreateActivity: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize()
@@ -155,6 +161,15 @@ fun ContentDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         count = actividades.size
                     )
+
+                    if (onCreateActivity != null) {
+                        AppButton(
+                            text = "Crear nueva actividad",
+                            onClick = onCreateActivity,
+                            variant = AppButtonVariant.OUTLINED,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
 
                     if (actividades.isEmpty()) {
                         EmptyState(

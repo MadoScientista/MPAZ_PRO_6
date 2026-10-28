@@ -21,6 +21,7 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
+import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
@@ -58,7 +59,8 @@ fun UnitDetailScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     puedeAutorizar: Boolean = false,
-    puedeResolverActividades: Boolean = false
+    puedeResolverActividades: Boolean = false,
+    onCreateContent: (() -> Unit)? = null
 ) {
     // Solo se resuelven títulos de contenidos que el rol puede ver.
     val contentTitles = contenidos.associate { it.id to it.titulo }
@@ -118,6 +120,15 @@ fun UnitDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         count = contenidos.size
                     )
+
+                    if (onCreateContent != null) {
+                        AppButton(
+                            text = "Crear nuevo contenido",
+                            onClick = onCreateContent,
+                            variant = AppButtonVariant.OUTLINED,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
 
                     if (contenidos.isEmpty()) {
                         EmptyState(

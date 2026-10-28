@@ -147,7 +147,7 @@ fun HomeTeacherScreen(
                 }
 
                 CardCarousel(
-                    title = "Unidades asignadas",
+                    title = "Unidades en curso",
                     itemCount = unidades.size,
                     onSeeAll = onVerUnidades,
                     emptyMessage = "No tienes unidades asignadas."
