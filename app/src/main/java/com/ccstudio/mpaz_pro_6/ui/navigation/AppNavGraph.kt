@@ -1,7 +1,6 @@
 package com.ccstudio.mpaz_pro_6.ui.navigation
 
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.EnterTransition
@@ -113,6 +112,7 @@ import com.ccstudio.mpaz_pro_6.ui.screens.users.UserFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.users.UserListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.users.UserListViewModel
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 /**
  * Grafo de navegación de la app.
@@ -267,7 +267,7 @@ private fun AppNavHost(
                     title = {
                         if (currentRoute in topLevelRoutes) {
                             ProfileHeader(
-                                userName = user?.nombre.orEmpty(),
+                                userName = user.nombre,
                                 role = rol
                             )
                         } else {
@@ -492,15 +492,11 @@ private fun AppNavHost(
                                         AppRoutes.subjectDetail(subject.id)
                                     )
                                 },
-                                onViewReport = { report ->
-                                    navController.navigate(
-                                        AppRoutes.reportDetail(report.id)
-                                    )
-                                },
+
                                 onVerUnidades = { navController.navigate(AppRoutes.UNITS) },
                                 onVerCursos = { navController.navigate(AppRoutes.COURSES) },
                                 onVerAsignaturas = { navController.navigate(AppRoutes.SUBJECTS) },
-                                onVerInformes = { navController.navigate(AppRoutes.REPORTS) },
+
                                 onCargar = viewModel::cargar,
                             )
                         }
@@ -510,12 +506,6 @@ private fun AppNavHost(
                                 container = container,
                                 navController = navController,
                                 user = user,
-                                onViewUnit = { unit ->
-                                    navController.navigate(AppRoutes.unitDetail(unit.id))
-                                },
-                                onVerUnidades = {
-                                    navController.navigate(AppRoutes.UNITS)
-                                },
                                 onVerActividades = {
                                     navController.navigate(AppRoutes.ACTIVITIES)
                                 }
@@ -1453,7 +1443,7 @@ private fun AppNavHost(
                         error = viewModel.error,
                         onOpenResource = { url ->
                             runCatching {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                             }.onFailure {
                                 Toast.makeText(context, "No se pudo abrir el recurso.", Toast.LENGTH_SHORT).show()
                             }
@@ -1699,8 +1689,6 @@ private fun HomeStudentDestination(
     container: AppContainer,
     navController: NavHostController,
     user: User,
-    onViewUnit: (LearningUnit) -> Unit,
-    onVerUnidades: () -> Unit,
     onVerActividades: () -> Unit
 ) {
     val viewModel: HomeStudentViewModel = viewModel(
@@ -1727,11 +1715,19 @@ private fun HomeStudentDestination(
         actividadesEnProgreso = viewModel.actividadesEnProgreso,
         totalInformes = viewModel.totalInformes,
         sinCurso = viewModel.sinCurso,
-        onViewUnit = { unit -> onViewUnit(unit) },
-        onVerUnidades = onVerUnidades,
+        courseId = user.cursoId,
+        onViewSubject = { subject ->
+            user.cursoId?.let { courseId ->
+                navController.navigate(
+                    AppRoutes.subjectDetail(subject.id, courseId)
+                )
+            }
+        },
         onVerActividades = onVerActividades,
         onResolveActivity = { activity ->
-            navController.navigate(AppRoutes.activityAttempt(activity.id))
+            navController.navigate(
+                AppRoutes.activityAttempt(activity.id)
+            )
         },
         onCargar = viewModel::cargar,
         isLoading = viewModel.isLoading,

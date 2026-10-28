@@ -68,12 +68,6 @@ fun StudentActivityCard(
             ) {
                 ActivityTypeChip(activityType = activity.tipo)
 
-                Text(
-                    text = "Orden ${activity.orden}",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
 
                 StatusChip(
                     label = status.label,
@@ -133,7 +127,7 @@ fun StudentActivityCard(
 /**
  * Tarjeta compacta de una actividad para el carrusel del panel del estudiante.
  *
- * Muestra el tipo, el orden, el estado, el título, la unidad y la acción
+ * Muestra el tipo, el estado, el título, la unidad y la acción
  * (“Resolver” o “Continuar”). Tocar la tarjeta abre el intento correspondiente.
  */
 @Composable
@@ -162,19 +156,10 @@ fun StudentActivityCarouselCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ActivityTypeChip(activityType = activity.tipo)
-
-                Text(
-                    text = "Orden ${activity.orden}",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
 
                 StatusChip(
                     label = status.label,

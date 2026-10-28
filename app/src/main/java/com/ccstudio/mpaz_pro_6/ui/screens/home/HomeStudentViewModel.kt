@@ -195,17 +195,17 @@ class HomeStudentViewModel(
             val unidadesVisiblesIds = unidadesVisibles.map { it.id }.toSet()
 
             actividadesPendientes = todasLasActividades.filter { activity ->
-                activity.unidadId in unidadesVisiblesIds && when {
-                    activity.id !in actividadesAsignadas -> false
-                    activity.id in idsEnProgreso -> true
-                    activity.id in actividadesCompletadas -> false
-                    else -> {
-                        val maxIntentos = asignacionDePruebaFinal[activity.id]?.maxIntentos
-                        maxIntentos == null ||
-                                (intentosPorActividad[activity.id] ?: 0) < maxIntentos
-                    }
-                }
+                activity.unidadId in unidadesVisiblesIds &&
+                        activity.id in actividadesAsignadas &&
+                        activity.id !in idsEnProgreso &&
+                        activity.id !in actividadesCompletadas &&
+                        run {
+                            val maxIntentos = asignacionDePruebaFinal[activity.id]?.maxIntentos
+                            maxIntentos == null ||
+                                    (intentosPorActividad[activity.id] ?: 0) < maxIntentos
+                        }
             }
+
             actividadesEnProgreso = idsEnProgreso
 
             // Dato de apoyo: un fallo de informes no oculta unidades ni actividades.

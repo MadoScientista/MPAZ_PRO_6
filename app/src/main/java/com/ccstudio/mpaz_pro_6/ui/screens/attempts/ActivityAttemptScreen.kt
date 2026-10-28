@@ -315,11 +315,6 @@ private fun ActivityHeader(
         ) {
             ActivityTypeChip(activityType = activity.tipo)
 
-            Text(
-                text = "Orden ${activity.orden}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
 
             if (attempt != null) {
                 Text(

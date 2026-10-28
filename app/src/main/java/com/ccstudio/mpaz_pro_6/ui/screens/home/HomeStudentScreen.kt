@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.activity.StudentActivityCarouselCard
@@ -24,7 +25,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
+import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCarouselCard
 
 /**
  * Panel de inicio del estudiante.
@@ -45,8 +46,9 @@ fun HomeStudentScreen(
     actividadesEnProgreso: Set<Int>,
     totalInformes: Int,
     sinCurso: Boolean,
-    onViewUnit: (LearningUnit) -> Unit,
-    onVerUnidades: () -> Unit,
+    courseId: Int?,
+    onViewSubject: (Subject) -> Unit = {},
+    onVerAsignaturas: () -> Unit = {},
     onVerActividades: () -> Unit,
     onResolveActivity: (Activity) -> Unit,
     onCargar: () -> Unit,
@@ -54,8 +56,12 @@ fun HomeStudentScreen(
     isLoading: Boolean = false,
     error: ApiError? = null
 ) {
-    val subjectNames = asignaturas.associate { it.id to it.nombre }
+
     val unitTitles = unidades.associate { it.id to it.titulo }
+
+    val unidadesPorAsignatura = unidades
+        .groupingBy { it.asignaturaId }
+        .eachCount()
 
     Column(modifier = modifier.fillMaxSize()) {
         when {
@@ -117,17 +123,17 @@ fun HomeStudentScreen(
                 }
 
                 CardCarousel(
-                    title = "Mis unidades",
-                    itemCount = unidades.size,
-                    onSeeAll = onVerUnidades,
-                    emptyMessage = "No tienes unidades publicadas asignadas."
+                    title = "Asignaturas",
+                    itemCount = asignaturas.size,
+                    onSeeAll = onVerAsignaturas,
+                    emptyMessage = "Sin asignaturas"
                 ) { index ->
-                    val unit = unidades[index]
+                    val subject = asignaturas[index]
 
-                    UnitCarouselCard(
-                        unit = unit,
-                        subjectName = subjectNames[unit.asignaturaId] ?: "Sin asignatura",
-                        onClick = { onViewUnit(unit) }
+                    SubjectCarouselCard(
+                        subject = subject,
+                        unitCount = unidadesPorAsignatura[subject.id] ?: 0,
+                        onClick = { onViewSubject(subject) }
                     )
                 }
 

@@ -57,8 +57,6 @@ fun HomeTeacherScreen(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     error: ApiError? = null,
-    onViewReport: (PedagogicalReport) -> Unit = {},
-    onVerInformes: () -> Unit = {},
     onViewSubject: (Subject) -> Unit = {},
     onVerAsignaturas: () -> Unit = {},
 ) {
