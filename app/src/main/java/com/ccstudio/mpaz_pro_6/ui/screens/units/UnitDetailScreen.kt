@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
@@ -33,10 +34,13 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 /**
  * Detalle de una unidad.
  *
- * Muestra el resumen de la unidad, sus contenidos y sus actividades. La UTP y el
- * docente ven todo el material en modo lectura; el estudiante ve los contenidos
- * publicados y las actividades asignadas a su curso, y puede abrir una actividad
- * para resolverla.
+ * Muestra el resumen de la unidad, sus contenidos y sus actividades. La UTP ve el
+ * material en modo lectura; el docente ve el material y dispone del botón para
+ * crear nuevo contenido; el estudiante ve los contenidos publicados y las
+ * actividades asignadas a su curso, y puede abrir una actividad para resolverla.
+ *
+ * El botón para crear nuevo contenido está disponible exclusivamente para el rol
+ * docente (`UserRole.DOCENTE`).
  *
  * La autorización solo se ofrece a la UTP y solo en los estados que el backend
  * admite: `EN_REVISION` para autorizar y `AUTORIZADO` para publicar.
@@ -58,8 +62,10 @@ fun UnitDetailScreen(
     onAutorizar: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    rol: UserRole? = null,
     puedeAutorizar: Boolean = false,
     puedeResolverActividades: Boolean = false,
+    puedeCrearContenido: Boolean = rol == UserRole.DOCENTE,
     onCreateContent: (() -> Unit)? = null
 ) {
     // Solo se resuelven títulos de contenidos que el rol puede ver.
@@ -121,7 +127,8 @@ fun UnitDetailScreen(
                         count = contenidos.size
                     )
 
-                    if (onCreateContent != null) {
+                    val puedeCrear = (puedeCrearContenido || rol == UserRole.DOCENTE) && onCreateContent != null
+                    if (puedeCrear) {
                         AppButton(
                             text = "Crear nuevo contenido",
                             onClick = onCreateContent,

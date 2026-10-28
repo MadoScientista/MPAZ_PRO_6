@@ -288,9 +288,10 @@ Inicio, Unidades, Asignaciones e Informes. El UTP ya muestra sus cinco destinos:
 Asignaturas, Cursos y Usuarios, con CRUD completo en Asignaturas, Cursos y Usuarios (crear, editar y
 borrar con confirmación y explicación del `409 Conflict`). El estudiante tiene cuatro destinos:
 Inicio, Unidades, Actividades e Informes. Desde Inicio puede iniciar o continuar un intento y ver su
-resultado; en el detalle de una unidad ve el resumen, los contenidos y las actividades. La UTP y el
-docente ven todo el material en modo lectura; el estudiante ve solo contenidos publicados y
-actividades asignadas, y puede resolverlas. La UTP ve únicamente las unidades `EN_REVISION` y
+resultado; en el detalle de una unidad ve el resumen, los contenidos y las actividades. La UTP ve
+todo el material en modo lectura y puede autorizar o publicar según el estado; el docente ve el
+material y dispone del botón para crear nuevo contenido; el estudiante ve solo contenidos publicados
+y actividades asignadas, y puede resolverlas. La UTP ve únicamente las unidades `EN_REVISION` y
 los borradores quedan reservados al docente, que los ve en su listado de Unidades junto con las
 autorizadas y publicadas. La autorización solo se ofrece a la UTP en `EN_REVISION`
 o `AUTORIZADO`. En Actividades ve el estado de cada una y accede a su resultado; en Informes consulta

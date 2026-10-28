@@ -1287,8 +1287,10 @@ private fun AppNavHost(
                             navController.navigate(AppRoutes.unitAuthorization(unitId))
                         },
                         onRetry = viewModel::cargar,
+                        rol = rol,
                         puedeAutorizar = rol == UserRole.UTP,
                         puedeResolverActividades = rol == UserRole.ESTUDIANTE,
+                        puedeCrearContenido = rol == UserRole.DOCENTE,
                         // Solo el docente crea el material de trabajo de la unidad.
                         onCreateContent = if (rol == UserRole.DOCENTE) {
                             { navController.navigate(AppRoutes.contentForm(unitId)) }

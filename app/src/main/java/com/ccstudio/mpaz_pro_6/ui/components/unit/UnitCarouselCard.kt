@@ -58,7 +58,8 @@ fun UnitCarouselCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                UnitStatusChip(status = unit.estado)
+                //UnitStatusChip(status = unit.estado)
+
             }
 
             Text(

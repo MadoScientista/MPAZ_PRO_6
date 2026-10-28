@@ -110,6 +110,10 @@ Una `ContentCard` por contenido de la unidad, con:
 - Cantidad de recursos.
 - Acción **Ver contenido** → `ContentDetailScreen`.
 
+El botón **Crear nuevo contenido** (`ContentFormScreen`) está reservado exclusivamente
+para el rol docente (`UserRole.DOCENTE`). Para la UTP y el estudiante la sección se mantiene
+en modo lectura sin dicha acción.
+
 Los contenidos se resuelven en dos pasos porque el contrato no expone un filtro
 por unidad:
 
