@@ -92,6 +92,18 @@ class UnitAuthorizationViewModel(
             return
         }
 
+        val autorizanteIdToSend = if (unit.estado == ContentStatus.AUTHORIZED) {
+            unit.autorizadaPorId ?: autorizanteId
+        } else {
+            autorizanteId
+        }
+
+        val fechaToSend = if (unit.estado == ContentStatus.AUTHORIZED) {
+            unit.fechaAutorizacion ?: Instant.now()
+        } else {
+            Instant.now()
+        }
+
         viewModelScope.launch {
             isLoading = true
             error = null
@@ -101,8 +113,8 @@ class UnitAuthorizationViewModel(
                 id = unit.id,
                 request = UpdateLearningUnitRequest(
                     estado = nuevoEstado,
-                    autorizadaPorId = autorizanteId,
-                    fechaAutorizacion = Instant.now()
+                    autorizadaPorId = autorizanteIdToSend,
+                    fechaAutorizacion = fechaToSend
                 )
             )
 

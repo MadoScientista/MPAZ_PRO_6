@@ -14,6 +14,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
@@ -21,6 +22,7 @@ import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentResourceRepository
+import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
 import com.ccstudio.mpaz_pro_6.data.repository.LearningObjectiveRepository
 import com.ccstudio.mpaz_pro_6.data.repository.QuestionRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
@@ -49,7 +51,8 @@ class UnitDetailViewModel(
     private val assignmentRepository: AssignmentRepository,
     private val rol: UserRole,
     private val courseId: Int?,
-    private val unitId: Int
+    private val unitId: Int,
+    private val courseRepository: CourseRepository? = null
 ) : ViewModel() {
 
     /** Unidad consultada. */
@@ -58,6 +61,10 @@ class UnitDetailViewModel(
 
     /** Asignatura de la unidad. */
     var asignatura by mutableStateOf<Subject?>(null)
+        private set
+
+    /** Curso opcional donde se consulta la unidad. */
+    var course by mutableStateOf<Course?>(null)
         private set
 
     /** Objetivos de aprendizaje de la unidad. */
@@ -82,6 +89,10 @@ class UnitDetailViewModel(
 
     /** Cantidad de actividades visibles asociadas a cada contenido. */
     var actividadesPorContenido by mutableStateOf<Map<Int, Int>>(emptyMap())
+        private set
+
+    /** Intentos máximos de la prueba final (tomados de la asignación de la unidad). */
+    var maxIntentosPruebaFinal by mutableStateOf<Int?>(null)
         private set
 
     /** Indica que el detalle se está cargando. */
@@ -127,6 +138,13 @@ class UnitDetailViewModel(
             if (subjectsResult.isSuccess) {
                 asignatura = subjectsResult.getOrDefault(emptyList())
                     .find { it.id == unit.asignaturaId }
+            }
+
+            if (courseId != null && courseRepository != null) {
+                val courseResult = courseRepository.getById(courseId)
+                if (courseResult.isSuccess) {
+                    course = courseResult.getOrNull()
+                }
             }
 
             val objectivesResult = learningObjectiveRepository.list(unitId)
@@ -219,6 +237,14 @@ class UnitDetailViewModel(
                 .groupingBy { it }
                 .eachCount()
 
+            // Límite de intentos de la prueba final desde la asignación de la unidad.
+            val assignmentsResult = assignmentRepository.list(unitId = unitId)
+            if (assignmentsResult.isSuccess) {
+                val assign = assignmentsResult.getOrDefault(emptyList())
+                    .firstOrNull { it.unidadId == unitId }
+                maxIntentosPruebaFinal = assign?.maxIntentos
+            }
+
             isLoading = false
         }
     }
@@ -282,7 +308,8 @@ class UnitDetailViewModel(
             assignmentRepository: AssignmentRepository,
             rol: UserRole,
             courseId: Int?,
-            unitId: Int
+            unitId: Int,
+            courseRepository: CourseRepository? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 UnitDetailViewModel(
@@ -296,7 +323,8 @@ class UnitDetailViewModel(
                     assignmentRepository = assignmentRepository,
                     rol = rol,
                     courseId = courseId,
-                    unitId = unitId
+                    unitId = unitId,
+                    courseRepository = courseRepository
                 )
             }
         }

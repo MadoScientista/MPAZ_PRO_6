@@ -24,7 +24,8 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 fun UnitSummaryHeader(
     unit: LearningUnit,
     subjectName: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    courseName: String? = null
 ) {
     Column(
         modifier = modifier
@@ -32,7 +33,8 @@ fun UnitSummaryHeader(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        SubjectLabel(subjectName = subjectName)
+        val labelText = if (courseName != null) "$subjectName · Curso $courseName" else subjectName
+        SubjectLabel(subjectName = labelText)
 
         Text(
             text = unit.titulo,

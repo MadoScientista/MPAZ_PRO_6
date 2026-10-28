@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 
 /**
@@ -46,6 +47,7 @@ fun ActivityCard(
     modifier: Modifier = Modifier,
     unitTitle: String? = null,
     contentTitle: String? = null,
+    maxAttempts: Int? = null,
     onViewDetail: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
@@ -105,41 +107,76 @@ fun ActivityCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Acceso al detalle, solo si la pantalla lo habilita.
-            if (onViewDetail != null) {
-                OutlinedButton(
-                    onClick = onViewDetail,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(detailLabel)
-                }
+            // Intentos máximos de la prueba final o asignación.
+            if (maxAttempts != null) {
+                Text(
+                    text = "Intentos máximos: $maxAttempts",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else if (activity.tipo == ActivityType.FINAL_TEST) {
+                Text(
+                    text = "Intentos máximos: Sin límite",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            // Acciones de gestión, solo si la pantalla las habilita.
-            if (onEdit != null || onDelete != null) {
+            // Acciones de la tarjeta.
+            if (onViewDetail != null && onEdit != null && onDelete == null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (onEdit != null) {
-                        OutlinedButton(
-                            onClick = onEdit,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Editar")
-                        }
+                    OutlinedButton(
+                        onClick = onViewDetail,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(detailLabel)
                     }
 
-                    if (onDelete != null) {
-                        Button(
-                            onClick = onDelete,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError
-                            )
-                        ) {
-                            Text("Eliminar")
+                    OutlinedButton(
+                        onClick = onEdit,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Editar")
+                    }
+                }
+            } else {
+                if (onViewDetail != null) {
+                    OutlinedButton(
+                        onClick = onViewDetail,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(detailLabel)
+                    }
+                }
+
+                if (onEdit != null || onDelete != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (onEdit != null) {
+                            OutlinedButton(
+                                onClick = onEdit,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Editar")
+                            }
+                        }
+
+                        if (onDelete != null) {
+                            Button(
+                                onClick = onDelete,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                )
+                            ) {
+                                Text("Eliminar")
+                            }
                         }
                     }
                 }

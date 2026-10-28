@@ -25,19 +25,18 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 import com.ccstudio.mpaz_pro_6.ui.components.course.CourseCarouselCard
-import com.ccstudio.mpaz_pro_6.ui.components.report.ReportCarouselCard
+import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCarouselCard
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCarouselCard
-
 
 /**
  * Panel de inicio del docente.
  *
- * Muestra un resumen de sus cursos, las unidades que tiene asignadas y los
- * informes que esperan su validación. El carrusel de cursos replica el del panel
- * de UTP y enlaza con la pestaña Cursos. La cantidad de actividades y los
- * informes pendientes se resuelven en el ViewModel.
- * Los cursos que maneja el docente los resuelve el ViewModel con
- * `GET /api/usuarios/{id}/cursos`.
+ * Muestra un resumen de sus cursos, asignaturas y unidades asignadas.
+ *
+ * Presenta tres carruseles en orden:
+ * 1. Cursos
+ * 2. Asignaturas
+ * 3. Unidades en curso
  *
  * La pantalla no habla con repositorios: recibe los datos ya resueltos y delega
  * las acciones por callback.
@@ -52,21 +51,24 @@ fun HomeTeacherScreen(
     actividades: Int,
     onViewUnit: (LearningUnit) -> Unit,
     onViewCourse: (Course) -> Unit,
-    onViewReport: (PedagogicalReport) -> Unit,
     onVerUnidades: () -> Unit,
     onVerCursos: () -> Unit,
-    onVerInformes: () -> Unit,
     onCargar: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
-    error: ApiError? = null
+    error: ApiError? = null,
+    onViewReport: (PedagogicalReport) -> Unit = {},
+    onVerInformes: () -> Unit = {},
+    onViewSubject: (Subject) -> Unit = {},
+    onVerAsignaturas: () -> Unit = {},
 ) {
     val subjectNames = asignaturas.associate { it.id to it.nombre }
-    val unitTitles = unidades.associate { it.id to it.titulo }
-    val studentNames = estudiantes.associate { it.id to it.nombre }
     val estudiantesPorCurso = estudiantes
         .mapNotNull { it.cursoId }
         .groupingBy { it }
+        .eachCount()
+    val unidadesPorAsignatura = unidades
+        .groupingBy { it.asignaturaId }
         .eachCount()
 
     Column(
@@ -147,6 +149,21 @@ fun HomeTeacherScreen(
                 }
 
                 CardCarousel(
+                    title = "Asignaturas",
+                    itemCount = asignaturas.size,
+                    onSeeAll = onVerAsignaturas,
+                    emptyMessage = "Sin asignaturas"
+                ) { index ->
+                    val subject = asignaturas[index]
+
+                    SubjectCarouselCard(
+                        subject = subject,
+                        unitCount = unidadesPorAsignatura[subject.id] ?: 0,
+                        onClick = { onViewSubject(subject) }
+                    )
+                }
+
+                CardCarousel(
                     title = "Unidades en curso",
                     itemCount = unidades.size,
                     onSeeAll = onVerUnidades,
@@ -160,29 +177,7 @@ fun HomeTeacherScreen(
                         onClick = { onViewUnit(unit) }
                     )
                 }
-
-                CardCarousel(
-                    title = "Informes de rendimiento",
-                    itemCount = informesPendientes.size,
-                    onSeeAll = onVerInformes,
-                    emptyMessage = "No tienes informes por validar."
-                ) { index ->
-                    val report = informesPendientes[index]
-
-                    ReportCarouselCard(
-                        report = report,
-                        studentName = studentNames[report.estudianteId]
-                            ?: "Sin estudiante",
-                        unitName = unitTitles[report.unidadId] ?: "Sin unidad",
-                        onClick = { onViewReport(report) }
-                    )
-                }
             }
         }
     }
 }
-
-
-
-
-
