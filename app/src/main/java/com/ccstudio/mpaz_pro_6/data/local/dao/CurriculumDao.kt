@@ -87,6 +87,15 @@ interface CurriculumDao {
     @Query("SELECT * FROM actividad WHERE unidad_id = :unitId ORDER BY orden")
     suspend fun getActivitiesByUnit(unitId: Int): List<ActivityEntity>
 
+    @Query("SELECT * FROM actividad WHERE unidad_id = :unitId AND contenido_id = :contentId ORDER BY orden")
+    suspend fun getActivitiesByUnitAndContent(unitId: Int, contentId: Int): List<ActivityEntity>
+
+    @Query("SELECT * FROM actividad WHERE unidad_id = :unitId AND contenido_id IS NULL ORDER BY orden")
+    suspend fun getTransversalActivitiesByUnit(unitId: Int): List<ActivityEntity>
+
+    @Query("SELECT COUNT(*) FROM actividad WHERE contenido_id = :contentId")
+    suspend fun countActivitiesByContent(contentId: Int): Int
+
     @Query("SELECT * FROM actividad WHERE id = :id")
     suspend fun getActivityById(id: Int): ActivityEntity?
 

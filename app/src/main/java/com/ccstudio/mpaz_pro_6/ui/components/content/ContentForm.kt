@@ -26,6 +26,8 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
  *
  * El objetivo de aprendizaje no forma parte del formulario: se elige en la
  * pantalla en modo creación y no se puede cambiar en edición (`PUT` parcial).
+ * La unidad tampoco se elige: el backend la deriva del OA y la devuelve como
+ * `unidadId`, un campo de solo lectura.
  * `ejemplos`, `instrucciones` y `orden` son opcionales.
  */
 @Composable

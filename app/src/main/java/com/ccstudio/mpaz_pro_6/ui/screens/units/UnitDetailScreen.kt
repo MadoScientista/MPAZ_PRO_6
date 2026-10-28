@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
@@ -29,7 +26,6 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
 import com.ccstudio.mpaz_pro_6.ui.components.common.ErrorState
 import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
-import com.ccstudio.mpaz_pro_6.ui.components.common.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.components.content.ContentCard
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
 
@@ -52,6 +48,7 @@ fun UnitDetailScreen(
     objetivos: List<LearningObjective>,
     actividades: List<Activity>,
     recursosPorContenido: Map<Int, Int>,
+    actividadesPorContenido: Map<Int, Int>,
     preguntasPorActividad: Map<Int, Int>,
     isLoading: Boolean,
     error: ApiError?,
@@ -63,6 +60,14 @@ fun UnitDetailScreen(
     puedeAutorizar: Boolean = false,
     puedeResolverActividades: Boolean = false
 ) {
+    // Solo se resuelven títulos de contenidos que el rol puede ver.
+    val contentTitles = contenidos.associate { it.id to it.titulo }
+
+    // La prueba final se presenta por separado: es única por unidad y no forma
+    // parte de la lista de actividades regulares.
+    val pruebaFinal = actividades.firstOrNull { it.tipo == ActivityType.FINAL_TEST }
+    val actividadesRegulares = actividades.filter { it.tipo != ActivityType.FINAL_TEST }
+
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -103,31 +108,8 @@ fun UnitDetailScreen(
 
                         CounterCard(
                             titulo = "Actividades",
-                            valor = actividades.size,
+                            valor = actividadesRegulares.size,
                             modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Prueba final",
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        val tienePruebaFinal = actividades.any {
-                            it.tipo == ActivityType.FINAL_TEST
-                        }
-
-                        StatusChip(
-                            label = if (tienePruebaFinal) "Sí" else "No"
                         )
                     }
 
@@ -147,6 +129,7 @@ fun UnitDetailScreen(
                             ContentCard(
                                 content = content,
                                 resourceCount = recursosPorContenido[content.id] ?: 0,
+                                activityCount = actividadesPorContenido[content.id] ?: 0,
                                 onViewContent = { onViewContent(content) },
                                 objectiveLabels = listOfNotNull(
                                     etiquetaObjetivo(content.oaId, objetivos)
@@ -157,32 +140,34 @@ fun UnitDetailScreen(
                     }
 
                     SectionHeader(
-                        title = "Actividades",
+                        title = "Prueba final",
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        count = actividades.size
+                        count = if (pruebaFinal != null) 1 else null
                     )
 
-                    if (actividades.isEmpty()) {
+                    if (pruebaFinal == null) {
                         EmptyState(
-                            message = "Esta unidad todavía no tiene actividades.",
+                            message = "Sin prueba final",
+                            description = "Esta unidad todavía no tiene una prueba final.",
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     } else {
-                        actividades.forEach { activity ->
-                            ActivityCard(
-                                activity = activity,
-                                questionsCount = preguntasPorActividad[activity.id] ?: 0,
-                                unitTitle = null,
-                                onViewDetail = if (puedeResolverActividades) {
-                                    { onOpenActivity(activity) }
-                                } else {
-                                    null
-                                },
-                                detailLabel = "Resolver",
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                        ActivityCard(
+                            activity = pruebaFinal,
+                            questionsCount = preguntasPorActividad[pruebaFinal.id] ?: 0,
+                            unitTitle = null,
+                            contentTitle = pruebaFinal.contenidoId?.let(contentTitles::get),
+                            onViewDetail = if (puedeResolverActividades) {
+                                { onOpenActivity(pruebaFinal) }
+                            } else {
+                                null
+                            },
+                            detailLabel = "Resolver",
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
+
+
 
                     if (puedeAutorizar &&
                         (unidad.estado == ContentStatus.IN_REVIEW ||

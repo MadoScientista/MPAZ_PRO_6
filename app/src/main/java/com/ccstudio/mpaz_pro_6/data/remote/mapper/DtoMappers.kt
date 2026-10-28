@@ -133,6 +133,7 @@ fun LearningObjectiveDto.toDomain() = LearningObjective(
 fun ContentDto.toDomain() = Content(
     id = id,
     oaId = oaId,
+    unidadId = unidadId,
     titulo = titulo,
     explicacion = explicacion,
     ejemplos = ejemplos,
@@ -157,6 +158,7 @@ fun ContentResourceDto.toDomain() = ContentResource(
 fun ActivityDto.toDomain() = Activity(
     id = id,
     unidadId = unidadId,
+    contenidoId = contenidoId,
     titulo = titulo,
     tipo = ActivityType.fromWire(tipo) ?: unknown("ActivityType", tipo),
     orden = orden
@@ -354,6 +356,7 @@ fun CreateActivityRequest.toDto() = CreateActivityRequestDto(
     unidadId = unidadId,
     titulo = titulo,
     tipo = tipo.wireValue,
+    contenidoId = contenidoId,
     orden = orden
 )
 
@@ -361,7 +364,9 @@ fun CreateActivityRequest.toDto() = CreateActivityRequestDto(
 fun UpdateActivityRequest.toDto() = UpdateActivityRequestDto(
     titulo = titulo,
     tipo = tipo?.wireValue,
-    orden = orden
+    orden = orden,
+    contenidoId = contenidoId,
+    desasociarContenido = desasociarContenido
 )
 
 /** Convierte una solicitud de pregunta al cuerpo wire. */

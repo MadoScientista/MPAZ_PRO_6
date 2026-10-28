@@ -38,6 +38,7 @@ class HomeStudentScreenTest {
     private val activity = Activity(
         id = 1,
         unidadId = 1,
+        contenidoId = null,
         titulo = "Actividad con el mismo id que la unidad",
         tipo = ActivityType.ACTIVITY,
         orden = 1

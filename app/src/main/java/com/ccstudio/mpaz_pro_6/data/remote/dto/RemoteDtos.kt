@@ -58,6 +58,7 @@ data class LearningObjectiveDto(
 data class ContentDto(
     val id: Int,
     val oaId: Int,
+    val unidadId: Int,
     val titulo: String,
     val explicacion: String,
     val ejemplos: String? = null,
@@ -82,6 +83,7 @@ data class ContentResourceDto(
 data class ActivityDto(
     val id: Int,
     val unidadId: Int,
+    val contenidoId: Int? = null,
     val titulo: String,
     val tipo: String,
     val orden: Int = 1
@@ -298,6 +300,7 @@ data class CreateActivityRequestDto(
     val unidadId: Int,
     val titulo: String,
     val tipo: String,
+    val contenidoId: Int? = null,
     val orden: Int? = null
 )
 
@@ -305,7 +308,9 @@ data class CreateActivityRequestDto(
 data class UpdateActivityRequestDto(
     val titulo: String? = null,
     val tipo: String? = null,
-    val orden: Int? = null
+    val orden: Int? = null,
+    val contenidoId: Int? = null,
+    val desasociarContenido: Boolean? = null
 )
 
 @Serializable

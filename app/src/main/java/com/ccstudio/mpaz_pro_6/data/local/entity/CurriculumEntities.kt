@@ -46,13 +46,25 @@ data class LearningObjectiveEntity(
             parentColumns = ["id"],
             childColumns = ["oa_id"],
             onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = LearningObjectiveEntity::class,
+            parentColumns = ["id", "unidad_id"],
+            childColumns = ["oa_id", "unidad_id"],
+            onDelete = ForeignKey.RESTRICT
         )
     ],
-    indices = [Index(value = ["oa_id"])]
+    indices = [
+        Index(value = ["oa_id"]),
+        Index(value = ["unidad_id"]),
+        Index(value = ["id", "unidad_id"], unique = true),
+        Index(value = ["oa_id", "unidad_id"])
+    ]
 )
 data class ContentEntity(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "oa_id") val oaId: Int,
+    @ColumnInfo(name = "unidad_id") val unidadId: Int,
     val titulo: String,
     val explicacion: String,
     val ejemplos: String?,
@@ -94,17 +106,32 @@ data class ContentResourceEntity(
             parentColumns = ["id"],
             childColumns = ["unidad_id"],
             onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = ContentEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["contenido_id"],
+            onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = ContentEntity::class,
+            parentColumns = ["id", "unidad_id"],
+            childColumns = ["contenido_id", "unidad_id"],
+            onDelete = ForeignKey.RESTRICT
         )
     ],
     indices = [
         Index(value = ["unidad_id"]),
         Index(value = ["id", "unidad_id"], unique = true),
-        Index(value = ["unidad_id", "titulo"], unique = true)
+        Index(value = ["unidad_id", "titulo"], unique = true),
+        Index(value = ["contenido_id"]),
+        Index(value = ["contenido_id", "unidad_id"])
     ]
 )
 data class ActivityEntity(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "unidad_id") val unidadId: Int,
+    @ColumnInfo(name = "contenido_id") val contenidoId: Int?,
     val titulo: String,
     val tipo: ActivityType,
     val orden: Int

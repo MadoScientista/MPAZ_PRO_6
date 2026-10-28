@@ -233,7 +233,9 @@ El SQL es la referencia, pero la copia local necesita estos ajustes:
    `primaryKeys = ["asignacion_id", "oa_id"]` y
    `primaryKeys = ["asignacion_id", "actividad_id"]`.
 5. **Índice parcial de `PRUEBA_FINAL`:** Room no lo expresa con anotaciones. Se
-   crea con SQL crudo en `RoomDatabase.Callback.onCreate`:
+   crea con SQL crudo en `SeedLoader.createIndexes`, invocado desde
+   `RoomDatabase.Callback.onCreate` (base nueva) y `onOpen` (cada apertura,
+   incluida una base migrada y validada):
 
    ```sql
    CREATE UNIQUE INDEX ux_actividad_prueba_final_por_unidad
@@ -251,8 +253,53 @@ El SQL es la referencia, pero la copia local necesita estos ajustes:
    local debe borrar los recursos antes que su contenido.
 8. **Índices de FK:** Room advierte si una columna FK no está indexada. Se deben
    declarar índices equivalentes a los de la sección 7 del SQL.
+9. **Relación actividad ↔ contenido:** `contenido` agrega `unidad_id`, derivada
+   del objetivo de aprendizaje (nunca la elige ni la envía la app), y `actividad`
+   agrega `contenido_id` opcional. `contenido_id` nulo significa que la actividad
+   es transversal a la unidad. La integridad se refuerza con dos FK compuestas:
+   `contenido(oa_id, unidad_id) → objetivo_aprendizaje(id, unidad_id)` y
+   `actividad(contenido_id, unidad_id) → contenido(id, unidad_id)`. Ambas usan
+   `ON DELETE RESTRICT`: un contenido con actividades no se puede borrar y una
+   actividad no puede apuntar a un contenido de otra unidad.
+   Como `contenido_id` admite `NULL`, la FK no se comprueba en las actividades
+   transversales.
+10. **Borrado de contenido con actividades:** el backend responde `409 Conflict`
+    y el repositorio local lo replica contando las actividades asociadas antes de
+    borrar. El repositorio de actividades traduce el contenido de otra unidad y la
+    asociación simultánea con `desasociarContenido` a `ApiError.Conflict` y
+    `ApiError.BadRequest` respectivamente.
 
-### 5.4 DAOs
+### 5.4 Migración 1 → 2
+
+La versión 2 de `MpazDatabase` agrega `contenido.unidad_id` y
+`actividad.contenido_id`. SQLite no permite agregar una columna `NOT NULL` con FK
+ni una FK compuesta con `ALTER TABLE`, así que `MIGRATION_1_2`:
+
+1. Respaldar y borrar las tablas hijas de hoja a raíz
+   (`respuesta_estudiante`, `intento`, `asignacion_actividad`, `alternativa`,
+   `pregunta`, `recurso_contenido`), porque `ON DELETE RESTRICT` no se puede
+   diferir dentro de la transacción exclusiva de Room.
+2. Reconstruir `contenido` copiando `unidad_id` desde su objetivo de aprendizaje.
+3. Reconstruir `actividad` con `contenido_id = NULL` en todas las filas
+   existentes: la versión 1 no guardaba asociaciones y la migración no inventa
+   datos.
+4. Volver a crear las tablas hijas y restaurar sus filas.
+5. Validar con `PRAGMA foreign_key_check`.
+
+El índice parcial `ux_actividad_prueba_final_por_unidad` **no** se crea dentro de
+la migración: Room valida el esquema después de `migrate()` y un índice extra que
+no está declarado en `ActivityEntity` hace fallar la validación
+(`Migration didn't properly handle: actividad`). Se crea en
+`SeedLoader.createIndexes`, invocado desde `Callback.onOpen`, que corre después
+de la validación y en cada apertura. La operación es idempotente
+(`CREATE UNIQUE INDEX IF NOT EXISTS`).
+
+El esquema exportado vive en
+`app/schemas/com.ccstudio.mpaz_pro_6.data.local.MpazDatabase/{1,2}.json` y se
+publica como asset de `androidTest` para que `MigrationTest` pueda crear la
+versión 1 y validar la 2.
+
+### 5.5 DAOs
 
 Agrupar por dominio para evitar 17 archivos de DAO:
 
@@ -274,7 +321,7 @@ Cada DAO necesita, como mínimo:
 - `deleteAll()` para la sincronización completa.
 - Consultas específicas de la UI (por asignatura, por curso, por docente, etc.).
 
-### 5.5 Carga de la semilla local
+### 5.6 Carga de la semilla local
 
 `app/src/main/assets/database/seed.sql` contiene el catálogo inicial.
 `SeedLoader` lo ejecuta al crear la base (`RoomDatabase.Callback.onCreate`) y
@@ -308,8 +355,14 @@ La cobertura vive en:
   splitter con `;` dentro de texto, comillas escapadas, comentarios y varias
   sentencias.
 - `app/src/androidTest/java/com/ccstudio/mpaz_pro_6/data/local/MpazDatabaseInstrumentedTest.kt`:
-  `semillaSeCargaSobreUnaBaseNueva` verifica los conteos y que el contenido con
-  `;` se conserve.
+  `semillaSeCargaSobreUnaBaseNueva` verifica los conteos, la unidad derivada de
+  cada contenido, la unidad compartida entre actividad y contenido y que la
+  `PRUEBA_FINAL` quede transversal; además cubre la FK compuesta de la relación y
+  el borrado restringido de un contenido con actividades.
+- `app/src/androidTest/java/com/ccstudio/mpaz_pro_6/data/local/MigrationTest.kt`:
+  crea la versión 1 con filas insertadas a mano, ejecuta `MIGRATION_1_2` y
+  comprueba la unidad derivada, la transversalidad y la conservación de las
+  tablas hijas.
 
 ---
 

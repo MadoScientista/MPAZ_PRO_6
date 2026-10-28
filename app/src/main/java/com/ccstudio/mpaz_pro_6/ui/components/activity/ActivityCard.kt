@@ -23,9 +23,13 @@ import com.ccstudio.mpaz_pro_6.data.model.Activity
 /**
  * Tarjeta de una actividad.
  *
- * Muestra el tipo (`ActivityType`), el orden, el título y la cantidad de preguntas.
- * La actividad solo trae `unidadId`, así que el título de la unidad lo resuelve la
- * pantalla que lista y se entrega como `unitTitle` (opcional).
+ * Muestra el tipo (`ActivityType`), el título y la cantidad de preguntas. La
+ * actividad trae `unidadId` y `contenidoId`; la pantalla resuelve los títulos y los
+ * entrega como `unitTitle` y `contentTitle` (opcionales).
+ *
+ * Si `contenidoId` es nulo, la actividad es transversal. Si tiene contenido pero la
+ * pantalla no pudo resolver su título (por ejemplo, porque el rol no puede ver ese
+ * contenido), la tarjeta lo indica como «Contenido no disponible».
  *
  * El borrado siempre se ofrece cuando la pantalla lo habilita; si la actividad
  * tiene preguntas, asignaciones o intentos asociados, el backend responde
@@ -41,6 +45,7 @@ fun ActivityCard(
     questionsCount: Int,
     modifier: Modifier = Modifier,
     unitTitle: String? = null,
+    contentTitle: String? = null,
     onViewDetail: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
@@ -54,7 +59,7 @@ fun ActivityCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Tipo y orden dentro de la unidad.
+            // Tipo de actividad.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -62,11 +67,6 @@ fun ActivityCard(
             ) {
                 ActivityTypeChip(activityType = activity.tipo)
 
-                Text(
-                    text = "Orden ${activity.orden}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             // Título.
@@ -86,6 +86,17 @@ fun ActivityCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            // Contenido de la actividad, o su carácter transversal.
+            Text(
+                text = when {
+                    activity.contenidoId == null -> "Transversal"
+                    contentTitle != null -> "Contenido: $contentTitle"
+                    else -> "Contenido no disponible"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             // Cantidad de preguntas.
             Text(

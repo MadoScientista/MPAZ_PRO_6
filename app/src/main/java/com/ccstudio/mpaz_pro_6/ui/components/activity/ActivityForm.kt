@@ -4,17 +4,29 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
+import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppTextField
 import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
+import com.ccstudio.mpaz_pro_6.ui.theme.TextFieldShape
 
 /**
  * Formulario de actividad.
@@ -24,22 +36,31 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.FilterChipRow
  * el `CreateActivityRequest` o el `UpdateActivityRequest`.
  *
  * La unidad no forma parte del formulario: se elige en la pantalla en modo creación
- * y no se puede cambiar en edición (`PUT` parcial). El título es único dentro de la
- * unidad y solo se admite una `PRUEBA_FINAL` por unidad. Cuando la unidad ya tiene
- * una `PRUEBA_FINAL` distinta de esta actividad, la pantalla pasa `hasFinalTest`
- * en `true`: el tipo `PRUEBA_FINAL` queda bloqueado y el formulario lo explica.
+ * y no se puede cambiar en edición (`PUT` parcial). La pantalla pasa `contents` ya
+ * filtrado por la unidad y limpia `contenidoId` cuando esa unidad cambia. El título
+ * es único dentro de la unidad y solo se admite una `PRUEBA_FINAL` por unidad.
+ * Cuando la unidad ya tiene una `PRUEBA_FINAL` distinta de esta actividad, la
+ * pantalla pasa `hasFinalTest` en `true`: el tipo `PRUEBA_FINAL` queda bloqueado y
+ * el formulario lo explica.
+ *
+ * `contenidoId` nulo significa que la actividad es transversal. La `PRUEBA_FINAL`
+ * se propone sin contenido y el selector queda deshabilitado para ese tipo.
  *
  * `orden` es opcional: al crear, vacío deja que el backend aplique `1`; al editar,
  * vacío conserva el orden actual.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityForm(
     titulo: String,
     tipo: ActivityType,
     orden: String,
+    contents: List<Content>,
+    contenidoId: Int?,
     onTituloChange: (String) -> Unit,
     onTipoChange: (ActivityType) -> Unit,
     onOrdenChange: (String) -> Unit,
+    onContenidoChange: (Int?) -> Unit,
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -61,6 +82,15 @@ fun ActivityForm(
         setOf(ActivityType.FINAL_TEST.label)
     } else {
         emptySet()
+    }
+
+    val canChooseContent = !isReadOnly && !isSaving && tipo != ActivityType.FINAL_TEST
+    var contentMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val selectedContentTitle = contents.firstOrNull { it.id == contenidoId }?.titulo
+    val contentFieldValue = when {
+        contenidoId == null -> "Sin contenido (transversal)"
+        selectedContentTitle != null -> selectedContentTitle
+        else -> "Contenido no disponible"
     }
 
     Column(
@@ -113,6 +143,68 @@ fun ActivityForm(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+
+        // Contenido opcional: sin contenido la actividad es transversal.
+        ExposedDropdownMenuBox(
+            expanded = contentMenuExpanded && canChooseContent,
+            onExpandedChange = {
+                if (canChooseContent) {
+                    contentMenuExpanded = !contentMenuExpanded
+                }
+            }
+        ) {
+            OutlinedTextField(
+                value = contentFieldValue,
+                onValueChange = {},
+                readOnly = true,
+                shape = TextFieldShape,
+                label = { Text(text = "Contenido") },
+                supportingText = {
+                    Text(
+                        text = if (tipo == ActivityType.FINAL_TEST) {
+                            "La prueba final se propone sin contenido."
+                        } else {
+                            "Opcional; sin contenido la actividad es transversal."
+                        }
+                    )
+                },
+                trailingIcon = {
+                    if (canChooseContent) {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = contentMenuExpanded
+                        )
+                    }
+                },
+                enabled = canChooseContent,
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth()
+            )
+
+            ExposedDropdownMenu(
+                expanded = contentMenuExpanded && canChooseContent,
+                onDismissRequest = { contentMenuExpanded = false },
+                shape = TextFieldShape,
+                shadowElevation = 0.dp
+            ) {
+                DropdownMenuItem(
+                    text = { Text(text = "Sin contenido (transversal)") },
+                    onClick = {
+                        onContenidoChange(null)
+                        contentMenuExpanded = false
+                    }
+                )
+                contents.forEach { content ->
+                    DropdownMenuItem(
+                        text = { Text(text = content.titulo) },
+                        onClick = {
+                            onContenidoChange(content.id)
+                            contentMenuExpanded = false
+                        }
+                    )
+                }
             }
         }
 
