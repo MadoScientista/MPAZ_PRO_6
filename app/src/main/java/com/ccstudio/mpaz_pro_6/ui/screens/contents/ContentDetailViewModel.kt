@@ -71,6 +71,10 @@ class ContentDetailViewModel(
     var preguntasPorActividad by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
+    /** Intentos máximos de la prueba final (tomados de la asignación de la unidad). */
+    var maxIntentosPruebaFinal by mutableStateOf<Int?>(null)
+        private set
+
     /** Indica que el detalle se está cargando. */
     var isLoading by mutableStateOf(false)
         private set
@@ -143,6 +147,13 @@ class ContentDetailViewModel(
                     .eachCount()
             } else {
                 emptyMap()
+            }
+
+            val assignmentsResult = assignmentRepository.list(unitId = content.unidadId)
+            if (assignmentsResult.isSuccess) {
+                val assign = assignmentsResult.getOrDefault(emptyList())
+                    .firstOrNull { it.unidadId == content.unidadId }
+                maxIntentosPruebaFinal = assign?.maxIntentos
             }
 
             isLoading = false

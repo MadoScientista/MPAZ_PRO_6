@@ -9,8 +9,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
@@ -19,16 +21,22 @@ import kotlinx.coroutines.launch
  * Estado del detalle de una asignatura.
  *
  * Carga la asignatura y todas sus unidades con `GET /api/asignaturas/{id}` y
- * `GET /api/unidades?asignaturaId={id}`.
+ * `GET /api/unidades?asignaturaId={id}`. Opcionalmente carga el curso si llega `courseId`.
  */
 class SubjectDetailViewModel(
     private val subjectRepository: SubjectRepository,
     private val unitRepository: UnitRepository,
-    private val subjectId: Int
+    private val subjectId: Int,
+    private val courseRepository: CourseRepository? = null,
+    private val courseId: Int? = null
 ) : ViewModel() {
 
     /** Asignatura cargada, o `null` mientras carga o si falló. */
     var subject by mutableStateOf<Subject?>(null)
+        private set
+
+    /** Curso opcional donde se navega la asignatura, si se especificó `courseId`. */
+    var course by mutableStateOf<Course?>(null)
         private set
 
     /** Unidades de la asignatura, en el orden del backend. */
@@ -43,7 +51,7 @@ class SubjectDetailViewModel(
     var error by mutableStateOf<ApiError?>(null)
         private set
 
-    /** Carga la asignatura y sus unidades. */
+    /** Carga la asignatura, el curso opcional y sus unidades. */
     fun cargar() {
         viewModelScope.launch {
             isLoading = true
@@ -58,6 +66,13 @@ class SubjectDetailViewModel(
             }
 
             subject = subjectResult.getOrNull()
+
+            if (courseId != null && courseRepository != null) {
+                val courseResult = courseRepository.getById(courseId)
+                if (courseResult.isSuccess) {
+                    course = courseResult.getOrNull()
+                }
+            }
 
             val unitsResult = unitRepository.list(subjectId)
 
@@ -74,14 +89,22 @@ class SubjectDetailViewModel(
 
     companion object {
 
-        /** Factoría del ViewModel con los repositorios y el id de la asignatura. */
+        /** Factoría del ViewModel con los repositorios y el id de la asignatura y curso. */
         fun factory(
             subjectRepository: SubjectRepository,
             unitRepository: UnitRepository,
-            subjectId: Int
+            subjectId: Int,
+            courseRepository: CourseRepository? = null,
+            courseId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                SubjectDetailViewModel(subjectRepository, unitRepository, subjectId)
+                SubjectDetailViewModel(
+                    subjectRepository = subjectRepository,
+                    unitRepository = unitRepository,
+                    subjectId = subjectId,
+                    courseRepository = courseRepository,
+                    courseId = courseId
+                )
             }
         }
     }

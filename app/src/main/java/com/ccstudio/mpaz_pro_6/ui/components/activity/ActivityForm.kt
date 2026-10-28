@@ -68,6 +68,8 @@ fun ActivityForm(
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    maxIntentos: String = "",
+    onMaxIntentosChange: (String) -> Unit = {},
     isEditMode: Boolean = false,
     isReadOnly: Boolean = false,
     isSaving: Boolean = false,
@@ -78,9 +80,16 @@ fun ActivityForm(
     val ordenValue = orden.trim()
     val isOrdenValid = ordenValue.isEmpty() ||
         (ordenValue.toIntOrNull()?.let { it > 0 } == true)
+
+    val maxIntentosValue = maxIntentos.trim()
+    val isMaxIntentosValid = tipo != ActivityType.FINAL_TEST ||
+        maxIntentosValue.isEmpty() ||
+        (maxIntentosValue.toIntOrNull()?.let { it > 0 } == true)
+
     val canSubmit = titulo.isNotBlank() &&
         titulo.length <= MAX_TITLE_LENGTH &&
-        isOrdenValid
+        isOrdenValid &&
+        isMaxIntentosValid
 
     val activityTypeOptions = ActivityType.entries
     val disabledTypes = buildSet {
@@ -238,6 +247,18 @@ fun ActivityForm(
             },
             enabled = !isReadOnly && !isSaving
         )
+
+        // Intentos máximos de la prueba final.
+        if (tipo == ActivityType.FINAL_TEST) {
+            AppTextField(
+                value = maxIntentos,
+                onValueChange = onMaxIntentosChange,
+                label = "Intentos máximos",
+                placeholder = "Ej. 2",
+                supportingText = "Cantidad máxima de intentos permitidos para esta prueba final (debe ser mayor que cero).",
+                enabled = !isReadOnly && !isSaving
+            )
+        }
 
         if (error != null) {
             Text(

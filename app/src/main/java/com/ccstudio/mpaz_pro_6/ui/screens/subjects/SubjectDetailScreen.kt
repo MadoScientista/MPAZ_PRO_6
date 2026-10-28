@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.ui.components.common.EmptyState
@@ -25,7 +26,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitCard
 /**
  * Detalle de una asignatura.
  *
- * Muestra el nombre, la cantidad de unidades y el listado de sus unidades. Cada
+ * Muestra el nombre, el curso (si se proporcionó), la cantidad de unidades y el listado de sus unidades. Cada
  * unidad abre su detalle. La acción de autorización (`onAuthorize`) es opcional y
  * solo se ofrece cuando el usuario tiene rol UTP para unidades en revisión o autorizadas.
  * La barra superior la monta el `Scaffold` de `AppNavGraph`.
@@ -39,6 +40,7 @@ fun SubjectDetailScreen(
     onViewUnit: (LearningUnit) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    course: Course? = null,
     onAuthorize: ((LearningUnit) -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -67,10 +69,19 @@ fun SubjectDetailScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = subject.nombre,
+                            text = if (course != null) "${subject.nombre} — ${course.nombre}" else subject.nombre,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
+
+                        if (course != null) {
+                            Text(
+                                text = "Curso ${course.nombre} (${course.anio})",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
 
                         Text(
                             text = unitCountLabel(unidades.size),

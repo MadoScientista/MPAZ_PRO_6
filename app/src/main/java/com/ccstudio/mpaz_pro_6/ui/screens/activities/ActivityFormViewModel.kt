@@ -10,30 +10,44 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
+import com.ccstudio.mpaz_pro_6.data.model.Activity
+import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateActivityRequest
+import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateActivityRequest
+import com.ccstudio.mpaz_pro_6.data.model.requests.UpdateAssignmentRequest
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
+import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
 import kotlinx.coroutines.launch
 
 /**
- * Estado del formulario de creación de una actividad.
+ * Estado del formulario de creación o edición de una actividad.
  *
  * Carga los contenidos de la unidad para el selector opcional y las actividades
  * de la unidad para detectar si ya existe una `PRUEBA_FINAL` (solo se admite una
- * por unidad). Si la pantalla se abrió desde un contenido, [lockedContentId]
+ * por unidad). Si [activityId] tiene valor, entra en modo edición.
+ * Si la pantalla se abrió desde un contenido, [lockedContentId]
  * llega con su id y el contenido queda preseleccionado y bloqueado.
  *
- * La unidad no se elige: la fija la pantalla que abre el formulario. `orden` es
- * opcional; si queda vacío, el backend aplica `1`. El título es único dentro de
- * la unidad.
+ * Cuando la actividad es o pasa a ser una `PRUEBA_FINAL`, permite consultar y
+ * editar la cantidad de `maxIntentos` asociada a la asignación de la unidad.
  */
 class ActivityFormViewModel(
     private val activityRepository: ActivityRepository,
     private val contentRepository: ContentRepository,
+    private val assignmentRepository: AssignmentRepository,
     private val unitId: Int,
-    private val lockedContentId: Int?
+    private val lockedContentId: Int?,
+    private val activityId: Int? = null
 ) : ViewModel() {
+
+    /** Actividad en edición si existe. */
+    var activity by mutableStateOf<Activity?>(null)
+        private set
+
+    /** Asignación de la unidad para actualizar `maxIntentos`. */
+    private var assignment: Assignment? = null
 
     /** Contenidos de la unidad, ordenados por objetivo y orden. */
     var contenidos by mutableStateOf<List<Content>>(emptyList())
@@ -51,6 +65,10 @@ class ActivityFormViewModel(
     var orden by mutableStateOf("")
         private set
 
+    /** Cantidad de intentos máximos para la prueba final. */
+    var maxIntentos by mutableStateOf("")
+        private set
+
     /**
      * Contenido asociado; `null` significa actividad transversal.
      *
@@ -60,7 +78,11 @@ class ActivityFormViewModel(
     var contenidoId by mutableStateOf(lockedContentId)
         private set
 
-    /** Indica que la unidad ya tiene una `PRUEBA_FINAL`. */
+    /** Indica si está en modo edición. */
+    val isEditMode: Boolean
+        get() = activityId != null
+
+    /** Indica que la unidad ya tiene una `PRUEBA_FINAL` distinta de esta. */
     var hasFinalTest by mutableStateOf(false)
         private set
 
@@ -108,6 +130,12 @@ class ActivityFormViewModel(
         error = null
     }
 
+    /** Cambia los intentos máximos. */
+    fun onMaxIntentosChange(value: String) {
+        maxIntentos = value.filter { it.isDigit() }
+        error = null
+    }
+
     /**
      * Cambia el contenido asociado.
      *
@@ -120,7 +148,7 @@ class ActivityFormViewModel(
         error = null
     }
 
-    /** Carga los contenidos de la unidad y detecta la prueba final existente. */
+    /** Carga los contenidos de la unidad, la actividad y la asignación. */
     fun cargar() {
         if (cargado) return
 
@@ -142,19 +170,49 @@ class ActivityFormViewModel(
 
             val activitiesResult = activityRepository.list(unitId = unitId)
 
-            hasFinalTest = activitiesResult
-                .getOrDefault(emptyList())
-                .any { it.tipo == ActivityType.FINAL_TEST }
+            if (activitiesResult.isFailure) {
+                loadError = activitiesResult.exceptionOrNull() as? ApiError
+                isLoading = false
+                return@launch
+            }
+
+            val activities = activitiesResult.getOrDefault(emptyList())
+
+            hasFinalTest = activities.any {
+                it.tipo == ActivityType.FINAL_TEST && it.id != activityId
+            }
+
+            if (activityId != null) {
+                val act = activities.firstOrNull { it.id == activityId }
+                    ?: activityRepository.getById(activityId).getOrNull()
+
+                if (act != null) {
+                    activity = act
+                    titulo = act.titulo
+                    tipo = act.tipo
+                    orden = act.orden.toString()
+                    contenidoId = act.contenidoId
+                }
+            }
+
+            val assignmentsResult = assignmentRepository.list(unitId = unitId)
+            val assignments = assignmentsResult.getOrDefault(emptyList())
+            assignment = assignments.firstOrNull { it.unidadId == unitId }
+
+            if (assignment != null && maxIntentos.isEmpty()) {
+                maxIntentos = assignment?.maxIntentos?.toString().orEmpty()
+            }
 
             cargado = true
             isLoading = false
         }
     }
 
-    /** Crea la actividad y avisa a la pantalla cuando termina. */
+    /** Crea o actualiza la actividad y avisa a la pantalla cuando termina. */
     fun guardar(onSaved: () -> Unit) {
         val tituloLimpio = titulo.trim()
         val ordenValue = orden.trim()
+        val maxIntentosValue = maxIntentos.trim()
 
         when {
             tituloLimpio.isBlank() -> {
@@ -180,27 +238,63 @@ class ActivityFormViewModel(
             return
         }
 
+        val maxIntentosNumber = if (maxIntentosValue.isEmpty()) null else maxIntentosValue.toIntOrNull()
+
+        if (tipo == ActivityType.FINAL_TEST && maxIntentosValue.isNotEmpty() && (maxIntentosNumber == null || maxIntentosNumber <= 0)) {
+            error = "Los intentos máximos deben ser un número mayor que cero."
+            return
+        }
+
         viewModelScope.launch {
             isSaving = true
             error = null
 
-            val result = activityRepository.create(
-                CreateActivityRequest(
-                    unidadId = unitId,
-                    titulo = tituloLimpio,
-                    tipo = tipo,
-                    contenidoId = contenidoId,
-                    orden = ordenNumber
+            val result = if (activityId != null) {
+                activityRepository.update(
+                    id = activityId,
+                    request = UpdateActivityRequest(
+                        titulo = tituloLimpio,
+                        tipo = tipo,
+                        orden = ordenNumber,
+                        contenidoId = contenidoId,
+                        desasociarContenido = if (contenidoId == null) true else null
+                    )
                 )
-            )
-
-            isSaving = false
+            } else {
+                activityRepository.create(
+                    CreateActivityRequest(
+                        unidadId = unitId,
+                        titulo = tituloLimpio,
+                        tipo = tipo,
+                        contenidoId = contenidoId,
+                        orden = ordenNumber
+                    )
+                )
+            }
 
             if (result.isFailure) {
+                isSaving = false
                 error = mensajeDeError(result.exceptionOrNull() as? ApiError)
                 return@launch
             }
 
+            // Si es prueba final, actualizar maxIntentos en la asignación correspondiente
+            if (tipo == ActivityType.FINAL_TEST) {
+                val currentAssign = assignment ?: assignmentRepository.list(unitId = unitId)
+                    .getOrDefault(emptyList()).firstOrNull { it.unidadId == unitId }
+
+                if (currentAssign != null) {
+                    assignmentRepository.update(
+                        id = currentAssign.id,
+                        request = UpdateAssignmentRequest(
+                            maxIntentos = maxIntentosNumber,
+                            pruebaFinalHabilitada = true
+                        )
+                    )
+                }
+            }
+
+            isSaving = false
             onSaved()
         }
     }
@@ -225,15 +319,19 @@ class ActivityFormViewModel(
         fun factory(
             activityRepository: ActivityRepository,
             contentRepository: ContentRepository,
+            assignmentRepository: AssignmentRepository,
             unitId: Int,
-            lockedContentId: Int?
+            lockedContentId: Int?,
+            activityId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 ActivityFormViewModel(
                     activityRepository = activityRepository,
                     contentRepository = contentRepository,
+                    assignmentRepository = assignmentRepository,
                     unitId = unitId,
-                    lockedContentId = lockedContentId
+                    lockedContentId = lockedContentId,
+                    activityId = activityId
                 )
             }
         }

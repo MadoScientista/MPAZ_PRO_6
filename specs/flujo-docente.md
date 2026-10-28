@@ -33,7 +33,7 @@ LoginScreen
 | Inicio | `home` | `HomeTeacherScreen` |
 | Cursos | `courses` | `CourseListScreen` |
 | Detalle de curso | `courseDetail/{courseId}` | `CourseDetailScreen` |
-| Detalle de asignatura | `subjectDetail/{subjectId}` | `SubjectDetailScreen` |
+| Detalle de asignatura | `subjectDetail/{subjectId}?courseId={courseId}` | `SubjectDetailScreen` |
 | Unidades | `units` | `UnitListScreen` |
 | Detalle de unidad | `unitDetail/{unitId}` | `UnitDetailScreen` |
 | Asignaciones | `assignments` | `AssignmentListScreen` |
@@ -114,7 +114,7 @@ o desde el listado general de asignaturas.
 
 Muestra:
 
-- Encabezado con el nombre de la asignatura y la cantidad total de unidades.
+- Encabezado con el nombre de la asignatura, el curso al que pertenece (si se navega desde un curso, ej. "Matemática — 6A" y "Curso 6A (2026)") y la cantidad total de unidades.
 - Listado vertical de tarjetas de unidad (`UnitCard`). Para el docente, las tarjetas solo ofrecen el botón «Ver detalle» (incluso si la unidad está en estado `EN_REVISION`, la acción «Autorizar» o «Publicar» queda reservada a la UTP).
 - Al seleccionar una unidad, el docente navega a `UnitDetailScreen` para revisar
   sus contenidos y actividades, o agregar nuevo material.

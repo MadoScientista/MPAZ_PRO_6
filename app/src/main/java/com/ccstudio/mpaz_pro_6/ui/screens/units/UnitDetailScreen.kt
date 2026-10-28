@@ -17,6 +17,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
+import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
@@ -62,11 +63,14 @@ fun UnitDetailScreen(
     onAutorizar: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    course: Course? = null,
     rol: UserRole? = null,
     puedeAutorizar: Boolean = false,
     puedeResolverActividades: Boolean = false,
     puedeCrearContenido: Boolean = rol == UserRole.DOCENTE,
-    onCreateContent: (() -> Unit)? = null
+    onCreateContent: (() -> Unit)? = null,
+    onEditActivity: ((Activity) -> Unit)? = null,
+    maxIntentosPruebaFinal: Int? = null
 ) {
     // Solo se resuelven títulos de contenidos que el rol puede ver.
     val contentTitles = contenidos.associate { it.id to it.titulo }
@@ -94,7 +98,8 @@ fun UnitDetailScreen(
                 unidad != null -> {
                     UnitSummaryHeader(
                         unit = unidad,
-                        subjectName = asignatura?.nombre ?: "Sin asignatura"
+                        subjectName = asignatura?.nombre ?: "Sin asignatura",
+                        courseName = course?.nombre
                     )
 
                     SectionHeader(
@@ -157,6 +162,8 @@ fun UnitDetailScreen(
                         }
                     }
 
+
+
                     SectionHeader(
                         title = "Prueba final",
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -175,12 +182,12 @@ fun UnitDetailScreen(
                             questionsCount = preguntasPorActividad[pruebaFinal.id] ?: 0,
                             unitTitle = null,
                             contentTitle = pruebaFinal.contenidoId?.let(contentTitles::get),
-                            onViewDetail = if (puedeResolverActividades) {
-                                { onOpenActivity(pruebaFinal) }
-                            } else {
-                                null
-                            },
-                            detailLabel = "Resolver",
+                            maxAttempts = maxIntentosPruebaFinal,
+                            onViewDetail = { onOpenActivity(pruebaFinal) },
+                            detailLabel = if (rol == UserRole.ESTUDIANTE) "Resolver" else "Vista previa",
+                            onEdit = if (rol == UserRole.DOCENTE && onEditActivity != null) {
+                                { onEditActivity(pruebaFinal) }
+                            } else null,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }

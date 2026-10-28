@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.data.enums.ActivityType
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
 import com.ccstudio.mpaz_pro_6.data.model.Content
@@ -57,7 +58,9 @@ fun ContentDetailScreen(
     preguntasPorActividad: Map<Int, Int> = emptyMap(),
     onOpenActivity: ((Activity) -> Unit)? = null,
     activityActionLabel: String = "Ver detalle",
-    onCreateActivity: (() -> Unit)? = null
+    onCreateActivity: (() -> Unit)? = null,
+    onEditActivity: ((Activity) -> Unit)? = null,
+    maxIntentosPruebaFinal: Int? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize()
@@ -182,10 +185,14 @@ fun ContentDetailScreen(
                                 activity = activity,
                                 questionsCount = preguntasPorActividad[activity.id] ?: 0,
                                 contentTitle = contenido.titulo,
+                                maxAttempts = if (activity.tipo == ActivityType.FINAL_TEST) maxIntentosPruebaFinal else null,
                                 onViewDetail = onOpenActivity?.let { open ->
                                     { open(activity) }
                                 },
                                 detailLabel = activityActionLabel,
+                                onEdit = if (onEditActivity != null) {
+                                    { onEditActivity(activity) }
+                                } else null,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }

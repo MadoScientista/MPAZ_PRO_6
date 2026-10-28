@@ -53,6 +53,9 @@ fun ActivityFormScreen(
     onCancel: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    maxIntentos: String = "",
+    onMaxIntentosChange: (String) -> Unit = {},
+    isEditMode: Boolean = false,
     isContentLocked: Boolean = false
 ) {
     Column(
@@ -68,7 +71,7 @@ fun ActivityFormScreen(
             loadError != null -> ErrorState(error = loadError, onRetry = onRetry)
 
             else -> {
-                SectionHeader(title = "Detalle de la actividad")
+                SectionHeader(title = if (isEditMode) "Editar actividad" else "Detalle de la actividad")
 
                 Text(
                     text = if (isContentLocked) {
@@ -92,6 +95,9 @@ fun ActivityFormScreen(
                     onContenidoChange = onContenidoChange,
                     onSubmit = onSubmit,
                     onCancel = onCancel,
+                    maxIntentos = maxIntentos,
+                    onMaxIntentosChange = onMaxIntentosChange,
+                    isEditMode = isEditMode,
                     isSaving = isSaving,
                     error = error,
                     hasFinalTest = hasFinalTest,
