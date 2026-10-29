@@ -116,17 +116,22 @@ class StudentActivityListViewModel(
                     return@launch
                 }
 
+                val finalTest = todasLasActividades
+                    .firstOrNull {
+                        it.unidadId == assignment.unidadId &&
+                                it.tipo == ActivityType.FINAL_TEST
+                    }
+
+                // La prueba final no cuenta como actividad regular aunque una
+                // base antigua conserve el vínculo: solo se suma si está
+                // habilitada para la asignación.
                 actividadesAsignadas += enlacesResult
                     .getOrDefault(emptyList())
                     .map { it.actividadId }
+                    .filter { it != finalTest?.id }
 
                 if (assignment.pruebaFinalHabilitada) {
-                    todasLasActividades
-                        .firstOrNull {
-                            it.unidadId == assignment.unidadId &&
-                                    it.tipo == ActivityType.FINAL_TEST
-                        }
-                        ?.let { actividadesAsignadas += it.id }
+                    finalTest?.let { actividadesAsignadas += it.id }
                 }
             }
 

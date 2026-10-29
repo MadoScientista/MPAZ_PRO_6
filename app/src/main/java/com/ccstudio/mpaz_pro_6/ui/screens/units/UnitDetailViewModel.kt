@@ -13,6 +13,7 @@ import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Activity
+import com.ccstudio.mpaz_pro_6.data.model.Assignment
 import com.ccstudio.mpaz_pro_6.data.model.Content
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
@@ -28,6 +29,7 @@ import com.ccstudio.mpaz_pro_6.data.repository.QuestionRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /**
  * Estado del detalle de una unidad.
@@ -52,7 +54,8 @@ class UnitDetailViewModel(
     private val rol: UserRole,
     private val courseId: Int?,
     private val unitId: Int,
-    private val courseRepository: CourseRepository? = null
+    private val courseRepository: CourseRepository? = null,
+    private val teacherId: Int? = null
 ) : ViewModel() {
 
     /** Unidad consultada. */
@@ -95,6 +98,22 @@ class UnitDetailViewModel(
     var maxIntentosPruebaFinal by mutableStateOf<Int?>(null)
         private set
 
+    /** Fecha de aplicación de la prueba final (tomada de la asignación de la unidad). */
+    var fechaPruebaFinal by mutableStateOf<Instant?>(null)
+        private set
+
+    /** Indica si la asignación habilita la prueba final; `null` si no se conoce. */
+    var pruebaFinalHabilitada by mutableStateOf<Boolean?>(null)
+        private set
+
+    /** Id de la asignación que gobierna la prueba final, para abrir su configuración. */
+    var asignacionPruebaFinalId by mutableStateOf<Int?>(null)
+        private set
+
+    /** `true` cuando el estudiante tiene prueba final en la unidad pero está deshabilitada. */
+    var pruebaFinalDeshabilitada by mutableStateOf(false)
+        private set
+
     /** Indica que el detalle se está cargando. */
     var isLoading by mutableStateOf(false)
         private set
@@ -114,6 +133,11 @@ class UnitDetailViewModel(
             preguntasPorActividad = emptyMap()
             recursosPorContenido = emptyMap()
             actividadesPorContenido = emptyMap()
+            maxIntentosPruebaFinal = null
+            fechaPruebaFinal = null
+            pruebaFinalHabilitada = null
+            asignacionPruebaFinalId = null
+            pruebaFinalDeshabilitada = false
 
             val unitResult = unitRepository.getById(unitId)
 
@@ -192,8 +216,48 @@ class UnitDetailViewModel(
             val unitActivities = activitiesResult.getOrDefault(emptyList())
                 .filter { it.unidadId == unitId }
 
+            // Las reglas de la prueba final (fecha, intentos y habilitación) viven
+            // en la asignación de la unidad. Para la UTP y el docente es
+            // información complementaria: si falla, la tarjeta muestra los valores
+            // sin definir en lugar de ocultar el material de la unidad.
+            val assignmentsResult = if (rol == UserRole.ESTUDIANTE && courseId == null) {
+                null
+            } else {
+                assignmentRepository.list(
+                    courseId = courseId,
+                    unitId = unitId,
+                    teacherId = if (rol == UserRole.DOCENTE) teacherId else null
+                )
+            }
+
+            if (assignmentsResult != null && assignmentsResult.isFailure &&
+                rol == UserRole.ESTUDIANTE
+            ) {
+                error = assignmentsResult.exceptionOrNull() as? ApiError
+                isLoading = false
+                return@launch
+            }
+
+            val assignment = assignmentsResult
+                ?.getOrDefault(emptyList())
+                ?.firstOrNull { it.unidadId == unitId }
+
+            asignacionPruebaFinalId = assignment?.id
+            fechaPruebaFinal = assignment?.fecha
+            maxIntentosPruebaFinal = assignment?.maxIntentos
+            pruebaFinalHabilitada = assignment?.pruebaFinalHabilitada
+
+            val finalTest = unitActivities.firstOrNull {
+                it.unidadId == unitId && it.tipo == ActivityType.FINAL_TEST
+            }
+
+            pruebaFinalDeshabilitada = rol == UserRole.ESTUDIANTE &&
+                courseId != null &&
+                finalTest != null &&
+                assignment?.pruebaFinalHabilitada != true
+
             val visibleActivities = if (rol == UserRole.ESTUDIANTE) {
-                actividadesParaEstudiante(unitActivities)
+                actividadesParaEstudiante(unitActivities, assignment)
             } else {
                 unitActivities
             }
@@ -237,14 +301,6 @@ class UnitDetailViewModel(
                 .groupingBy { it }
                 .eachCount()
 
-            // Límite de intentos de la prueba final desde la asignación de la unidad.
-            val assignmentsResult = assignmentRepository.list(unitId = unitId)
-            if (assignmentsResult.isSuccess) {
-                val assign = assignmentsResult.getOrDefault(emptyList())
-                    .firstOrNull { it.unidadId == unitId }
-                maxIntentosPruebaFinal = assign?.maxIntentos
-            }
-
             isLoading = false
         }
     }
@@ -254,22 +310,10 @@ class UnitDetailViewModel(
      * asignación de su curso más la prueba final habilitada.
      */
     private suspend fun actividadesParaEstudiante(
-        unitActivities: List<Activity>
+        unitActivities: List<Activity>,
+        assignment: Assignment?
     ): List<Activity> {
-        if (courseId == null) return emptyList()
-
-        val assignmentsResult = assignmentRepository.list(
-            courseId = courseId,
-            unitId = unitId
-        )
-
-        if (assignmentsResult.isFailure) {
-            error = assignmentsResult.exceptionOrNull() as? ApiError
-            return emptyList()
-        }
-
-        val assignment = assignmentsResult.getOrDefault(emptyList()).firstOrNull()
-            ?: return emptyList()
+        if (assignment == null) return emptyList()
 
         val linksResult = assignmentRepository.listActivities(assignment.id)
 
@@ -282,13 +326,17 @@ class UnitDetailViewModel(
             .map { it.actividadId }
             .toMutableSet()
 
+        // La prueba final no se asocia como actividad regular: si una base
+        // antigua o la semilla dejó ese vínculo, se ignora. Solo se muestra
+        // cuando la asignación la habilita.
+        val finalTest = unitActivities.firstOrNull {
+            it.unidadId == unitId && it.tipo == ActivityType.FINAL_TEST
+        }
+
+        finalTest?.let { assignedIds -= it.id }
+
         if (assignment.pruebaFinalHabilitada) {
-            unitActivities
-                .firstOrNull {
-                    it.unidadId == unitId &&
-                            it.tipo == ActivityType.FINAL_TEST
-                }
-                ?.let { assignedIds += it.id }
+            finalTest?.let { assignedIds += it.id }
         }
 
         return unitActivities.filter { it.id in assignedIds }
@@ -309,7 +357,8 @@ class UnitDetailViewModel(
             rol: UserRole,
             courseId: Int?,
             unitId: Int,
-            courseRepository: CourseRepository? = null
+            courseRepository: CourseRepository? = null,
+            teacherId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 UnitDetailViewModel(
@@ -324,7 +373,8 @@ class UnitDetailViewModel(
                     rol = rol,
                     courseId = courseId,
                     unitId = unitId,
-                    courseRepository = courseRepository
+                    courseRepository = courseRepository,
+                    teacherId = teacherId
                 )
             }
         }

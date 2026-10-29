@@ -187,12 +187,18 @@ class UnitListViewModel(
                 val enlaces = assignmentRepository.listActivities(assignment.id)
                     .getOrDefault(emptyList())
 
-                val ids = enlaces.map { it.actividadId }.toMutableSet()
-
                 val finalTest = actividades.firstOrNull {
                     it.unidadId == assignment.unidadId &&
                             it.tipo == ActivityType.FINAL_TEST
                 }
+
+                // La prueba final no se cuenta como actividad regular aunque el
+                // vínculo exista en una base antigua; solo se suma si la
+                // asignación la habilita.
+                val ids = enlaces
+                    .map { it.actividadId }
+                    .filter { it != finalTest?.id }
+                    .toMutableSet()
 
                 if (assignment.pruebaFinalHabilitada && finalTest != null) {
                     ids += finalTest.id

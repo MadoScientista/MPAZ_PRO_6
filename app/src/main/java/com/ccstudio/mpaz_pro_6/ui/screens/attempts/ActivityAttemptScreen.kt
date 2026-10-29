@@ -39,9 +39,10 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
  * registra en el backend. Al completar, navega al resultado. Un intento ya
  * cerrado se presenta en modo de solo lectura con la corrección congelada.
  *
- * En **vista previa** (UTP y docente) no se crea ni se registra ningún intento:
- * las preguntas se responden en memoria y el botón de comprobación revela el
- * resultado solo en pantalla. Nada de lo respondido se guarda.
+ * En **vista previa** (UTP y docente) la actividad se abre directamente, sin
+ * ofrecer «Comenzar intento»: las alternativas correctas aparecen seleccionadas,
+ * no hay barra de progreso y el botón «Finalizar intento» queda deshabilitado
+ * porque la vista previa no registra intentos ni respuestas.
  */
 @Composable
 fun ActivityAttemptScreen(
@@ -64,11 +65,7 @@ fun ActivityAttemptScreen(
     onRetry: () -> Unit,
     onDismissMensaje: () -> Unit,
     modifier: Modifier = Modifier,
-    previewMode: Boolean = false,
-    previewCompleted: Boolean = false,
-    previewCorrectAnswers: Int = 0,
-    onCheckPreview: () -> Unit = {},
-    onRestartPreview: () -> Unit = {}
+    previewMode: Boolean = false
 ) {
     val isCompleted = attempt?.fechaFin != null
 
@@ -126,8 +123,8 @@ fun ActivityAttemptScreen(
                     } else {
                         item {
                             Text(
-                                text = "Vista previa: responde la actividad para conocer cómo " +
-                                        "funciona. Las respuestas no se guardan.",
+                                text = "Vista previa: las alternativas correctas aparecen " +
+                                        "seleccionadas. No se registra ningún intento.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -148,50 +145,25 @@ fun ActivityAttemptScreen(
                                 question = question,
                                 alternatives = alternativesByQuestion[question.id].orEmpty(),
                                 selectedAlternativeId = selectedAlternatives[question.id],
-                                onSelectAlternative = { alternativeId ->
-                                    onSelectAlternative(question.id, alternativeId)
-                                },
+                                onSelectAlternative = {},
                                 questionNumber = index + 1,
-                                isReadOnly = previewCompleted,
-                                showCorrectness = previewCompleted,
-                                enabled = !previewCompleted
+                                isReadOnly = true,
+                                enabled = false
                             )
                         }
 
                         item {
+                            AppButton(
+                                text = "Finalizar intento",
+                                onClick = {},
+                                enabled = false
+                            )
+
                             Text(
-                                text = "$answeredCount de ${questions.size} preguntas respondidas",
+                                text = "La vista previa no registra intentos ni respuestas.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-
-                            if (previewCompleted) {
-                                Text(
-                                    text = "Respuestas correctas: " +
-                                            "$previewCorrectAnswers de ${questions.size}",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-
-                                AppButton(
-                                    text = "Reiniciar vista previa",
-                                    onClick = onRestartPreview
-                                )
-                            } else {
-                                AppButton(
-                                    text = "Comprobar respuestas",
-                                    onClick = onCheckPreview,
-                                    enabled = allAnswered
-                                )
-
-                                if (!allAnswered) {
-                                    Text(
-                                        text = "Responde todas las preguntas para comprobar.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
                         }
                     }
                 } else if (attempt == null) {

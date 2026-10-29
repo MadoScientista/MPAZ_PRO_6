@@ -145,20 +145,24 @@ class HomeStudentViewModel(
                     return@launch
                 }
 
+                val finalTest = todasLasActividades
+                    .firstOrNull {
+                        it.unidadId == assignment.unidadId &&
+                                it.tipo == ActivityType.FINAL_TEST
+                    }
+
+                // La prueba final nunca entra por el vínculo regular: solo se
+                // agrega cuando la asignación la habilita.
                 actividadesAsignadas += asociadasResult
                     .getOrDefault(emptyList())
                     .map { it.actividadId }
+                    .filter { it != finalTest?.id }
 
                 if (assignment.pruebaFinalHabilitada) {
-                    todasLasActividades
-                        .firstOrNull {
-                            it.unidadId == assignment.unidadId &&
-                                    it.tipo == ActivityType.FINAL_TEST
-                        }
-                        ?.let { finalTest ->
-                            actividadesAsignadas += finalTest.id
-                            asignacionDePruebaFinal[finalTest.id] = assignment
-                        }
+                    finalTest?.let { pruebaFinal ->
+                        actividadesAsignadas += pruebaFinal.id
+                        asignacionDePruebaFinal[pruebaFinal.id] = assignment
+                    }
                 }
             }
 

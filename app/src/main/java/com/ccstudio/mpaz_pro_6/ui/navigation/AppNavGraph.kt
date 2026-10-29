@@ -101,6 +101,8 @@ import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectFormScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectFormViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.subjects.SubjectListViewModel
+import com.ccstudio.mpaz_pro_6.ui.screens.units.FinalTestSettingsScreen
+import com.ccstudio.mpaz_pro_6.ui.screens.units.FinalTestSettingsViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitAuthorizationViewModel
 import com.ccstudio.mpaz_pro_6.ui.screens.units.UnitDetailScreen
@@ -211,6 +213,10 @@ private fun AppNavHost(
     val editingCourse = (backStackEntry?.arguments?.getInt("courseId") ?: -1) > 0
     val editingUser = (backStackEntry?.arguments?.getInt("userId") ?: -1) > 0
 
+    // Vista previa de la actividad: la piden la UTP y el docente desde el
+    // material de la unidad, porque ninguno de los dos registra intentos.
+    val previewingActivity = backStackEntry?.arguments?.getBoolean("preview") == true
+
     // Título de la barra superior para los destinos profundos (detalles y
     // formularios). Las pestañas muestran la identidad del usuario en su lugar:
     // su contenido ya indica de qué pantalla se trata.
@@ -242,11 +248,16 @@ private fun AppNavHost(
 
         AppRoutes.COURSE_FORM -> if (editingCourse) "Editar curso" else "Nuevo curso"
         AppRoutes.USER_FORM -> if (editingUser) "Editar usuario" else "Nuevo usuario"
-        AppRoutes.ACTIVITY_ATTEMPT -> "Resolver actividad"
+        AppRoutes.ACTIVITY_ATTEMPT -> if (previewingActivity) {
+            "Vista previa de la actividad"
+        } else {
+            "Resolver actividad"
+        }
         AppRoutes.ATTEMPT_RESULT -> "Resultado del intento"
         AppRoutes.REPORT_DETAIL -> "Informe pedagógico"
         AppRoutes.ASSIGNMENT_DETAIL -> "Detalle de la asignación"
         AppRoutes.ASSIGNMENT_FORM -> "Editar asignación"
+        AppRoutes.FINAL_TEST_SETTINGS -> "Configurar prueba final"
         else -> ""
     }
 
@@ -532,10 +543,15 @@ private fun AppNavHost(
                 composable(
                     route = AppRoutes.ACTIVITY_ATTEMPT,
                     arguments = listOf(
-                        navArgument("activityId") { type = NavType.IntType }
+                        navArgument("activityId") { type = NavType.IntType },
+                        navArgument("preview") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
                     )
                 ) { entry ->
                     val activityId = entry.arguments?.getInt("activityId") ?: 0
+                    val preview = entry.arguments?.getBoolean("preview") == true
 
                     val viewModel: ActivityAttemptViewModel = viewModel(
                         factory = ActivityAttemptViewModel.factory(
@@ -545,7 +561,8 @@ private fun AppNavHost(
                             attemptRepository = container.attemptRepository,
                             studentAnswerRepository = container.studentAnswerRepository,
                             studentId = user.id,
-                            activityId = activityId
+                            activityId = activityId,
+                            previewMode = preview
                         )
                     )
 
@@ -578,6 +595,7 @@ private fun AppNavHost(
                         },
                         onRetry = viewModel::cargar,
                         onDismissMensaje = viewModel::limpiarMensaje,
+                        previewMode = preview
                     )
                 }
 
@@ -1165,6 +1183,49 @@ private fun AppNavHost(
                     )
                 }
 
+                composable(
+                    route = AppRoutes.FINAL_TEST_SETTINGS,
+                    arguments = listOf(
+                        navArgument("assignmentId") { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    val assignmentId = entry.arguments?.getInt("assignmentId") ?: 0
+
+                    val viewModel: FinalTestSettingsViewModel = viewModel(
+                        factory = FinalTestSettingsViewModel.factory(
+                            assignmentRepository = container.assignmentRepository,
+                            assignmentId = assignmentId
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.cargar()
+                    }
+
+                    FinalTestSettingsScreen(
+                        fecha = viewModel.fecha,
+                        maxIntentos = viewModel.maxIntentos,
+                        pruebaFinalHabilitada = viewModel.pruebaFinalHabilitada,
+                        isLoading = viewModel.isLoading,
+                        isSaving = viewModel.isSaving,
+                        error = viewModel.error,
+                        onFechaChange = viewModel::onFechaChange,
+                        onMaxIntentosChange = viewModel::onMaxIntentosChange,
+                        onPruebaFinalHabilitadaChange =
+                            viewModel::onPruebaFinalHabilitadaChange,
+                        onSubmit = {
+                            viewModel.guardar {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(REFRESH_UNIT_DETAIL_KEY, true)
+                                markAssignmentsChanged(navController)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = { navController.popBackStack() }
+                    )
+                }
+
                 composable(AppRoutes.REPORTS) {
                     if (rol == UserRole.ESTUDIANTE) {
                         val viewModel: StudentReportListViewModel = viewModel(
@@ -1279,7 +1340,8 @@ private fun AppNavHost(
                             rol = rol,
                             courseId = courseId,
                             unitId = unitId,
-                            courseRepository = container.courseRepository
+                            courseRepository = container.courseRepository,
+                            teacherId = user.id
                         )
                     )
 
@@ -1320,15 +1382,17 @@ private fun AppNavHost(
                                 )
                             )
                         },
-                        onEditActivity = if (rol == UserRole.DOCENTE) {
-                            { activity ->
-                                navController.navigate(
-                                    AppRoutes.activityForm(
-                                        unitId = unitId,
-                                        contentId = activity.contenidoId,
-                                        activityId = activity.id
+                        maxIntentosPruebaFinal = viewModel.maxIntentosPruebaFinal,
+                        fechaPruebaFinal = viewModel.fechaPruebaFinal,
+                        pruebaFinalHabilitada = viewModel.pruebaFinalHabilitada,
+                        pruebaFinalDeshabilitada = viewModel.pruebaFinalDeshabilitada,
+                        onEditFinalTest = if (rol == UserRole.DOCENTE) {
+                            viewModel.asignacionPruebaFinalId?.let { assignmentId ->
+                                {
+                                    navController.navigate(
+                                        AppRoutes.finalTestSettings(assignmentId)
                                     )
-                                )
+                                }
                             }
                         } else null,
                         onAutorizar = {
@@ -1781,7 +1845,8 @@ private val ROUTES_WITH_BACK = setOf(
     AppRoutes.ATTEMPT_RESULT,
     AppRoutes.REPORT_DETAIL,
     AppRoutes.ASSIGNMENT_DETAIL,
-    AppRoutes.ASSIGNMENT_FORM
+    AppRoutes.ASSIGNMENT_FORM,
+    AppRoutes.FINAL_TEST_SETTINGS
 )
 
 /**

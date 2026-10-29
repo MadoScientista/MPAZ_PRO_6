@@ -21,7 +21,7 @@ import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningObjective
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
-import com.ccstudio.mpaz_pro_6.ui.components.activity.ActivityCard
+import com.ccstudio.mpaz_pro_6.ui.components.activity.FinalTestCard
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButton
 import com.ccstudio.mpaz_pro_6.ui.components.common.AppButtonVariant
 import com.ccstudio.mpaz_pro_6.ui.components.common.CounterCard
@@ -31,6 +31,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.common.LoadingState
 import com.ccstudio.mpaz_pro_6.ui.components.common.SectionHeader
 import com.ccstudio.mpaz_pro_6.ui.components.content.ContentCard
 import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
+import java.time.Instant
 
 /**
  * Detalle de una unidad.
@@ -45,6 +46,10 @@ import com.ccstudio.mpaz_pro_6.ui.components.unit.UnitSummaryHeader
  *
  * La autorización solo se ofrece a la UTP y solo en los estados que el backend
  * admite: `EN_REVISION` para autorizar y `AUTORIZADO` para publicar.
+ *
+ * La prueba final se muestra en una tarjeta propia con su fecha de aplicación y
+ * máximo de intentos. El docente puede abrir su configuración desde esa tarjeta;
+ * el estudiante ve un aviso cuando la prueba final está deshabilitada.
  */
 @Composable
 fun UnitDetailScreen(
@@ -69,12 +74,12 @@ fun UnitDetailScreen(
     puedeResolverActividades: Boolean = false,
     puedeCrearContenido: Boolean = rol == UserRole.DOCENTE,
     onCreateContent: (() -> Unit)? = null,
-    onEditActivity: ((Activity) -> Unit)? = null,
-    maxIntentosPruebaFinal: Int? = null
+    maxIntentosPruebaFinal: Int? = null,
+    fechaPruebaFinal: Instant? = null,
+    pruebaFinalHabilitada: Boolean? = null,
+    pruebaFinalDeshabilitada: Boolean = false,
+    onEditFinalTest: (() -> Unit)? = null
 ) {
-    // Solo se resuelven títulos de contenidos que el rol puede ver.
-    val contentTitles = contenidos.associate { it.id to it.titulo }
-
     // La prueba final se presenta por separado: es única por unidad y no forma
     // parte de la lista de actividades regulares.
     val pruebaFinal = actividades.firstOrNull { it.tipo == ActivityType.FINAL_TEST }
@@ -171,23 +176,32 @@ fun UnitDetailScreen(
                     )
 
                     if (pruebaFinal == null) {
-                        EmptyState(
-                            message = "Sin prueba final",
-                            description = "Esta unidad todavía no tiene una prueba final.",
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
+                        if (rol == UserRole.ESTUDIANTE && pruebaFinalDeshabilitada) {
+                            EmptyState(
+                                message = "La prueba final todavía no está habilitada.",
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        } else {
+                            EmptyState(
+                                message = "Sin prueba final",
+                                description = "Esta unidad todavía no tiene una prueba final.",
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
                     } else {
-                        ActivityCard(
+                        FinalTestCard(
                             activity = pruebaFinal,
                             questionsCount = preguntasPorActividad[pruebaFinal.id] ?: 0,
-                            unitTitle = null,
-                            contentTitle = pruebaFinal.contenidoId?.let(contentTitles::get),
+                            applicationDate = fechaPruebaFinal,
                             maxAttempts = maxIntentosPruebaFinal,
-                            onViewDetail = { onOpenActivity(pruebaFinal) },
-                            detailLabel = if (rol == UserRole.ESTUDIANTE) "Resolver" else "Vista previa",
-                            onEdit = if (rol == UserRole.DOCENTE && onEditActivity != null) {
-                                { onEditActivity(pruebaFinal) }
-                            } else null,
+                            enabled = pruebaFinalHabilitada,
+                            onOpen = { onOpenActivity(pruebaFinal) },
+                            openLabel = if (rol == UserRole.ESTUDIANTE) {
+                                "Resolver"
+                            } else {
+                                "Vista previa"
+                            },
+                            onEdit = if (rol == UserRole.DOCENTE) onEditFinalTest else null,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }

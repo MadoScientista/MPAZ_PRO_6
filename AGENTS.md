@@ -294,7 +294,10 @@ material y dispone del botón para crear nuevo contenido; el estudiante ve solo 
 y actividades asignadas, y puede resolverlas. La UTP ve únicamente las unidades `EN_REVISION` y
 los borradores quedan reservados al docente, que los ve en su listado de Unidades junto con las
 autorizadas y publicadas. La autorización solo se ofrece a la UTP en `EN_REVISION`
-o `AUTORIZADO`. En Actividades ve el estado de cada una y accede a su resultado; en Informes consulta
+o `AUTORIZADO`. La vista previa de una actividad —disponible para la UTP y el docente— abre la
+actividad directamente, con la alternativa correcta de cada pregunta ya seleccionada, sin barra de
+progreso y con «Finalizar intento» deshabilitado: no se registran intentos ni respuestas. En
+Actividades ve el estado de cada una y accede a su resultado; en Informes consulta
 sus informes pedagógicos y el detalle por objetivo de aprendizaje en modo lectura. Todas las
 pantallas reales exponen el botón de tema claro/oscuro (`ThemeToggleButton`), cuya elección persiste
 en `data/preferences/`.

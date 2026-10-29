@@ -87,6 +87,9 @@ object AppRoutes {
     /** Edición de una asignación. */
     const val ASSIGNMENT_FORM = "assignmentForm/{assignmentId}"
 
+    /** Configuración de la prueba final de la unidad asignada a un curso. */
+    const val FINAL_TEST_SETTINGS = "finalTestSettings/{assignmentId}"
+
     /** Listado de informes pedagógicos (docente). */
     const val REPORTS = "reports"
 
@@ -119,8 +122,9 @@ object AppRoutes {
     /**
      * Construye la ruta de resolución de una actividad.
      *
-     * @param preview `true` para abrir la vista previa de la UTP o el docente, que
-     *   no crea intentos ni guarda respuestas.
+     * @param preview `true` para abrir la vista previa de la UTP o el docente:
+     *   la actividad se muestra con las alternativas correctas ya seleccionadas,
+     *   sin barra de progreso y sin registrar intentos ni respuestas.
      */
     fun activityAttempt(activityId: Int, preview: Boolean = false): String =
         if (preview) {
@@ -164,4 +168,8 @@ object AppRoutes {
 
     /** Construye la ruta de edición de una asignación. */
     fun assignmentForm(assignmentId: Int): String = "assignmentForm/$assignmentId"
+
+    /** Construye la ruta de configuración de la prueba final. */
+    fun finalTestSettings(assignmentId: Int): String =
+        "finalTestSettings/$assignmentId"
 }

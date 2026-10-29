@@ -34,9 +34,9 @@ import kotlinx.coroutines.launch
  * bloqueadas y solo se pueden responder las que faltan.
  *
  * En modo de **vista previa** (`previewMode = true`), pensado para la UTP y el
- * docente, la actividad se carga igual pero no se consulta ni se escribe ningún
- * intento: las selecciones viven solo en memoria y se pueden comprobar para
- * conocer el funcionamiento de la actividad. Nada de lo respondido se guarda.
+ * docente, la actividad se abre directamente con la alternativa correcta de cada
+ * pregunta ya seleccionada. No se consulta ni se escribe ningún intento y la
+ * selección no se puede cambiar: es una vista de revisión, no de resolución.
  */
 class ActivityAttemptViewModel(
     private val activityRepository: ActivityRepository,
@@ -73,10 +73,6 @@ class ActivityAttemptViewModel(
     var selectedAlternatives by mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
-    /** `true` cuando la vista previa ya comprobó sus respuestas. */
-    var previewCompleted by mutableStateOf(false)
-        private set
-
     /** Indica que se están cargando los datos de la actividad. */
     var isLoading by mutableStateOf(false)
         private set
@@ -108,16 +104,6 @@ class ActivityAttemptViewModel(
     /** Preguntas cuya respuesta ya está registrada y no se puede cambiar. */
     val registeredQuestionIds: Set<Int>
         get() = registeredAnswers.keys
-
-    /** Cantidad de respuestas correctas de la vista previa, calculada en local. */
-    val previewCorrectAnswers: Int
-        get() = questions.count { question ->
-            val selectedId = selectedAlternatives[question.id] ?: return@count false
-
-            alternativesByQuestion[question.id]
-                .orEmpty()
-                .any { it.id == selectedId && it.esCorrecta }
-        }
 
     /** Carga la actividad, sus preguntas, alternativas e intento vigente. */
     fun cargar() {
@@ -159,12 +145,12 @@ class ActivityAttemptViewModel(
                 .filter { it.preguntaId in questionIds }
                 .groupBy { it.preguntaId }
 
-            // La vista previa no consulta intentos ni respuestas del usuario.
+            // La vista previa no consulta intentos ni respuestas del usuario: se
+            // abre con la alternativa correcta de cada pregunta ya seleccionada.
             if (previewMode) {
                 attempt = null
                 registeredAnswers = emptyMap()
-                selectedAlternatives = emptyMap()
-                previewCompleted = false
+                selectedAlternatives = correctAlternatives()
                 isLoading = false
                 return@launch
             }
@@ -247,14 +233,8 @@ class ActivityAttemptViewModel(
      * ya registradas no se pueden modificar.
      */
     fun seleccionar(questionId: Int, alternativeId: Int) {
-        // En vista previa no hay intento: la selección solo vive en memoria.
-        if (previewMode) {
-            if (previewCompleted) return
-
-            selectedAlternatives = selectedAlternatives + (questionId to alternativeId)
-            mensaje = null
-            return
-        }
+        // La vista previa es de solo lectura: las correctas ya vienen seleccionadas.
+        if (previewMode) return
 
         val currentAttempt = attempt ?: return
 
@@ -327,30 +307,19 @@ class ActivityAttemptViewModel(
         }
     }
 
-    /**
-     * Comprueba las respuestas de la vista previa.
-     *
-     * No llama al backend: solo revela en pantalla cuántas alternativas coinciden
-     * con la correcta. Nada se registra como intento ni como respuesta.
-     */
-    fun comprobarVistaPrevia() {
-        if (!previewMode || previewCompleted || !allAnswered) return
-
-        previewCompleted = true
-    }
-
-    /** Reinicia las selecciones de la vista previa sin tocar datos persistidos. */
-    fun reiniciarVistaPrevia() {
-        if (!previewMode) return
-
-        selectedAlternatives = emptyMap()
-        previewCompleted = false
-        mensaje = null
-    }
-
     /** Oculta el aviso de la última operación. */
     fun limpiarMensaje() {
         mensaje = null
+    }
+
+    /**
+     * Alternativa correcta de cada pregunta, usada como selección inicial de la
+     * vista previa. Las preguntas sin alternativa correcta quedan sin selección.
+     */
+    private fun correctAlternatives(): Map<Int, Int> = buildMap {
+        alternativesByQuestion.forEach { (questionId, alternatives) ->
+            alternatives.firstOrNull { it.esCorrecta }?.let { put(questionId, it.id) }
+        }
     }
 
     private fun mensajeDeInicio(error: ApiError?): String = when (error) {
