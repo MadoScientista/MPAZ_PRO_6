@@ -86,6 +86,10 @@ class LocalUnitRepository(
         )
         require(updated.titulo.isNotBlank()) { "El título es obligatorio." }
         dao.upsertUnit(updated)
+        if (nextState != current.estado) {
+            dao.updateContentsStatusByUnit(id, nextState)
+            dao.updateResourcesStatusByUnit(id, nextState)
+        }
         updated.toDomain()
     }
 

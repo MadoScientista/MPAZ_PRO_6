@@ -35,7 +35,8 @@ fun AttemptProgress(
     attempt: Attempt,
     answeredCount: Int,
     totalQuestions: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxIntentos: Int? = null
 ) {
     val total = totalQuestions.coerceAtLeast(0)
     val answered = if (total > 0) {
@@ -69,8 +70,13 @@ fun AttemptProgress(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val attemptLabel = if (maxIntentos != null) {
+                    "Intento ${attempt.numero} de $maxIntentos"
+                } else {
+                    "Intento ${attempt.numero}"
+                }
                 Text(
-                    text = "Intento ${attempt.numero}",
+                    text = attemptLabel,
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold

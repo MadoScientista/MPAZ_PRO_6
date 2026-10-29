@@ -186,15 +186,22 @@ class HomeStudentViewModel(
             val intentosPorActividad = intentos.groupingBy { it.actividadId }.eachCount()
 
             val unidadesAsignadas = asignaciones.map { it.unidadId }.toSet()
+            val todasLasUnidades = unidadesResult.getOrDefault(emptyList())
 
-            val unidadesVisibles = unidadesResult.getOrDefault(emptyList())
+            val unidadesVisibles = todasLasUnidades
                 .filter {
                     it.id in unidadesAsignadas &&
                             it.estado == ContentStatus.PUBLISHED
                 }
 
             unidades = unidadesVisibles
+
+            val unidadesDelCurso = todasLasUnidades.filter { it.id in unidadesAsignadas }
+            val subjectIdsForCourse = unidadesDelCurso.map { it.asignaturaId }.toSet()
+
             asignaturas = asignaturasResult.getOrDefault(emptyList())
+                .filter { it.id in subjectIdsForCourse }
+                .sortedBy { it.nombre.lowercase() }
 
             val unidadesVisiblesIds = unidadesVisibles.map { it.id }.toSet()
 

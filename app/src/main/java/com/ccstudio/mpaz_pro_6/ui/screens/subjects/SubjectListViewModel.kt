@@ -9,8 +9,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
+import com.ccstudio.mpaz_pro_6.data.enums.UserRole
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
 import kotlinx.coroutines.launch
@@ -25,12 +27,16 @@ data class SubjectStats(
 /**
  * Estado del listado de asignaturas.
  *
- * Carga una sola vez `GET /api/asignaturas`; la búsqueda por nombre es
- * client-side, tal como exige el contrato.
+ * Para UTP y docentes muestra las asignaturas del currículo. Para el
+ * estudiante, carga únicamente las asignaturas de las unidades publicadas y
+ * asignadas a su curso. La búsqueda por nombre es client-side.
  */
 class SubjectListViewModel(
     private val subjectRepository: SubjectRepository,
-    private val unitRepository: UnitRepository
+    private val unitRepository: UnitRepository,
+    private val assignmentRepository: AssignmentRepository? = null,
+    private val rol: UserRole = UserRole.UTP,
+    private val courseId: Int? = null
 ) : ViewModel() {
 
     /** Asignaturas ordenadas por nombre. */
@@ -39,6 +45,10 @@ class SubjectListViewModel(
 
     /** Total y unidades en revisión por asignatura, para la tarjeta. */
     var estadisticasPorAsignatura by mutableStateOf<Map<Int, SubjectStats>>(emptyMap())
+        private set
+
+    /** `true` cuando el estudiante no tiene curso asignado. */
+    var sinCurso by mutableStateOf(false)
         private set
 
     /** Indica que el listado se está cargando. */
@@ -58,6 +68,67 @@ class SubjectListViewModel(
         viewModelScope.launch {
             isLoading = true
             error = null
+            sinCurso = false
+
+            if (rol == UserRole.ESTUDIANTE && courseId == null) {
+                asignaturas = emptyList()
+                estadisticasPorAsignatura = emptyMap()
+                sinCurso = true
+                isLoading = false
+                return@launch
+            }
+
+            if (rol == UserRole.ESTUDIANTE && assignmentRepository != null) {
+                val assignmentsResult = assignmentRepository.list(courseId = courseId)
+
+                if (assignmentsResult.isFailure) {
+                    error = assignmentsResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                val unitsResult = unitRepository.list()
+
+                if (unitsResult.isFailure) {
+                    error = unitsResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                val subjectsResult = subjectRepository.list()
+
+                if (subjectsResult.isFailure) {
+                    error = subjectsResult.exceptionOrNull() as? ApiError
+                    isLoading = false
+                    return@launch
+                }
+
+                val assignments = assignmentsResult.getOrDefault(emptyList())
+                val assignedUnitIds = assignments.map { it.unidadId }.toSet()
+
+                val allUnits = unitsResult.getOrDefault(emptyList())
+                val courseUnits = allUnits.filter { it.id in assignedUnitIds }
+
+                val subjectIdsForCourse = courseUnits.map { it.asignaturaId }.toSet()
+
+                asignaturas = subjectsResult.getOrDefault(emptyList())
+                    .filter { it.id in subjectIdsForCourse }
+                    .sortedBy { it.nombre.lowercase() }
+
+                val publishedCourseUnits = courseUnits.filter { it.estado == ContentStatus.PUBLISHED }
+
+                estadisticasPorAsignatura = publishedCourseUnits
+                    .groupBy { it.asignaturaId }
+                    .mapValues { (_, units) ->
+                        SubjectStats(
+                            total = units.size,
+                            pending = 0
+                        )
+                    }
+
+                isLoading = false
+                return@launch
+            }
 
             val subjectsResult = subjectRepository.list()
 
@@ -125,15 +196,21 @@ class SubjectListViewModel(
 
     companion object {
 
-        /** Factoría del ViewModel con el repositorio de asignaturas. */
+        /** Factoría del ViewModel con los repositorios y el rol del usuario. */
         fun factory(
             subjectRepository: SubjectRepository,
-            unitRepository: UnitRepository
+            unitRepository: UnitRepository,
+            assignmentRepository: AssignmentRepository? = null,
+            rol: UserRole = UserRole.UTP,
+            courseId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 SubjectListViewModel(
                     subjectRepository = subjectRepository,
-                    unitRepository = unitRepository
+                    unitRepository = unitRepository,
+                    assignmentRepository = assignmentRepository,
+                    rol = rol,
+                    courseId = courseId
                 )
             }
         }

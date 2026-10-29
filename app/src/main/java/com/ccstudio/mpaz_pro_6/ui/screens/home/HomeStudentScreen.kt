@@ -46,7 +46,7 @@ fun HomeStudentScreen(
     actividadesEnProgreso: Set<Int>,
     totalInformes: Int,
     sinCurso: Boolean,
-    courseId: Int?,
+    courseId: Int? = null,
     onViewSubject: (Subject) -> Unit = {},
     onVerAsignaturas: () -> Unit = {},
     onVerActividades: () -> Unit,
@@ -104,8 +104,8 @@ fun HomeStudentScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CounterCard(
-                        titulo = "Unidades",
-                        valor = unidades.size,
+                        titulo = "Asignaturas",
+                        valor = asignaturas.size,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -115,15 +115,10 @@ fun HomeStudentScreen(
                         modifier = Modifier.weight(1f)
                     )
 
-                    CounterCard(
-                        titulo = "Informes",
-                        valor = totalInformes,
-                        modifier = Modifier.weight(1f)
-                    )
                 }
 
                 CardCarousel(
-                    title = "Asignaturas",
+                    title = "Mis Asignaturas",
                     itemCount = asignaturas.size,
                     onSeeAll = onVerAsignaturas,
                     emptyMessage = "Sin asignaturas"

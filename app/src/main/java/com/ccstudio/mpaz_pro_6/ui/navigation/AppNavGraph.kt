@@ -562,7 +562,9 @@ private fun AppNavHost(
                             studentAnswerRepository = container.studentAnswerRepository,
                             studentId = user.id,
                             activityId = activityId,
-                            previewMode = preview
+                            previewMode = preview,
+                            assignmentRepository = container.assignmentRepository,
+                            courseId = user.cursoId
                         )
                     )
 
@@ -585,6 +587,8 @@ private fun AppNavHost(
                         mensaje = viewModel.mensaje,
                         onStart = viewModel::iniciarIntento,
                         onSelectAlternative = viewModel::seleccionar,
+                        maxIntentos = viewModel.maxIntentos,
+                        previousAttemptsCount = viewModel.previousAttemptsCount,
                         onComplete = {
                             viewModel.completar { attemptId ->
                                 navController.navigate(AppRoutes.attemptResult(attemptId))
@@ -688,7 +692,8 @@ private fun AppNavHost(
                             unitRepository = container.unitRepository,
                             courseRepository = container.courseRepository,
                             subjectId = subjectId,
-                            courseId = courseId
+                            courseId = courseId,
+                            assignmentRepository = container.assignmentRepository
                         )
                     )
 
@@ -718,12 +723,20 @@ private fun AppNavHost(
                     val viewModel: SubjectListViewModel = viewModel(
                         factory = SubjectListViewModel.factory(
                             subjectRepository = container.subjectRepository,
-                            unitRepository = container.unitRepository
+                            unitRepository = container.unitRepository,
+                            assignmentRepository = container.assignmentRepository,
+                            rol = rol,
+                            courseId = user.cursoId
                         )
                     )
 
                     LaunchedEffect(Unit) {
                         viewModel.cargar()
+                    }
+
+                    val headerTitle = when (rol) {
+                        UserRole.ESTUDIANTE -> "Asignaturas de tu curso"
+                        else -> "Asignaturas del currículo"
                     }
 
                     SubjectListScreen(
@@ -733,7 +746,15 @@ private fun AppNavHost(
                             navController.navigate(AppRoutes.subjectForm())
                         },
                         onViewDetail = { subject ->
-                            navController.navigate(AppRoutes.subjectDetail(subject.id))
+                            if (rol == UserRole.ESTUDIANTE) {
+                                user.cursoId?.let { courseId ->
+                                    navController.navigate(
+                                        AppRoutes.subjectDetail(subject.id, courseId = courseId)
+                                    )
+                                } ?: navController.navigate(AppRoutes.subjectDetail(subject.id))
+                            } else {
+                                navController.navigate(AppRoutes.subjectDetail(subject.id))
+                            }
                         },
                         onEdit = { subject ->
                             navController.navigate(AppRoutes.subjectForm(subject.id))
@@ -745,7 +766,12 @@ private fun AppNavHost(
                         onDismissMensaje = viewModel::limpiarMensaje,
                         onRetry = viewModel::cargar,
                         isLoading = viewModel.isLoading,
-                        error = viewModel.error
+                        error = viewModel.error,
+                        canCreate = rol == UserRole.UTP,
+                        showCardActions = rol == UserRole.UTP,
+                        showPendingChip = rol == UserRole.UTP,
+                        headerTitle = headerTitle,
+                        sinCurso = viewModel.sinCurso
                     )
                 }
 
@@ -1341,7 +1367,9 @@ private fun AppNavHost(
                             courseId = courseId,
                             unitId = unitId,
                             courseRepository = container.courseRepository,
-                            teacherId = user.id
+                            teacherId = user.id,
+                            attemptRepository = container.attemptRepository,
+                            studentId = user.id
                         )
                     )
 
@@ -1386,6 +1414,7 @@ private fun AppNavHost(
                         fechaPruebaFinal = viewModel.fechaPruebaFinal,
                         pruebaFinalHabilitada = viewModel.pruebaFinalHabilitada,
                         pruebaFinalDeshabilitada = viewModel.pruebaFinalDeshabilitada,
+                        intentosPruebaFinalCount = viewModel.intentosPruebaFinalCount,
                         onEditFinalTest = if (rol == UserRole.DOCENTE) {
                             viewModel.asignacionPruebaFinalId?.let { assignmentId ->
                                 {

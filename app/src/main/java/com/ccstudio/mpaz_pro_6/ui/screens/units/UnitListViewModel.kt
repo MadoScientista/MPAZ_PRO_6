@@ -164,8 +164,15 @@ class UnitListViewModel(
 
         val unidadPorObjetivo = objetivos.associate { it.id to it.unidadId }
 
+        val publishedUnitIds = unidades
+            .filter { it.estado == ContentStatus.PUBLISHED }
+            .map { it.id }
+            .toSet()
+
         val contenidosVisibles = if (rol == UserRole.ESTUDIANTE) {
-            contenidos.filter { it.estado == ContentStatus.PUBLISHED }
+            contenidos.filter {
+                it.estado == ContentStatus.PUBLISHED || unidadPorObjetivo[it.oaId] in publishedUnitIds
+            }
         } else {
             contenidos
         }

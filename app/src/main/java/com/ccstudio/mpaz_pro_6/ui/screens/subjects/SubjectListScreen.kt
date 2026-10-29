@@ -36,24 +36,30 @@ import com.ccstudio.mpaz_pro_6.ui.components.subject.SubjectCard
 /**
  * Listado de asignaturas.
  *
- * Consume `GET /api/asignaturas` (ordenado por nombre) y busca por texto libre
- * en cliente. Permite crear, editar y borrar: el borrado siempre se ofrece y el
- * `409 Conflict` se explica con el mensaje que entrega el ViewModel.
+ * Muestra las asignaturas y busca por texto libre en cliente. Para UTP ofrece
+ * la creación, edición y borrado de asignaturas; para el estudiante presenta las
+ * asignaturas de su curso en modo lectura.
  */
 @Composable
 fun SubjectListScreen(
     asignaturas: List<Subject>,
     estadisticasPorAsignatura: Map<Int, SubjectStats>,
-    onCreate: () -> Unit,
     onViewDetail: (Subject) -> Unit,
-    onEdit: (Subject) -> Unit,
-    onDelete: (Subject) -> Unit,
-    mensajeOperacion: String?,
-    onDismissMensaje: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onCreate: (() -> Unit)? = null,
+    onEdit: ((Subject) -> Unit)? = null,
+    onDelete: ((Subject) -> Unit)? = null,
+    mensajeOperacion: String? = null,
+    onDismissMensaje: () -> Unit = {},
     isLoading: Boolean = false,
-    error: ApiError? = null
+    error: ApiError? = null,
+    canCreate: Boolean = true,
+    showCardActions: Boolean = true,
+    showPendingChip: Boolean = true,
+    headerTitle: String = "Asignaturas del currículo",
+    sinCurso: Boolean = false,
+    emptyMessage: String? = null
 ) {
     var search by rememberSaveable { mutableStateOf("") }
     var pendienteEliminar by remember { mutableStateOf<Subject?>(null) }
@@ -77,9 +83,14 @@ fun SubjectListScreen(
 
                 error != null -> ErrorState(error = error, onRetry = onRetry)
 
+                sinCurso -> EmptyState(
+                    message = "No tienes curso asignado.",
+                    description = "La UTP debe asignarte un curso para ver tus asignaturas."
+                )
+
                 else -> {
                     Text(
-                        text = "Asignaturas del currículo",
+                        text = headerTitle,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -90,10 +101,12 @@ fun SubjectListScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
 
-                    AppButton(
-                        text = "Nueva asignatura",
-                        onClick = onCreate
-                    )
+                    if (canCreate && onCreate != null) {
+                        AppButton(
+                            text = "Nueva asignatura",
+                            onClick = onCreate
+                        )
+                    }
 
                     if (mensajeOperacion != null) {
                         Row(
@@ -127,7 +140,7 @@ fun SubjectListScreen(
                     if (filteredSubjects.isEmpty()) {
                         EmptyState(
                             message = if (asignaturas.isEmpty()) {
-                                "No hay asignaturas."
+                                emptyMessage ?: "No hay asignaturas."
                             } else {
                                 "No se encontraron asignaturas."
                             }
@@ -147,8 +160,10 @@ fun SubjectListScreen(
                                     unitCount = estadisticasPorAsignatura[subject.id]?.total ?: 0,
                                     pendingCount = estadisticasPorAsignatura[subject.id]?.pending ?: 0,
                                     onViewDetail = { onViewDetail(subject) },
-                                    onEdit = { onEdit(subject) },
-                                    onDelete = { pendienteEliminar = subject }
+                                    onEdit = { onEdit?.invoke(subject) },
+                                    onDelete = { pendienteEliminar = subject },
+                                    showActions = showCardActions,
+                                    showPendingChip = showPendingChip
                                 )
                             }
                         }
@@ -162,7 +177,7 @@ fun SubjectListScreen(
                 title = "Eliminar asignatura",
                 message = "¿Eliminar «${subject.nombre}»? Esta acción no se puede deshacer.",
                 onConfirm = {
-                    onDelete(subject)
+                    onDelete?.invoke(subject)
                     pendienteEliminar = null
                 },
                 onDismiss = { pendienteEliminar = null }

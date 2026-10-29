@@ -50,10 +50,14 @@ fun StudentActivityCard(
     attemptsCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    contentTitle: String? = null
+    contentTitle: String? = null,
+    maxAttempts: Int? = null
 ) {
+    val isExhausted = maxAttempts != null && attemptsCount >= maxAttempts && status == StudentActivityStatus.PENDING
+    val actionText = if (isExhausted) "Ya no quedan más intentos" else status.actionLabel
+
     Card(
-        onClick = onClick,
+        onClick = if (isExhausted) { {} } else onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -103,21 +107,27 @@ fun StudentActivityCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = when (attemptsCount) {
+                val attemptsText = if (maxAttempts != null) {
+                    "Intentos: $attemptsCount de $maxAttempts"
+                } else {
+                    when (attemptsCount) {
                         0 -> "Sin intentos"
                         1 -> "1 intento"
                         else -> "$attemptsCount intentos"
-                    },
+                    }
+                }
+
+                Text(
+                    text = attemptsText,
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
-                    text = status.actionLabel,
+                    text = actionText,
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = if (isExhausted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
                 )
             }
         }

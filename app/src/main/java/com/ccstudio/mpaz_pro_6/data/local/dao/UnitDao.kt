@@ -3,6 +3,7 @@ package com.ccstudio.mpaz_pro_6.data.local.dao
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.local.entity.LearningUnitEntity
 
 /** Consultas de unidades de aprendizaje. */
@@ -23,6 +24,12 @@ interface UnitDao {
 
     @Upsert
     suspend fun upsertUnits(entities: List<LearningUnitEntity>)
+
+    @Query("UPDATE contenido SET estado = :status WHERE unidad_id = :unitId")
+    suspend fun updateContentsStatusByUnit(unitId: Int, status: ContentStatus)
+
+    @Query("UPDATE recurso_contenido SET estado = :status WHERE contenido_id IN (SELECT id FROM contenido WHERE unidad_id = :unitId)")
+    suspend fun updateResourcesStatusByUnit(unitId: Int, status: ContentStatus)
 
     @Query("DELETE FROM unidad")
     suspend fun deleteAllUnits()

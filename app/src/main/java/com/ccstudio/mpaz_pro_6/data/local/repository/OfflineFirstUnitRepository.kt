@@ -66,6 +66,10 @@ class OfflineFirstUnitRepository(
         apiCall { api.updateUnit(id, request.toDto()).toDomain() }.fold(
             onSuccess = { unit ->
                 dao.upsertUnit(unit.toEntity())
+                if (request.estado != null) {
+                    dao.updateContentsStatusByUnit(unit.id, unit.estado)
+                    dao.updateResourcesStatusByUnit(unit.id, unit.estado)
+                }
                 Result.success(unit)
             },
             onFailure = { Result.failure(it) }

@@ -17,6 +17,7 @@ import com.ccstudio.mpaz_pro_6.data.model.StudentAnswer
 import com.ccstudio.mpaz_pro_6.data.model.requests.CreateStudentAnswerRequest
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AlternativeRepository
+import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AttemptRepository
 import com.ccstudio.mpaz_pro_6.data.repository.QuestionRepository
 import com.ccstudio.mpaz_pro_6.data.repository.StudentAnswerRepository
@@ -38,6 +39,7 @@ import kotlinx.coroutines.launch
  * pregunta ya seleccionada. No se consulta ni se escribe ningún intento y la
  * selección no se puede cambiar: es una vista de revisión, no de resolución.
  */
+
 class ActivityAttemptViewModel(
     private val activityRepository: ActivityRepository,
     private val questionRepository: QuestionRepository,
@@ -46,7 +48,9 @@ class ActivityAttemptViewModel(
     private val studentAnswerRepository: StudentAnswerRepository,
     private val studentId: Int,
     private val activityId: Int,
-    private val previewMode: Boolean = false
+    private val previewMode: Boolean = false,
+    private val assignmentRepository: AssignmentRepository? = null,
+    private val courseId: Int? = null
 ) : ViewModel() {
 
     /** Actividad que se está resolviendo. */
@@ -71,6 +75,14 @@ class ActivityAttemptViewModel(
 
     /** Selecciones locales, indexadas por id de pregunta. */
     var selectedAlternatives by mutableStateOf<Map<Int, Int>>(emptyMap())
+        private set
+
+    /** Intentos máximos configurados para la asignación de esta actividad. */
+    var maxIntentos by mutableStateOf<Int?>(null)
+        private set
+
+    /** Cantidad de intentos anteriores del estudiante para esta actividad. */
+    var previousAttemptsCount by mutableStateOf(0)
         private set
 
     /** Indica que se están cargando los datos de la actividad. */
@@ -138,12 +150,21 @@ class ActivityAttemptViewModel(
 
             val loadedQuestions = questionsResult.getOrDefault(emptyList())
             val questionIds = loadedQuestions.map { it.id }.toSet()
+            val loadedActivity = activityResult.getOrNull()
 
-            activity = activityResult.getOrNull()
+            activity = loadedActivity
             questions = loadedQuestions
             alternativesByQuestion = alternativesResult.getOrDefault(emptyList())
                 .filter { it.preguntaId in questionIds }
                 .groupBy { it.preguntaId }
+
+            if (assignmentRepository != null && courseId != null && loadedActivity != null) {
+                val assignmentsResult = assignmentRepository.list(
+                    courseId = courseId,
+                    unitId = loadedActivity.unidadId
+                )
+                maxIntentos = assignmentsResult.getOrNull()?.firstOrNull()?.maxIntentos
+            }
 
             // La vista previa no consulta intentos ni respuestas del usuario: se
             // abre con la alternativa correcta de cada pregunta ya seleccionada.
@@ -166,7 +187,10 @@ class ActivityAttemptViewModel(
                 return@launch
             }
 
-            val inProgress = attemptsResult.getOrDefault(emptyList())
+            val allAttempts = attemptsResult.getOrDefault(emptyList())
+            previousAttemptsCount = allAttempts.size
+
+            val inProgress = allAttempts
                 .filter { it.fechaFin == null }
                 .maxByOrNull { it.numero }
 
@@ -174,6 +198,24 @@ class ActivityAttemptViewModel(
                 attempt = null
                 registeredAnswers = emptyMap()
                 selectedAlternatives = emptyMap()
+
+                // Si no es una prueba final, va directo a la actividad iniciando el intento.
+                val maxLimit = maxIntentos
+                val hasMoreAttempts = maxLimit == null || previousAttemptsCount < maxLimit
+
+                if (loadedActivity?.tipo != com.ccstudio.mpaz_pro_6.data.enums.ActivityType.FINAL_TEST &&
+                    loadedQuestions.isNotEmpty() &&
+                    hasMoreAttempts
+                ) {
+                    val startResult = attemptRepository.start(studentId, activityId)
+                    if (startResult.isSuccess) {
+                        val started = startResult.getOrNull()
+                        if (started != null) {
+                            attempt = started
+                        }
+                    }
+                }
+
                 isLoading = false
                 return@launch
             }
@@ -363,7 +405,9 @@ class ActivityAttemptViewModel(
             studentAnswerRepository: StudentAnswerRepository,
             studentId: Int,
             activityId: Int,
-            previewMode: Boolean = false
+            previewMode: Boolean = false,
+            assignmentRepository: AssignmentRepository? = null,
+            courseId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 ActivityAttemptViewModel(
@@ -374,7 +418,9 @@ class ActivityAttemptViewModel(
                     studentAnswerRepository = studentAnswerRepository,
                     studentId = studentId,
                     activityId = activityId,
-                    previewMode = previewMode
+                    previewMode = previewMode,
+                    assignmentRepository = assignmentRepository,
+                    courseId = courseId
                 )
             }
         }

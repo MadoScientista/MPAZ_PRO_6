@@ -106,8 +106,8 @@ fun HomeTeacherScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CounterCard(
-                        titulo = "Unidades",
-                        valor = unidades.size,
+                        titulo = "Asignaturas",
+                        valor = asignaturas.size,
                         modifier = Modifier.weight(1f)
                     )
 

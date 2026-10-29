@@ -114,7 +114,7 @@ class ContentDetailViewModel(
                     .sortedBy { it.id }
 
                 recursos = if (rol == UserRole.ESTUDIANTE) {
-                    allResources.filter { it.estado == ContentStatus.PUBLISHED }
+                    allResources.filter { it.estado == ContentStatus.PUBLISHED || content.estado == ContentStatus.PUBLISHED }
                 } else {
                     allResources
                 }

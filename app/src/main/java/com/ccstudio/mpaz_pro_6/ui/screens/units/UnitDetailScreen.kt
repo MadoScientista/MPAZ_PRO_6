@@ -78,6 +78,7 @@ fun UnitDetailScreen(
     fechaPruebaFinal: Instant? = null,
     pruebaFinalHabilitada: Boolean? = null,
     pruebaFinalDeshabilitada: Boolean = false,
+    intentosPruebaFinalCount: Int? = null,
     onEditFinalTest: (() -> Unit)? = null
 ) {
     // La prueba final se presenta por separado: es única por unidad y no forma
@@ -194,6 +195,7 @@ fun UnitDetailScreen(
                             questionsCount = preguntasPorActividad[pruebaFinal.id] ?: 0,
                             applicationDate = fechaPruebaFinal,
                             maxAttempts = maxIntentosPruebaFinal,
+                            attemptsCount = intentosPruebaFinalCount,
                             enabled = pruebaFinalHabilitada,
                             onOpen = { onOpenActivity(pruebaFinal) },
                             openLabel = if (rol == UserRole.ESTUDIANTE) {

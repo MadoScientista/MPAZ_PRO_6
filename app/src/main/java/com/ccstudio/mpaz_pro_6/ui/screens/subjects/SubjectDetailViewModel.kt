@@ -8,10 +8,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ccstudio.mpaz_pro_6.data.enums.ContentStatus
 import com.ccstudio.mpaz_pro_6.data.error.ApiError
 import com.ccstudio.mpaz_pro_6.data.model.Course
 import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
+import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
 import com.ccstudio.mpaz_pro_6.data.repository.SubjectRepository
 import com.ccstudio.mpaz_pro_6.data.repository.UnitRepository
@@ -28,7 +30,8 @@ class SubjectDetailViewModel(
     private val unitRepository: UnitRepository,
     private val subjectId: Int,
     private val courseRepository: CourseRepository? = null,
-    private val courseId: Int? = null
+    private val courseId: Int? = null,
+    private val assignmentRepository: AssignmentRepository? = null
 ) : ViewModel() {
 
     /** Asignatura cargada, o `null` mientras carga o si falló. */
@@ -82,7 +85,25 @@ class SubjectDetailViewModel(
                 return@launch
             }
 
-            unidades = unitsResult.getOrDefault(emptyList())
+            val allUnits = unitsResult.getOrDefault(emptyList())
+
+            if (courseId != null && assignmentRepository != null) {
+                val assignmentsResult = assignmentRepository.list(courseId = courseId)
+                if (assignmentsResult.isSuccess) {
+                    val assignedUnitIds = assignmentsResult.getOrDefault(emptyList())
+                        .map { it.unidadId }
+                        .toSet()
+                    unidades = allUnits.filter {
+                        it.id in assignedUnitIds &&
+                                it.estado == ContentStatus.PUBLISHED
+                    }
+                } else {
+                    unidades = allUnits
+                }
+            } else {
+                unidades = allUnits
+            }
+
             isLoading = false
         }
     }
@@ -95,7 +116,8 @@ class SubjectDetailViewModel(
             unitRepository: UnitRepository,
             subjectId: Int,
             courseRepository: CourseRepository? = null,
-            courseId: Int? = null
+            courseId: Int? = null,
+            assignmentRepository: AssignmentRepository? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 SubjectDetailViewModel(
@@ -103,7 +125,8 @@ class SubjectDetailViewModel(
                     unitRepository = unitRepository,
                     subjectId = subjectId,
                     courseRepository = courseRepository,
-                    courseId = courseId
+                    courseId = courseId,
+                    assignmentRepository = assignmentRepository
                 )
             }
         }

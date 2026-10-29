@@ -65,7 +65,9 @@ fun ActivityAttemptScreen(
     onRetry: () -> Unit,
     onDismissMensaje: () -> Unit,
     modifier: Modifier = Modifier,
-    previewMode: Boolean = false
+    previewMode: Boolean = false,
+    maxIntentos: Int? = null,
+    previousAttemptsCount: Int = 0
 ) {
     val isCompleted = attempt?.fechaFin != null
 
@@ -88,7 +90,10 @@ fun ActivityAttemptScreen(
                 item {
                     ActivityHeader(
                         activity = activity,
-                        attempt = attempt
+                        attempt = attempt,
+                        maxIntentos = maxIntentos,
+                        previousAttemptsCount = previousAttemptsCount,
+                        previewMode = previewMode
                     )
                 }
 
@@ -167,6 +172,8 @@ fun ActivityAttemptScreen(
                         }
                     }
                 } else if (attempt == null) {
+                    val isExhausted = maxIntentos != null && previousAttemptsCount >= maxIntentos
+
                     if (questions.isEmpty()) {
                         item {
                             EmptyState(
@@ -174,11 +181,32 @@ fun ActivityAttemptScreen(
                                 description = "Todavía no se puede resolver."
                             )
                         }
-                    } else {
+                    } else if (isExhausted) {
                         item {
                             Text(
-                                text = "Vas a iniciar un nuevo intento. " +
-                                        "Responde todas las preguntas y finaliza para ver tu resultado.",
+                                text = "Has alcanzado el número máximo de intentos ($maxIntentos) permitidos para esta actividad.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        item {
+                            AppButton(
+                                text = "Ya no quedan más intentos",
+                                onClick = {},
+                                enabled = false
+                            )
+                        }
+                    } else {
+                        item {
+                            val nextAttempt = previousAttemptsCount + 1
+                            val attemptText = if (maxIntentos != null) {
+                                "Vas a iniciar el intento $nextAttempt de $maxIntentos. Responde todas las preguntas y finaliza para ver tu resultado."
+                            } else {
+                                "Vas a iniciar un nuevo intento. Responde todas las preguntas y finaliza para ver tu resultado."
+                            }
+                            Text(
+                                text = attemptText,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -197,7 +225,8 @@ fun ActivityAttemptScreen(
                         AttemptProgress(
                             attempt = attempt,
                             answeredCount = answeredCount,
-                            totalQuestions = questions.size
+                            totalQuestions = questions.size,
+                            maxIntentos = maxIntentos
                         )
                     }
 
@@ -269,7 +298,10 @@ fun ActivityAttemptScreen(
 private fun ActivityHeader(
     activity: Activity,
     attempt: Attempt?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxIntentos: Int? = null,
+    previousAttemptsCount: Int = 0,
+    previewMode: Boolean = false
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -287,10 +319,15 @@ private fun ActivityHeader(
         ) {
             ActivityTypeChip(activityType = activity.tipo)
 
-
-            if (attempt != null) {
+            if (!previewMode) {
+                val numIntento = attempt?.numero ?: (previousAttemptsCount + 1)
+                val textIntento = if (maxIntentos != null) {
+                    "Intento $numIntento de $maxIntentos"
+                } else {
+                    "Intento $numIntento"
+                }
                 Text(
-                    text = "Intento ${attempt.numero}",
+                    text = textIntento,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

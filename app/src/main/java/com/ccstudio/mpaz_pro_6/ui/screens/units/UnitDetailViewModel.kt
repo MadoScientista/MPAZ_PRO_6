@@ -21,6 +21,7 @@ import com.ccstudio.mpaz_pro_6.data.model.LearningUnit
 import com.ccstudio.mpaz_pro_6.data.model.Subject
 import com.ccstudio.mpaz_pro_6.data.repository.ActivityRepository
 import com.ccstudio.mpaz_pro_6.data.repository.AssignmentRepository
+import com.ccstudio.mpaz_pro_6.data.repository.AttemptRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentRepository
 import com.ccstudio.mpaz_pro_6.data.repository.ContentResourceRepository
 import com.ccstudio.mpaz_pro_6.data.repository.CourseRepository
@@ -55,7 +56,9 @@ class UnitDetailViewModel(
     private val courseId: Int?,
     private val unitId: Int,
     private val courseRepository: CourseRepository? = null,
-    private val teacherId: Int? = null
+    private val teacherId: Int? = null,
+    private val attemptRepository: AttemptRepository? = null,
+    private val studentId: Int? = null
 ) : ViewModel() {
 
     /** Unidad consultada. */
@@ -110,6 +113,10 @@ class UnitDetailViewModel(
     var asignacionPruebaFinalId by mutableStateOf<Int?>(null)
         private set
 
+    /** Cantidad de intentos del estudiante en la prueba final de esta unidad. */
+    var intentosPruebaFinalCount by mutableStateOf<Int?>(null)
+        private set
+
     /** `true` cuando el estudiante tiene prueba final en la unidad pero está deshabilitada. */
     var pruebaFinalDeshabilitada by mutableStateOf(false)
         private set
@@ -137,6 +144,7 @@ class UnitDetailViewModel(
             fechaPruebaFinal = null
             pruebaFinalHabilitada = null
             asignacionPruebaFinalId = null
+            intentosPruebaFinalCount = null
             pruebaFinalDeshabilitada = false
 
             val unitResult = unitRepository.getById(unitId)
@@ -198,7 +206,7 @@ class UnitDetailViewModel(
                 .filter { it.unidadId == unitId && it.oaId in objectiveIds }
 
             val visibleContents = if (rol == UserRole.ESTUDIANTE) {
-                allContents.filter { it.estado == ContentStatus.PUBLISHED }
+                allContents.filter { it.estado == ContentStatus.PUBLISHED || unit.estado == ContentStatus.PUBLISHED }
             } else {
                 allContents
             }
@@ -249,6 +257,13 @@ class UnitDetailViewModel(
 
             val finalTest = unitActivities.firstOrNull {
                 it.unidadId == unitId && it.tipo == ActivityType.FINAL_TEST
+            }
+
+            if (rol == UserRole.ESTUDIANTE && studentId != null && finalTest != null && attemptRepository != null) {
+                val attemptsRes = attemptRepository.list(studentId = studentId, activityId = finalTest.id)
+                if (attemptsRes.isSuccess) {
+                    intentosPruebaFinalCount = attemptsRes.getOrDefault(emptyList()).size
+                }
             }
 
             pruebaFinalDeshabilitada = rol == UserRole.ESTUDIANTE &&
@@ -358,7 +373,9 @@ class UnitDetailViewModel(
             courseId: Int?,
             unitId: Int,
             courseRepository: CourseRepository? = null,
-            teacherId: Int? = null
+            teacherId: Int? = null,
+            attemptRepository: AttemptRepository? = null,
+            studentId: Int? = null
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 UnitDetailViewModel(
@@ -374,7 +391,9 @@ class UnitDetailViewModel(
                     courseId = courseId,
                     unitId = unitId,
                     courseRepository = courseRepository,
-                    teacherId = teacherId
+                    teacherId = teacherId,
+                    attemptRepository = attemptRepository,
+                    studentId = studentId
                 )
             }
         }

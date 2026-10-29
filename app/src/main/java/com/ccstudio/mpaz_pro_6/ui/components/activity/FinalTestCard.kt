@@ -42,11 +42,16 @@ fun FinalTestCard(
     modifier: Modifier = Modifier,
     applicationDate: Instant? = null,
     maxAttempts: Int? = null,
+    attemptsCount: Int? = null,
     enabled: Boolean? = null,
     onOpen: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null,
     openLabel: String = "Vista previa"
 ) {
+    val isExhausted = maxAttempts != null && attemptsCount != null && attemptsCount >= maxAttempts && openLabel != "Vista previa"
+    val actualOpenLabel = if (isExhausted) "Ya no quedan más intentos" else openLabel
+    val isButtonEnabled = !isExhausted
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
@@ -97,11 +102,19 @@ fun FinalTestCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Text(
-                text = "Número máximo de intentos: ${maxAttemptsLabel(maxAttempts)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (attemptsCount != null) {
+                Text(
+                    text = if (maxAttempts != null) "Intentos: $attemptsCount de $maxAttempts" else "Intentos realizados: $attemptsCount",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(
+                    text = "Número máximo de intentos: ${maxAttemptsLabel(maxAttempts)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             if (onOpen != null && onEdit != null) {
                 Row(
@@ -110,9 +123,10 @@ fun FinalTestCard(
                 ) {
                     OutlinedButton(
                         onClick = onOpen,
+                        enabled = isButtonEnabled,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(openLabel)
+                        Text(actualOpenLabel)
                     }
 
                     OutlinedButton(
@@ -126,9 +140,10 @@ fun FinalTestCard(
                 if (onOpen != null) {
                     OutlinedButton(
                         onClick = onOpen,
+                        enabled = isButtonEnabled,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(openLabel)
+                        Text(actualOpenLabel)
                     }
                 }
 

@@ -48,6 +48,7 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
         BottomDestination(
             route = AppRoutes.USERS,
             label = "Usuarios",
+
             icon = Icons.Filled.People
         )
     )
@@ -59,18 +60,13 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
             icon = Icons.Filled.Home
         ),
         BottomDestination(
-            route = AppRoutes.UNITS,
-            label = "Unidades",
-            icon = Icons.AutoMirrored.Filled.MenuBook
-        ),
-        BottomDestination(
             route = AppRoutes.COURSES,
             label = "Cursos",
             icon = Icons.Filled.School
         ),
         BottomDestination(
             route = AppRoutes.ASSIGNMENTS,
-            label = "Asignación",
+            label = "Evaluaciones",
             icon = Icons.AutoMirrored.Filled.Assignment
         ),
         BottomDestination(
@@ -87,19 +83,14 @@ fun bottomDestinationsFor(role: UserRole): List<BottomDestination> = when (role)
             icon = Icons.Filled.Home
         ),
         BottomDestination(
-            route = AppRoutes.UNITS,
-            label = "Unidades",
-            icon = Icons.AutoMirrored.Filled.MenuBook
+            route = AppRoutes.SUBJECTS,
+            label = "Asignaturas",
+            icon = Icons.Filled.Category
         ),
         BottomDestination(
             route = AppRoutes.ACTIVITIES,
             label = "Actividades",
             icon = Icons.Filled.Checklist
-        ),
-        BottomDestination(
-            route = AppRoutes.REPORTS,
-            label = "Informes",
-            icon = Icons.Filled.Assessment
         )
     )
 }
