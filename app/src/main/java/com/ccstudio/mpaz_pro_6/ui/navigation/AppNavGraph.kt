@@ -591,11 +591,21 @@ private fun AppNavHost(
                         previousAttemptsCount = viewModel.previousAttemptsCount,
                         onComplete = {
                             viewModel.completar { attemptId ->
-                                navController.navigate(AppRoutes.attemptResult(attemptId))
+                                markActivityCompleted(navController)
+                                navController.navigate(AppRoutes.attemptResult(attemptId)) {
+                                    popUpTo(AppRoutes.ACTIVITY_ATTEMPT) {
+                                        inclusive = true
+                                    }
+                                }
                             }
                         },
                         onViewResult = { attemptId ->
-                            navController.navigate(AppRoutes.attemptResult(attemptId))
+                            markActivityCompleted(navController)
+                            navController.navigate(AppRoutes.attemptResult(attemptId)) {
+                                popUpTo(AppRoutes.ACTIVITY_ATTEMPT) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         onRetry = viewModel::cargar,
                         onDismissMensaje = viewModel::limpiarMensaje,
@@ -641,7 +651,7 @@ private fun AppNavHost(
                     )
                 }
 
-                composable(AppRoutes.ACTIVITIES) {
+                composable(AppRoutes.ACTIVITIES) { entry ->
                     val viewModel: StudentActivityListViewModel = viewModel(
                         factory = StudentActivityListViewModel.factory(
                             assignmentRepository = container.assignmentRepository,
@@ -655,6 +665,17 @@ private fun AppNavHost(
 
                     LaunchedEffect(Unit) {
                         viewModel.cargar()
+                    }
+
+                    val refresh by entry.savedStateHandle
+                        .getStateFlow(REFRESH_ACTIVITIES_KEY, false)
+                        .collectAsState()
+
+                    LaunchedEffect(refresh) {
+                        if (refresh) {
+                            viewModel.cargar()
+                            entry.savedStateHandle.set(REFRESH_ACTIVITIES_KEY, false)
+                        }
                     }
 
                     StudentActivityListScreen(
@@ -1801,6 +1822,18 @@ private fun HomeStudentDestination(
         viewModel.cargar()
     }
 
+    val refresh by (navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow(REFRESH_HOME_KEY, false)
+        ?.collectAsState() ?: remember { mutableStateOf(false) })
+
+    LaunchedEffect(refresh) {
+        if (refresh) {
+            viewModel.cargar()
+            navController.currentBackStackEntry?.savedStateHandle?.set(REFRESH_HOME_KEY, false)
+        }
+    }
+
     HomeStudentScreen(
         unidades = viewModel.unidades,
         asignaturas = viewModel.asignaturas,
@@ -1843,6 +1876,12 @@ private const val REFRESH_ASSIGNMENT_DETAIL_KEY = "refrescarAsignacion"
 /** Clave con la que el Home y el listado de asignaciones reciben el aviso de recarga. */
 private const val REFRESH_ASSIGNMENTS_KEY = "refrescarAsignaciones"
 
+/** Clave con la que el listado de actividades del estudiante recibe el aviso de recarga. */
+private const val REFRESH_ACTIVITIES_KEY = "refrescarActividades"
+
+/** Clave con la que el panel de inicio del estudiante recibe el aviso de recarga. */
+private const val REFRESH_HOME_KEY = "refrescarHome"
+
 /**
  * Marca el Home y el listado de asignaciones para que recarguen.
  *
@@ -1854,6 +1893,28 @@ private fun markAssignmentsChanged(navController: NavHostController) {
         runCatching {
             navController.getBackStackEntry(route).savedStateHandle
                 .set(REFRESH_ASSIGNMENTS_KEY, true)
+        }
+    }
+}
+
+/**
+ * Marca el Home, el listado de actividades y los detalles de unidad y contenido
+ * para que recarguen tras completar o cambiar un intento de actividad.
+ */
+private fun markActivityCompleted(navController: NavHostController) {
+    listOf(
+        AppRoutes.HOME,
+        AppRoutes.ACTIVITIES,
+        AppRoutes.UNIT_DETAIL,
+        AppRoutes.CONTENT_DETAIL
+    ).forEach { route ->
+        runCatching {
+            navController.getBackStackEntry(route).savedStateHandle.apply {
+                set(REFRESH_HOME_KEY, true)
+                set(REFRESH_ACTIVITIES_KEY, true)
+                set(REFRESH_UNIT_DETAIL_KEY, true)
+                set(REFRESH_CONTENT_DETAIL_KEY, true)
+            }
         }
     }
 }
