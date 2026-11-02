@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.CurriculoDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.DocenciaDao
 import com.ccstudio.mpaz_pro_6.data.local.dao.EvaluacionDao
@@ -35,6 +37,31 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.SeccionEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.informe.DetalleInformePedagogicoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.informe.InformePedagogicoEntity
+
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+fun seedInitialData(db: SupportSQLiteDatabase) {
+    db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (1, 'UTP')")
+    db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (2, 'DOCENTE')")
+    db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (3, 'ALUMNO')")
+
+    db.execSQL("""
+        INSERT OR IGNORE INTO usuario (nombre_usuario, password_hash, pnombre, snombre, apaterno, amaterno, rol_id, activo)
+        VALUES ('utp', 'mpaz123', 'Usuario', NULL, 'UTP', NULL, 1, 1)
+    """.trimIndent())
+    db.execSQL("""
+        INSERT OR IGNORE INTO usuario (nombre_usuario, password_hash, pnombre, snombre, apaterno, amaterno, rol_id, activo)
+        VALUES ('docente', 'mpaz123', 'Usuario', NULL, 'Docente', NULL, 2, 1)
+    """.trimIndent())
+    db.execSQL("""
+        INSERT OR IGNORE INTO usuario (nombre_usuario, password_hash, pnombre, snombre, apaterno, amaterno, rol_id, activo)
+        VALUES ('alumno', 'mpaz123', 'Usuario', NULL, 'Alumno', NULL, 3, 1)
+    """.trimIndent())
+}
 
 @Database(
     entities = [
@@ -74,7 +101,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.informe.InformePedagogicoEntity
         InformePedagogicoEntity::class,
         DetalleInformePedagogicoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -84,6 +111,47 @@ abstract class MpazDatabase : RoomDatabase() {
     abstract fun docenciaDao(): DocenciaDao
     abstract fun evaluacionDao(): EvaluacionDao
     abstract fun informeDao(): InformeDao
+
+    suspend fun resetDatabase() {
+        clearAllTables()
+        identidadDao().insertRol(RolEntity(id = 1, nombre = "UTP"))
+        identidadDao().insertRol(RolEntity(id = 2, nombre = "DOCENTE"))
+        identidadDao().insertRol(RolEntity(id = 3, nombre = "ALUMNO"))
+
+        identidadDao().insertUsuario(
+            UsuarioEntity(
+                id = 1,
+                nombreUsuario = "utp",
+                passwordHash = "mpaz123",
+                pnombre = "Usuario",
+                apaterno = "UTP",
+                rolId = 1,
+                activo = true
+            )
+        )
+        identidadDao().insertUsuario(
+            UsuarioEntity(
+                id = 2,
+                nombreUsuario = "docente",
+                passwordHash = "mpaz123",
+                pnombre = "Usuario",
+                apaterno = "Docente",
+                rolId = 2,
+                activo = true
+            )
+        )
+        identidadDao().insertUsuario(
+            UsuarioEntity(
+                id = 3,
+                nombreUsuario = "alumno",
+                passwordHash = "mpaz123",
+                pnombre = "Usuario",
+                apaterno = "Alumno",
+                rolId = 3,
+                activo = true
+            )
+        )
+    }
 
     companion object {
         @Volatile
@@ -95,7 +163,15 @@ abstract class MpazDatabase : RoomDatabase() {
                     context.applicationContext,
                     MpazDatabase::class.java,
                     "mpaz_database"
-                ).build()
+                )
+                .addMigrations(MIGRATION_1_2)
+                .addCallback(object : Callback() {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        super.onCreate(db)
+                        seedInitialData(db)
+                    }
+                })
+                .build()
                 INSTANCE = instance
                 instance
             }
