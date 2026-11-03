@@ -11,6 +11,18 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.EstadoAutorizacionEnt
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.PreguntaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.CursoEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.NivelEntity
+
+data class AsignaturaConNivel(
+    @Embedded val asignatura: AsignaturaEntity,
+    @Relation(
+        parentColumn = "nivel_id",
+        entityColumn = "nivel_id"
+    )
+    val nivel: NivelEntity
+)
 
 data class UnidadConDetalles(
     @Embedded val unidad: UnidadEntity,
@@ -38,6 +50,20 @@ data class ActividadConTipo(
         entityColumn = "estado_id"
     )
     val estado: EstadoAutorizacionEntity
+)
+
+data class ActividadCursoConDetalles(
+    @Embedded val actividadCurso: ActividadCursoEntity,
+    @Relation(
+        parentColumn = "actividad_id",
+        entityColumn = "actividad_id"
+    )
+    val actividad: ActividadEntity,
+    @Relation(
+        parentColumn = "curso_id",
+        entityColumn = "curso_id"
+    )
+    val curso: CursoEntity
 )
 
 data class PreguntaConAlternativas(

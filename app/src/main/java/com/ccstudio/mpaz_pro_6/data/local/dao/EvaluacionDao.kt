@@ -27,8 +27,11 @@ interface EvaluacionDao {
     @Query("SELECT * FROM intento WHERE usuario_id = :usuarioId")
     suspend fun getIntentosByUsuarioId(usuarioId: Long): List<IntentoEntity>
 
-    @Query("SELECT * FROM intento WHERE actividad_id = :actividadId")
-    suspend fun getIntentosByActividadId(actividadId: Long): List<IntentoEntity>
+    @Query("SELECT * FROM intento WHERE actividad_curso_id = :actividadCursoId")
+    suspend fun getIntentosByActividadCursoId(actividadCursoId: Long): List<IntentoEntity>
+
+    @Query("SELECT * FROM intento WHERE usuario_id = :usuarioId AND actividad_curso_id = :actividadCursoId")
+    suspend fun getIntentosByUsuarioYActividadCurso(usuarioId: Long, actividadCursoId: Long): List<IntentoEntity>
 
     // Respuesta
     @Insert(onConflict = OnConflictStrategy.REPLACE)

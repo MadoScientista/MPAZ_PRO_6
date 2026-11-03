@@ -1,8 +1,8 @@
 package com.ccstudio.mpaz_pro_6.data.dto.evaluacion
 
-import com.ccstudio.mpaz_pro_6.data.dto.curriculo.ActividadResumen
 import com.ccstudio.mpaz_pro_6.data.dto.curriculo.AlternativaResumen
 import com.ccstudio.mpaz_pro_6.data.dto.curriculo.PreguntaResumen
+import com.ccstudio.mpaz_pro_6.data.dto.docencia.ActividadCursoResumen
 import com.ccstudio.mpaz_pro_6.data.dto.identidad.UsuarioResumen
 import kotlinx.serialization.Serializable
 
@@ -16,7 +16,7 @@ data class IntentoResumen(
 @Serializable
 data class IntentoRequest(
     val usuarioId: Long,
-    val actividadId: Long,
+    val actividadCursoId: Long,
     val fechaInicio: String? = null,
     val fechaFin: String? = null
 )
@@ -25,7 +25,7 @@ data class IntentoRequest(
 data class IntentoResponse(
     val id: Long,
     val usuario: UsuarioResumen,
-    val actividad: ActividadResumen,
+    val actividadCurso: ActividadCursoResumen? = null,
     val fechaInicio: String,
     val fechaFin: String? = null
 )

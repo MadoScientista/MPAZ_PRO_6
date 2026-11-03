@@ -5,14 +5,31 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.NivelEntity
 
-@Entity(tableName = "asignatura")
+@Entity(
+    tableName = "asignatura",
+    indices = [
+        Index(value = ["nivel_id"]),
+        Index(value = ["nivel_id", "nombre"], unique = true)
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = NivelEntity::class,
+            parentColumns = ["nivel_id"],
+            childColumns = ["nivel_id"],
+            onDelete = ForeignKey.NO_ACTION
+        )
+    ]
+)
 data class AsignaturaEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "asignatura_id")
     val id: Long = 0,
     @ColumnInfo(name = "nombre")
-    val nombre: String
+    val nombre: String,
+    @ColumnInfo(name = "nivel_id")
+    val nivelId: Long = 1
 )
 
 @Entity(tableName = "estado_autorizacion")
@@ -220,8 +237,6 @@ data class ActividadEntity(
     val id: Long = 0,
     @ColumnInfo(name = "instrucciones")
     val instrucciones: String,
-    @ColumnInfo(name = "habilitada")
-    val habilitada: Boolean = true,
     @ColumnInfo(name = "contenido_id")
     val contenidoId: Long,
     @ColumnInfo(name = "tipo_actividad_id")

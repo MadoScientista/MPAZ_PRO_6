@@ -41,6 +41,9 @@ interface CurriculoDao {
     @Query("SELECT * FROM asignatura")
     suspend fun getAllAsignaturas(): List<AsignaturaEntity>
 
+    @Query("SELECT * FROM asignatura WHERE nivel_id = :nivelId")
+    suspend fun getAsignaturasByNivelId(nivelId: Long): List<AsignaturaEntity>
+
     // EstadoAutorizacion
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEstadoAutorizacion(entity: EstadoAutorizacionEntity): Long

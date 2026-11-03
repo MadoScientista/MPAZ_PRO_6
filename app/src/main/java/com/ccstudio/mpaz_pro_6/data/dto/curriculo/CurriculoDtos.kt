@@ -1,12 +1,14 @@
 package com.ccstudio.mpaz_pro_6.data.dto.curriculo
 
+import com.ccstudio.mpaz_pro_6.data.dto.identidad.NivelResumen
 import kotlinx.serialization.Serializable
 
 // Resúmenes
 @Serializable
 data class AsignaturaResumen(
     val id: Long,
-    val nombre: String
+    val nombre: String,
+    val nivel: NivelResumen? = null
 )
 
 @Serializable
@@ -57,8 +59,7 @@ data class RecursoResumen(
 @Serializable
 data class ActividadResumen(
     val id: Long,
-    val instrucciones: String,
-    val habilitada: Boolean
+    val instrucciones: String
 )
 
 @Serializable
@@ -76,11 +77,11 @@ data class AlternativaResumen(
 
 // Asignatura
 @Serializable
-data class AsignaturaRequest(val nombre: String)
+data class AsignaturaRequest(val nombre: String, val nivelId: Long = 1)
 @Serializable
-data class AsignaturaUpdateRequest(val nombre: String? = null)
+data class AsignaturaUpdateRequest(val nombre: String? = null, val nivelId: Long? = null)
 @Serializable
-data class AsignaturaResponse(val id: Long, val nombre: String)
+data class AsignaturaResponse(val id: Long, val nombre: String, val nivel: NivelResumen? = null)
 
 // EstadoAutorizacion
 @Serializable
@@ -207,15 +208,13 @@ data class RecursoResponse(
 @Serializable
 data class ActividadRequest(
     val instrucciones: String,
-    val habilitada: Boolean = true,
     val contenidoId: Long,
     val tipoActividadId: Long,
-    val estadoId: Long
+    val estadoId: Long = 1
 )
 @Serializable
 data class ActividadUpdateRequest(
     val instrucciones: String? = null,
-    val habilitada: Boolean? = null,
     val tipoActividadId: Long? = null,
     val estadoId: Long? = null
 )
@@ -223,10 +222,9 @@ data class ActividadUpdateRequest(
 data class ActividadResponse(
     val id: Long,
     val instrucciones: String,
-    val habilitada: Boolean,
-    val contenido: ContenidoResumen,
-    val tipoActividad: TipoActividadResumen,
-    val estado: EstadoAutorizacionResumen
+    val contenido: ContenidoResumen? = null,
+    val tipoActividad: TipoActividadResumen? = null,
+    val estado: EstadoAutorizacionResumen? = null
 )
 
 // Pregunta

@@ -11,13 +11,14 @@ import com.ccstudio.mpaz_pro_6.data.dto.curriculo.RecursoResumen
 import com.ccstudio.mpaz_pro_6.data.dto.curriculo.TipoActividadResumen
 import com.ccstudio.mpaz_pro_6.data.dto.curriculo.TipoRecursoResumen
 import com.ccstudio.mpaz_pro_6.data.dto.curriculo.UnidadResumen
-import com.ccstudio.mpaz_pro_6.data.dto.informe.InformePedagogicoResumen
+import com.ccstudio.mpaz_pro_6.data.dto.docencia.ActividadCursoResumen
 import com.ccstudio.mpaz_pro_6.data.dto.evaluacion.IntentoResumen
 import com.ccstudio.mpaz_pro_6.data.dto.identidad.CursoResumen
 import com.ccstudio.mpaz_pro_6.data.dto.identidad.NivelResumen
 import com.ccstudio.mpaz_pro_6.data.dto.identidad.RolResumen
 import com.ccstudio.mpaz_pro_6.data.dto.identidad.SeccionResumen
 import com.ccstudio.mpaz_pro_6.data.dto.identidad.UsuarioResumen
+import com.ccstudio.mpaz_pro_6.data.dto.informe.InformePedagogicoResumen
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AlternativaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity
@@ -29,6 +30,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.RecursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoRecursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.evaluacion.IntentoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.CursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.NivelEntity
@@ -67,9 +69,10 @@ object ResumenMapper {
         nombreCompleto = nombreCompleto
     )
 
-    fun AsignaturaEntity.toResumen() = AsignaturaResumen(
+    fun AsignaturaEntity.toResumen(nivel: NivelEntity? = null) = AsignaturaResumen(
         id = id,
-        nombre = nombre
+        nombre = nombre,
+        nivel = nivel?.toResumen()
     )
 
     fun EstadoAutorizacionEntity.toResumen() = EstadoAutorizacionResumen(
@@ -112,8 +115,18 @@ object ResumenMapper {
 
     fun ActividadEntity.toResumen() = ActividadResumen(
         id = id,
-        instrucciones = instrucciones,
-        habilitada = habilitada
+        instrucciones = instrucciones
+    )
+
+    fun ActividadCursoEntity.toResumen(actividad: ActividadEntity? = null, curso: CursoResumen? = null) = ActividadCursoResumen(
+        id = id,
+        actividad = actividad?.toResumen(),
+        curso = curso,
+        fechaInicio = fechaInicio,
+        fechaFin = fechaFin,
+        habilitada = habilitada,
+        visible = visible,
+        maxIntentos = maxIntentos
     )
 
     fun PreguntaEntity.toResumen() = PreguntaResumen(

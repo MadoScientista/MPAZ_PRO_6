@@ -5,16 +5,16 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AlternativaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.PreguntaEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
 
 @Entity(
     tableName = "intento",
     indices = [
         Index(value = ["usuario_id"]),
-        Index(value = ["actividad_id"])
+        Index(value = ["actividad_curso_id"])
     ],
     foreignKeys = [
         ForeignKey(
@@ -24,9 +24,9 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
             onDelete = ForeignKey.NO_ACTION
         ),
         ForeignKey(
-            entity = ActividadEntity::class,
-            parentColumns = ["actividad_id"],
-            childColumns = ["actividad_id"],
+            entity = ActividadCursoEntity::class,
+            parentColumns = ["actividad_curso_id"],
+            childColumns = ["actividad_curso_id"],
             onDelete = ForeignKey.NO_ACTION
         )
     ]
@@ -37,8 +37,8 @@ data class IntentoEntity(
     val id: Long = 0,
     @ColumnInfo(name = "usuario_id")
     val usuarioId: Long,
-    @ColumnInfo(name = "actividad_id")
-    val actividadId: Long,
+    @ColumnInfo(name = "actividad_curso_id")
+    val actividadCursoId: Long,
     @ColumnInfo(name = "fecha_inicio")
     val fechaInicio: String,
     @ColumnInfo(name = "fecha_fin")

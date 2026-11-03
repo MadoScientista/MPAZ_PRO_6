@@ -5,6 +5,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
 
@@ -35,4 +37,26 @@ interface DocenciaDao {
 
     @Query("SELECT * FROM usuario_curso WHERE usuario_id = :usuarioId")
     suspend fun getCursosByUsuarioId(usuarioId: Long): List<UsuarioCursoEntity>
+
+    // ActividadCurso
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertActividadCurso(entity: ActividadCursoEntity): Long
+
+    @Update
+    suspend fun updateActividadCurso(entity: ActividadCursoEntity)
+
+    @Delete
+    suspend fun deleteActividadCurso(entity: ActividadCursoEntity)
+
+    @Query("SELECT * FROM actividad_curso WHERE actividad_curso_id = :id")
+    suspend fun getActividadCursoById(id: Long): ActividadCursoEntity?
+
+    @Query("SELECT * FROM actividad_curso WHERE actividad_id = :actividadId AND curso_id = :cursoId")
+    suspend fun getActividadCursoByActividadYCurso(actividadId: Long, cursoId: Long): ActividadCursoEntity?
+
+    @Query("SELECT * FROM actividad_curso WHERE curso_id = :cursoId")
+    suspend fun getActividadesByCursoId(cursoId: Long): List<ActividadCursoEntity>
+
+    @Query("SELECT * FROM actividad_curso WHERE curso_id = :cursoId AND visible = 1 AND habilitada = 1")
+    suspend fun getActividadesVisiblesByCursoId(cursoId: Long): List<ActividadCursoEntity>
 }

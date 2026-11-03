@@ -26,6 +26,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.RecursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoRecursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.evaluacion.IntentoEntity
@@ -69,6 +70,30 @@ val MIGRATION_1_4 = object : Migration(1, 4) {
 }
 
 val MIGRATION_2_4 = object : Migration(2, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_1_5 = object : Migration(1, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_2_5 = object : Migration(2, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_3_5 = object : Migration(3, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
         seedInitialData(db)
     }
@@ -119,11 +144,11 @@ fun seedInitialData(db: SupportSQLiteDatabase) {
     db.execSQL("INSERT OR IGNORE INTO tipo_recurso (tipo_recurso_id, nombre) VALUES (3, 'DOCUMENTO')")
     db.execSQL("INSERT OR IGNORE INTO tipo_recurso (tipo_recurso_id, nombre) VALUES (4, 'VIDEO')")
 
-    // 9. Asignaturas
-    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre) VALUES (1, 'Lenguaje y Comunicación')")
-    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre) VALUES (2, 'Matemática')")
-    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre) VALUES (3, 'Ciencias Naturales')")
-    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre) VALUES (4, 'Historia, Geografía y Ciencias Sociales')")
+    // 9. Asignaturas (con nivel_id)
+    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre, nivel_id) VALUES (1, 'Lenguaje y Comunicación', 1)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre, nivel_id) VALUES (2, 'Matemática', 1)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre, nivel_id) VALUES (3, 'Ciencias Naturales', 1)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura (asignatura_id, nombre, nivel_id) VALUES (4, 'Historia, Geografía y Ciencias Sociales', 1)")
 
     // 10. Unidades
     db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (1, 'Lectura - Comprensión', 1, 2)")
@@ -742,11 +767,25 @@ Las actividades humanas pueden modificar estas relaciones, por lo que proteger l
     db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (7, 4, 14, 3)")
     db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (8, 4, 15, 3)")
 
-    // 17. Actividades (1 por contenido)
-    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (1, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 1, 1, 4)")
-    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (2, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 2, 1, 4)")
-    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (3, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 3, 1, 4)")
-    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (4, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 4, 1, 4)")
+    // 17. Actividades (1 por contenido) - Plantillas reutilizables
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (1, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (2, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 2, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (3, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 3, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (4, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 4, 1, 4)")
+
+    // 17b. ActividadCurso (Configuración de actividades por curso)
+    db.execSQL("CREATE TABLE IF NOT EXISTS actividad_curso (actividad_curso_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, actividad_id INTEGER NOT NULL, curso_id INTEGER NOT NULL, fecha_inicio TEXT, fecha_fin TEXT, habilitada INTEGER NOT NULL DEFAULT 0, visible INTEGER NOT NULL DEFAULT 0, max_intentos INTEGER, FOREIGN KEY(actividad_id) REFERENCES actividad(actividad_id) ON UPDATE NO ACTION ON DELETE NO ACTION, FOREIGN KEY(curso_id) REFERENCES curso(curso_id) ON UPDATE NO ACTION ON DELETE NO ACTION)")
+    db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_actividad_curso_actividad_id_curso_id ON actividad_curso (actividad_id, curso_id)")
+    db.execSQL("CREATE INDEX IF NOT EXISTS index_actividad_curso_curso_id ON actividad_curso (curso_id)")
+
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (1, 1, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (2, 1, 2, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (3, 2, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (4, 2, 2, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (5, 3, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (6, 3, 2, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (7, 4, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (8, 4, 2, 1, 1, 3)")
 
     // 18. Preguntas (3 por actividad, 12 en total)
     // Actividad 1 (Lenguaje C1)
@@ -904,9 +943,10 @@ Pasto → Saltamontes → Rana → Serpiente
         PreguntaActividadEntity::class,
         ObjetivoAprendizajeContenidoEntity::class,
 
-        // Docencia (2)
+        // Docencia (3)
         AsignaturaCursoEntity::class,
         UsuarioCursoEntity::class,
+        ActividadCursoEntity::class,
 
         // Evaluación (2)
         IntentoEntity::class,
@@ -916,7 +956,7 @@ Pasto → Saltamontes → Rana → Serpiente
         InformePedagogicoEntity::class,
         DetalleInformePedagogicoEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -943,7 +983,10 @@ abstract class MpazDatabase : RoomDatabase() {
                     MpazDatabase::class.java,
                     "mpaz_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_1_3, MIGRATION_3_4, MIGRATION_1_4, MIGRATION_2_4)
+                .addMigrations(
+                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_1_3, MIGRATION_3_4, MIGRATION_1_4, MIGRATION_2_4,
+                    MIGRATION_4_5, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5
+                )
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
