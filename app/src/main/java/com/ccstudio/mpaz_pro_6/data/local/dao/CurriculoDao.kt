@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AlternativaEntity
@@ -104,6 +105,17 @@ interface CurriculoDao {
     @Query("SELECT * FROM unidad")
     suspend fun getAllUnidades(): List<UnidadEntity>
 
+    @Transaction
+    @Query("SELECT * FROM unidad WHERE estado_id = :estadoId")
+    suspend fun getUnidadesConDetallesByEstadoId(estadoId: Long): List<UnidadConDetalles>
+
+    @Transaction
+    @Query("SELECT * FROM unidad WHERE unidad_id = :id")
+    suspend fun getUnidadConDetallesById(id: Long): UnidadConDetalles?
+
+    @Query("UPDATE unidad SET estado_id = :nuevoEstadoId WHERE unidad_id = :unidadId")
+    suspend fun updateUnidadEstado(unidadId: Long, nuevoEstadoId: Long)
+
     // ObjetivoAprendizaje
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertObjetivoAprendizaje(entity: ObjetivoAprendizajeEntity): Long
@@ -146,6 +158,9 @@ interface CurriculoDao {
     @Query("SELECT * FROM contenido")
     suspend fun getAllContenidos(): List<ContenidoEntity>
 
+    @Query("SELECT * FROM contenido WHERE unidad_id = :unidadId")
+    suspend fun getContenidosByUnidadId(unidadId: Long): List<ContenidoEntity>
+
     // Recurso
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRecurso(entity: RecursoEntity): Long
@@ -178,6 +193,18 @@ interface CurriculoDao {
     @Query("SELECT * FROM actividad")
     suspend fun getAllActividades(): List<ActividadEntity>
 
+    @Transaction
+    @Query("SELECT * FROM actividad WHERE contenido_id = :contenidoId")
+    suspend fun getActividadesConTipoByContenidoId(contenidoId: Long): List<ActividadConTipo>
+
+    @Transaction
+    @Query("SELECT * FROM actividad WHERE actividad_id = :id")
+    suspend fun getActividadConTipoById(id: Long): ActividadConTipo?
+
+    @Transaction
+    @Query("SELECT a.* FROM actividad a INNER JOIN contenido c ON a.contenido_id = c.contenido_id WHERE c.unidad_id = :unidadId AND a.tipo_actividad_id = 3 LIMIT 1")
+    suspend fun getPruebaFinalConTipoByUnidadId(unidadId: Long): ActividadConTipo?
+
     // Pregunta
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPregunta(entity: PreguntaEntity): Long
@@ -193,6 +220,10 @@ interface CurriculoDao {
 
     @Query("SELECT * FROM pregunta")
     suspend fun getAllPreguntas(): List<PreguntaEntity>
+
+    @Transaction
+    @Query("SELECT p.* FROM pregunta p INNER JOIN pregunta_actividad pa ON p.pregunta_id = pa.pregunta_id WHERE pa.actividad_id = :actividadId")
+    suspend fun getPreguntasConAlternativasByActividadId(actividadId: Long): List<PreguntaConAlternativas>
 
     // Alternativa
     @Insert(onConflict = OnConflictStrategy.REPLACE)

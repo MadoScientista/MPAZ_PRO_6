@@ -1,8 +1,11 @@
 package com.ccstudio.mpaz_pro_6.ui.home
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -15,15 +18,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.ccstudio.mpaz_pro_6.ui.navigation.NavDestination
 import com.ccstudio.mpaz_pro_6.ui.screens.GenericSectionScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.InicioScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.RestrictedAccessScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.ActividadVistaPreviaScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.ContenidoDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.RevisionesPendientesScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.UnidadDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,23 +53,30 @@ fun HomeScreen(
         NavDestination.isRouteAllowedForRole(currentRoute, rol)
     }
 
+    val isTopLevelDestination = NavDestination.isTopLevelRoute(currentRoute)
+
     val currentTitle = if (isRouteAllowed) {
         navItems.find { it.route == currentRoute }?.title
-            ?: when (currentRoute) {
-                NavDestination.Inicio.route -> NavDestination.Inicio.title
-                NavDestination.RevisionesPendientes.route -> NavDestination.RevisionesPendientes.title
-                NavDestination.Cursos.route -> NavDestination.Cursos.title
-                NavDestination.Docentes.route -> NavDestination.Docentes.title
-                NavDestination.Usuarios.route -> NavDestination.Usuarios.title
-                NavDestination.Asignaturas.route -> NavDestination.Asignaturas.title
-                NavDestination.Crear.route -> NavDestination.Crear.title
-                NavDestination.Informes.route -> NavDestination.Informes.title
-                NavDestination.ActividadesPendientes.route -> NavDestination.ActividadesPendientes.title
+            ?: when {
+                currentRoute == NavDestination.Inicio.route -> NavDestination.Inicio.title
+                currentRoute == NavDestination.RevisionesPendientes.route -> NavDestination.RevisionesPendientes.title
+                currentRoute == NavDestination.Cursos.route -> NavDestination.Cursos.title
+                currentRoute == NavDestination.Docentes.route -> NavDestination.Docentes.title
+                currentRoute == NavDestination.Usuarios.route -> NavDestination.Usuarios.title
+                currentRoute == NavDestination.Asignaturas.route -> NavDestination.Asignaturas.title
+                currentRoute == NavDestination.Crear.route -> NavDestination.Crear.title
+                currentRoute == NavDestination.Informes.route -> NavDestination.Informes.title
+                currentRoute == NavDestination.ActividadesPendientes.route -> NavDestination.ActividadesPendientes.title
+                currentRoute.startsWith("unidad_detalle/") -> NavDestination.DetalleUnidad.title
+                currentRoute.startsWith("contenido_detalle/") -> NavDestination.DetalleContenido.title
+                currentRoute.startsWith("actividad_vistaprevia/") -> NavDestination.VistaPreviaActividad.title
                 else -> "MPAZ PRO"
             }
     } else {
         "Acceso Restringido"
     }
+
+    val utpViewModel: UtpViewModel = viewModel()
 
     Scaffold(
         modifier = modifier,
@@ -70,6 +88,16 @@ fun HomeScreen(
                         style = MaterialTheme.typography.titleLarge,
                     )
                 },
+                navigationIcon = {
+                    if (!isTopLevelDestination) {
+                        IconButton(onClick = { navController.navigateUp() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -77,16 +105,18 @@ fun HomeScreen(
             )
         },
         bottomBar = {
-            if (navItems.isNotEmpty()) {
+            if (isTopLevelDestination && navItems.isNotEmpty()) {
                 NavigationBar {
                     navItems.forEach { item ->
                         val selected = currentRoute == item.route
                         NavigationBarItem(
                             icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.title,
-                                )
+                                item.icon?.let { iconVector ->
+                                    Icon(
+                                        imageVector = iconVector,
+                                        contentDescription = item.title,
+                                    )
+                                }
                             },
                             label = {
                                 Text(
@@ -130,7 +160,69 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.RevisionesPendientes.title)
+                    RevisionesPendientesScreen(
+                        viewModel = utpViewModel,
+                        onUnitClick = { unitId ->
+                            navController.navigate(NavDestination.DetalleUnidad.createRoute(unitId))
+                        },
+                    )
+                }
+            }
+            composable(
+                route = NavDestination.DetalleUnidad.route,
+                arguments = listOf(navArgument("unidadId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val unidadId = backStackEntry.arguments?.getLong("unidadId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.DetalleUnidad.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    UnidadDetalleScreen(
+                        unidadId = unidadId,
+                        viewModel = utpViewModel,
+                        onContentClick = { contentId ->
+                            navController.navigate(NavDestination.DetalleContenido.createRoute(contentId))
+                        },
+                        onPruebaFinalClick = { actividadId ->
+                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId))
+                        },
+                    )
+                }
+            }
+            composable(
+                route = NavDestination.DetalleContenido.route,
+                arguments = listOf(navArgument("contenidoId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val contenidoId = backStackEntry.arguments?.getLong("contenidoId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.DetalleContenido.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    ContenidoDetalleScreen(
+                        contenidoId = contenidoId,
+                        viewModel = utpViewModel,
+                        onActivityClick = { actividadId ->
+                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId))
+                        },
+                    )
+                }
+            }
+            composable(
+                route = NavDestination.VistaPreviaActividad.route,
+                arguments = listOf(navArgument("actividadId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val actividadId = backStackEntry.arguments?.getLong("actividadId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.VistaPreviaActividad.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    ActividadVistaPreviaScreen(
+                        actividadId = actividadId,
+                        viewModel = utpViewModel,
+                    )
                 }
             }
             composable(NavDestination.Cursos.route) {

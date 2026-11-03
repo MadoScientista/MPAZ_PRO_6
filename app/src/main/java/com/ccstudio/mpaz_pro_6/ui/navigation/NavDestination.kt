@@ -15,17 +15,30 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class NavDestination(
     val route: String,
     val title: String,
-    val icon: ImageVector,
+    val icon: ImageVector? = null,
+    val isTopLevel: Boolean = true,
 ) {
-    data object Inicio : NavDestination("inicio", "Inicio", Icons.Default.Home)
-    data object RevisionesPendientes : NavDestination("revisiones_pendientes", "Revisiones pendientes", Icons.AutoMirrored.Filled.FactCheck)
-    data object Cursos : NavDestination("cursos", "Cursos", Icons.Default.School)
-    data object Docentes : NavDestination("docentes", "Docentes", Icons.Default.Badge)
-    data object Usuarios : NavDestination("usuarios", "Usuarios", Icons.Default.People)
-    data object Asignaturas : NavDestination("asignaturas", "Asignaturas", Icons.Default.Book)
-    data object Crear : NavDestination("crear", "Crear", Icons.Default.AddCircle)
-    data object Informes : NavDestination("informes", "Informes", Icons.Default.Assessment)
-    data object ActividadesPendientes : NavDestination("actividades_pendientes", "Actividades pendientes", Icons.Default.Task)
+    // --- DESTINOS PRINCIPALES (TOP-LEVEL) ---
+    data object Inicio : NavDestination("inicio", "Inicio", Icons.Default.Home, isTopLevel = true)
+    data object RevisionesPendientes : NavDestination("revisiones_pendientes", "Revisiones pendientes", Icons.AutoMirrored.Filled.FactCheck, isTopLevel = true)
+    data object Cursos : NavDestination("cursos", "Cursos", Icons.Default.School, isTopLevel = true)
+    data object Docentes : NavDestination("docentes", "Docentes", Icons.Default.Badge, isTopLevel = true)
+    data object Usuarios : NavDestination("usuarios", "Usuarios", Icons.Default.People, isTopLevel = true)
+    data object Asignaturas : NavDestination("asignaturas", "Asignaturas", Icons.Default.Book, isTopLevel = true)
+    data object Crear : NavDestination("crear", "Crear", Icons.Default.AddCircle, isTopLevel = true)
+    data object Informes : NavDestination("informes", "Informes", Icons.Default.Assessment, isTopLevel = true)
+    data object ActividadesPendientes : NavDestination("actividades_pendientes", "Actividades pendientes", Icons.Default.Task, isTopLevel = true)
+
+    // --- DESTINOS SECUNDARIOS / DETALLE (SUB-DESTINATIONS) ---
+    data object DetalleUnidad : NavDestination("unidad_detalle/{unidadId}", "Detalle de Unidad", isTopLevel = false) {
+        fun createRoute(unidadId: Long) = "unidad_detalle/$unidadId"
+    }
+    data object DetalleContenido : NavDestination("contenido_detalle/{contenidoId}", "Detalle de Contenido", isTopLevel = false) {
+        fun createRoute(contenidoId: Long) = "contenido_detalle/$contenidoId"
+    }
+    data object VistaPreviaActividad : NavDestination("actividad_vistaprevia/{actividadId}", "Vista Previa de Actividad", isTopLevel = false) {
+        fun createRoute(actividadId: Long) = "actividad_vistaprevia/$actividadId"
+    }
 
     companion object {
         fun getNavItemsForRole(rol: String): List<NavDestination> {
@@ -56,8 +69,36 @@ sealed class NavDestination(
         }
 
         fun isRouteAllowedForRole(route: String, rol: String): Boolean {
-            val allowedRoutes = getNavItemsForRole(rol).map { it.route }
-            return allowedRoutes.contains(route)
+            val allowedTopRoutes = getNavItemsForRole(rol).map { it.route }
+            if (allowedTopRoutes.contains(route)) return true
+
+            // Sub-rutas permitidas por rol
+            return when (rol.uppercase()) {
+                "UTP" -> route.startsWith("unidad_detalle/") ||
+                         route.startsWith("contenido_detalle/") ||
+                         route.startsWith("actividad_vistaprevia/")
+                "DOCENTE" -> route.startsWith("unidad_detalle/") ||
+                             route.startsWith("contenido_detalle/") ||
+                             route.startsWith("actividad_vistaprevia/")
+                "ESTUDIANTE" -> route.startsWith("contenido_detalle/") ||
+                                route.startsWith("actividad_vistaprevia/")
+                else -> false
+            }
+        }
+
+        fun isTopLevelRoute(route: String): Boolean {
+            return when (route) {
+                Inicio.route,
+                RevisionesPendientes.route,
+                Cursos.route,
+                Docentes.route,
+                Usuarios.route,
+                Asignaturas.route,
+                Crear.route,
+                Informes.route,
+                ActividadesPendientes.route -> true
+                else -> false
+            }
         }
     }
 }

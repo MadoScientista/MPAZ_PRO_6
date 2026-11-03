@@ -56,6 +56,24 @@ val MIGRATION_1_3 = object : Migration(1, 3) {
     }
 }
 
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_1_4 = object : Migration(1, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_2_4 = object : Migration(2, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
 fun seedInitialData(db: SupportSQLiteDatabase) {
     // 1. Roles
     db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (1, 'UTP')")
@@ -110,7 +128,7 @@ fun seedInitialData(db: SupportSQLiteDatabase) {
     // 10. Unidades
     db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (1, 'Lectura - Comprensión', 1, 2)")
     db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (2, 'Números y operaciones', 2, 3)")
-    db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (3, 'Ciencias de la Vida', 3, 1)")
+    db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (3, 'Ciencias de la Vida', 3, 2)")
     db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (4, 'Historia', 4, 4)")
 
     // 11. AsignaturaCurso
@@ -201,6 +219,663 @@ fun seedInitialData(db: SupportSQLiteDatabase) {
         val oaId = 29L + i
         db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_unidad (id, objetivo_aprendizaje_id, unidad_id) VALUES ($id, $oaId, 2)")
     }
+
+    // 15. Contenidos (Markdown)
+    // Contenido 1: Lenguaje - Estrategias para comprender lo que leemos (Unidad 1)
+    val c1Markdown = """# Estrategias para comprender lo que leemos
+
+## ¿Cómo podemos comprender mejor un texto?
+
+Leer es mucho más que reconocer palabras y pronunciarlas correctamente. Cuando leemos, nuestra mente trabaja para comprender las ideas, relacionar información y construir significados.
+
+Cada texto nos entrega información que podemos conectar con lo que ya sabemos, con nuestras experiencias y con otros conocimientos que hemos adquirido.
+
+Para comprender mejor lo que leemos, podemos utilizar distintas estrategias antes, durante y después de la lectura.
+
+## 1. Antes de leer: activar nuestros conocimientos
+
+Antes de comenzar, podemos observar el título, las imágenes y otros elementos que acompañan al texto.
+
+Esto nos permite anticipar de qué podría tratarse la lectura y recordar lo que sabemos sobre ese tema.
+
+**Por ejemplo:**
+
+Si vamos a leer un texto titulado *La importancia de los bosques nativos*, podemos preguntarnos:
+
+- ¿Qué sabemos sobre los bosques nativos?
+- ¿Qué animales y plantas viven en ellos?
+- ¿Por qué son importantes para nuestro entorno?
+
+Estas preguntas nos ayudan a preparar nuestra mente para recibir nueva información.
+
+## 2. Durante la lectura: identificar y relacionar información
+
+Mientras leemos, podemos utilizar diferentes estrategias para comprender las ideas que presenta el texto.
+
+**Identificar información explícita**
+
+Es reconocer información que aparece directamente en el texto. Para encontrarla, podemos buscar nombres, fechas, lugares, acontecimientos y otros datos.
+
+**Inferir información**
+
+Consiste en descubrir información que el autor no expresa directamente, utilizando pistas del texto y nuestros conocimientos.
+
+Por ejemplo, si leemos:
+
+> Camila salió de su casa con paraguas y botas. Mientras caminaba, observó que las calles estaban cubiertas de agua.
+
+Podemos inferir que probablemente estaba lloviendo, aunque el texto no lo diga expresamente.
+
+**Releer cuando sea necesario**
+
+Si encontramos una palabra, oración o párrafo que nos resulta difícil de comprender, podemos volver a leerlo con atención. A veces, una segunda lectura nos permite descubrir información que pasó inadvertida.
+
+**Formular preguntas**
+
+Hacer preguntas durante la lectura nos ayuda a mantener la atención y profundizar en las ideas.
+
+Algunas preguntas útiles son:
+
+- ¿De quién o de qué habla el texto?
+- ¿Qué ocurrió?
+- ¿Por qué sucedió?
+- ¿Qué información importante nos entrega?
+
+## 3. Después de leer: organizar y sintetizar la información
+
+Cuando terminamos una lectura, podemos realizar algunas acciones para comprobar qué comprendimos y recordar las ideas más importantes.
+
+**Identificar las ideas principales**
+
+La idea principal corresponde a la información más importante de un párrafo o texto. Las ideas secundarias entregan detalles, explicaciones o ejemplos que complementan esa información.
+
+**Organizar la información**
+
+Podemos utilizar esquemas, cuadros comparativos o mapas conceptuales para relacionar las ideas y observar cómo se conectan entre sí.
+
+**Elaborar un resumen**
+
+Resumir consiste en expresar las ideas principales de un texto utilizando nuestras propias palabras y manteniendo su significado.
+
+Un buen resumen permite recordar lo esencial de una lectura de manera clara y ordenada.
+
+## 4. Pongamos en práctica lo aprendido
+
+Imaginemos que leemos el siguiente texto:
+
+### Las abejas y su importancia para el planeta
+
+Las abejas cumplen una función fundamental en los ecosistemas. Al visitar las flores para obtener néctar y polen, transportan pequeñas partículas de polen de una flor a otra. Este proceso se conoce como polinización y permite que muchas plantas produzcan frutos y semillas.
+
+Además, la polinización contribuye a la producción de numerosos alimentos que consumimos diariamente, como manzanas, frutillas y almendras.
+
+Sin embargo, las abejas enfrentan diversas amenazas, entre ellas la pérdida de sus hábitats, el uso de ciertos pesticidas y el cambio climático.
+
+### ¿Cómo aplicamos las estrategias?
+
+- **Conocimientos previos:** pensamos en lo que sabemos sobre las abejas y su relación con las flores.
+- **Información explícita:** identificamos que las abejas transportan polen entre las flores.
+- **Inferencias:** podemos concluir que la disminución de las abejas podría afectar la producción de algunos alimentos.
+- **Idea principal:** las abejas son fundamentales para los ecosistemas y la producción de alimentos.
+- **Resumen:** las abejas contribuyen a la polinización, un proceso necesario para la reproducción de muchas plantas y la producción de alimentos. Actualmente enfrentan amenazas que ponen en riesgo su población.
+
+## Para recordar
+
+Comprender un texto es un proceso que podemos fortalecer con la práctica. Activar nuestros conocimientos, identificar información, realizar inferencias, formular preguntas y organizar las ideas nos permite aprovechar mejor cada lectura.
+
+**Cada vez que leemos con atención, tenemos una nueva oportunidad para aprender.**""".replace("'", "''")
+
+    // Contenido 2: Lenguaje - Comprendemos y analizamos textos narrativos (Unidad 1)
+    val c2Markdown = """# Comprendemos y analizamos textos narrativos
+
+## ¿Qué hace interesante una historia?
+
+Cuando leemos un cuento, una leyenda o una fábula, nos encontramos con personajes que viven experiencias, enfrentan dificultades y toman decisiones. Cada uno de estos elementos contribuye al desarrollo de la historia.
+
+Comprender una narración significa descubrir qué sucede, quiénes participan, dónde ocurren los acontecimientos y por qué los personajes actúan de determinada manera.
+
+En este contenido aprenderemos a reconocer los elementos de una narración y analizar cómo se relacionan entre sí.
+
+## 1. ¿Qué es un texto narrativo?
+
+Un texto narrativo es un relato que presenta una serie de acontecimientos protagonizados por uno o varios personajes. Estos acontecimientos pueden ser reales o imaginarios y se desarrollan en un tiempo y lugar determinados.
+
+Existen distintos tipos de narraciones, entre ellas:
+
+- **Cuentos:** relatos breves que presentan personajes y acontecimientos organizados en una historia.
+- **Fábulas:** narraciones que generalmente utilizan animales como personajes y transmiten una enseñanza o moraleja.
+- **Leyendas:** relatos tradicionales que mezclan elementos reales y fantásticos, y que forman parte de la cultura de una comunidad.
+- **Mitos:** narraciones tradicionales que explican el origen del mundo, fenómenos naturales o creencias de una cultura.
+- **Novelas:** narraciones extensas que desarrollan historias, personajes y conflictos con mayor profundidad.
+
+## 2. Elementos de una narración
+
+Para comprender una historia, debemos prestar atención a sus principales elementos.
+
+### Los personajes
+
+Son quienes participan en los acontecimientos de la historia. Cada personaje puede tener características, intereses, motivaciones y formas particulares de actuar.
+
+Podemos distinguir:
+
+- **Personaje principal:** participa directamente en los acontecimientos centrales de la historia.
+- **Personajes secundarios:** acompañan al personaje principal y contribuyen al desarrollo de los acontecimientos.
+
+También es importante observar cómo reaccionan los personajes frente a las situaciones que enfrentan. Sus decisiones nos permiten comprender sus motivaciones y características.
+
+### El ambiente
+
+Corresponde al entorno en el que ocurren los acontecimientos. Podemos reconocer dos dimensiones:
+
+- **Ambiente físico:** lugar donde sucede la historia, como un bosque, una ciudad, una escuela o una montaña.
+- **Ambiente social:** características de la comunidad, las costumbres, las relaciones y las condiciones de vida de los personajes.
+
+El ambiente influye en las acciones de los personajes y en las situaciones que deben enfrentar.
+
+### El tiempo
+
+Corresponde al momento o período en que ocurren los acontecimientos. Una historia puede desarrollarse durante unas horas, varios días, años o incluso siglos.
+
+Reconocer el tiempo nos ayuda a comprender el contexto de la narración y las circunstancias que rodean a sus personajes.
+
+### El conflicto
+
+Es la situación o dificultad que impulsa el desarrollo de la historia. Los personajes deben enfrentarla y tomar decisiones para avanzar.
+
+Por ejemplo, un personaje puede tener que resolver un problema, superar un desafío o alcanzar un objetivo.
+
+## 3. ¿Cómo se organiza una narración?
+
+Generalmente, las narraciones presentan tres momentos que permiten organizar los acontecimientos.
+
+**Inicio**
+
+Se presentan los personajes, el ambiente y las primeras situaciones de la historia. El lector conoce el contexto en el que se desarrollarán los acontecimientos.
+
+**Desarrollo**
+
+Aparece el conflicto y se presentan las acciones que realizan los personajes para enfrentarlo. En esta parte suelen ocurrir los acontecimientos más importantes.
+
+**Desenlace**
+
+Se resuelve el conflicto y se conoce el resultado de las acciones de los personajes. La historia llega a su conclusión.
+
+## 4. Analizamos las acciones y motivaciones de los personajes
+
+Una buena comprensión lectora nos permite ir más allá de reconocer lo que sucede. También podemos analizar por qué suceden los acontecimientos y qué motivaciones tienen los personajes.
+
+Por ejemplo, si un personaje decide compartir su alimento con alguien que tiene hambre, podemos preguntarnos:
+
+- ¿Qué situación motivó su decisión?
+- ¿Qué característica de su personalidad demuestra esta acción?
+- ¿Qué consecuencias puede tener su decisión en la historia?
+
+Al responder estas preguntas, utilizamos información del relato para fundamentar nuestras interpretaciones.
+
+## 5. El lenguaje figurado en las narraciones
+
+En algunas historias encontramos expresiones que utilizan las palabras de manera creativa para transmitir ideas, emociones o imágenes.
+
+Por ejemplo:
+
+**"El viento susurraba entre los árboles".**
+
+El viento no puede hablar ni susurrar como una persona. Esta expresión utiliza una personificación para transmitir la sensación de un viento suave que se mueve entre los árboles.
+
+Otro ejemplo:
+
+**"Tenía un corazón de piedra".**
+
+Esta expresión no significa que el corazón esté hecho de piedra. Se utiliza para representar a una persona que parece no demostrar sentimientos o compasión.
+
+Reconocer estas expresiones nos permite comprender mejor lo que el autor quiere transmitir.
+
+## 6. Pongamos en práctica lo aprendido
+
+### La decisión de Martina
+
+Una mañana de otoño, Martina caminaba por un sendero cercano a su casa. Le gustaba recorrer aquel lugar porque podía observar los árboles, escuchar el canto de los pájaros y disfrutar de la tranquilidad del bosque.
+
+Mientras avanzaba, encontró una pequeña caja de madera junto a un árbol. Al abrirla, descubrió que contenía varias fotografías antiguas y una carta.
+
+La carta estaba dirigida a una persona llamada Elena y explicaba que aquellas fotografías pertenecían a una familia que había vivido en el sector muchos años atrás.
+
+Martina sintió curiosidad por conocer la historia de aquella familia. En lugar de llevarse la caja a su casa, decidió entregarla en la biblioteca del pueblo, donde podrían investigar su origen.
+
+Días después, la bibliotecaria descubrió que las fotografías correspondían a los primeros habitantes de la localidad. Gracias al hallazgo, pudieron organizar una exposición para compartir aquella historia con toda la comunidad.
+
+### Analicemos la narración
+
+- **Personaje principal:** Martina, quien encuentra la caja y decide entregarla en la biblioteca.
+- **Personajes secundarios:** la bibliotecaria y las personas relacionadas con la historia de las fotografías.
+- **Ambiente físico:** un sendero del bosque y la biblioteca del pueblo.
+- **Tiempo:** una mañana de otoño y los días posteriores al hallazgo.
+- **Conflicto o situación central:** el descubrimiento de una caja con fotografías y una carta cuyo origen se desconoce.
+- **Desenlace:** las fotografías permiten conocer parte de la historia de los primeros habitantes de la localidad.
+
+### Reflexionemos
+
+La decisión de Martina demuestra curiosidad y responsabilidad. Al entregar la caja en la biblioteca, permitió que otras personas pudieran investigar y conocer la historia de su comunidad.
+
+Esta situación nos muestra cómo las acciones de un personaje pueden influir en el desarrollo de una historia y beneficiar a otras personas.
+
+## Para recordar
+
+Cuando leemos una narración, podemos comprenderla mejor si identificamos sus personajes, el ambiente, el tiempo y el conflicto.
+
+También es importante analizar las acciones y motivaciones de los personajes, reconocer cómo se relacionan los acontecimientos e interpretar las expresiones que utiliza el autor.
+
+**Leer una historia es descubrir mucho más que los acontecimientos: es comprender las decisiones, emociones y experiencias que dan vida a sus personajes.**""".replace("'", "''")
+
+    // Contenido 3: Ciencias Naturales - La fotosíntesis (Unidad 3)
+    val c3Markdown = """# La fotosíntesis: cómo las plantas producen su alimento
+
+## ¿Cómo obtienen alimento las plantas?
+
+Las plantas son organismos fundamentales para la vida en nuestro planeta. A diferencia de los animales, no necesitan alimentarse de otros seres vivos para obtener la energía química que utilizan para desarrollarse. Producen su propio alimento mediante un proceso llamado **fotosíntesis**.
+
+La fotosíntesis es un proceso mediante el cual las plantas utilizan la energía de la luz solar para transformar agua y dióxido de carbono en azúcares. Durante este proceso también liberan oxígeno al ambiente.
+
+Este fenómeno ocurre principalmente en las hojas, donde se encuentran estructuras celulares llamadas cloroplastos, que contienen clorofila, un pigmento responsable de captar la energía luminosa.
+
+## 1. ¿Qué necesitan las plantas para realizar la fotosíntesis?
+
+Para que la fotosíntesis ocurra, las plantas necesitan tres elementos fundamentales:
+
+### Agua
+
+El agua es absorbida desde el suelo a través de las raíces y transportada hacia las hojas mediante estructuras conductoras de la planta.
+
+Este elemento aporta la materia necesaria para que ocurran las transformaciones químicas propias de la fotosíntesis.
+
+### Dióxido de carbono
+
+Es un gas presente en el aire que ingresa principalmente a través de pequeñas aberturas de las hojas llamadas estomas.
+
+El dióxido de carbono aporta el carbono que la planta utiliza para producir azúcares.
+
+### Energía lumínica
+
+Proviene principalmente del Sol y es captada por la clorofila presente en los cloroplastos.
+
+Esta energía permite que ocurran las transformaciones necesarias para producir azúcares a partir del agua y el dióxido de carbono.
+
+## 2. ¿Qué producen las plantas durante la fotosíntesis?
+
+Como resultado de la fotosíntesis se producen dos elementos importantes:
+
+**Azúcares:** son sustancias que almacenan energía química y que la planta utiliza para obtener energía, crecer y desarrollar sus estructuras.
+
+**Oxígeno:** es liberado al ambiente y puede ser utilizado por numerosos organismos durante la respiración celular.
+
+Por esta razón, la fotosíntesis es un proceso esencial para mantener la vida en los ecosistemas.
+
+## 3. ¿Dónde ocurre la fotosíntesis?
+
+La fotosíntesis ocurre principalmente en las hojas de las plantas.
+
+Dentro de sus células encontramos los cloroplastos, que contienen clorofila. Este pigmento absorbe parte de la luz que llega desde el Sol y permite aprovechar su energía.
+
+Podemos reconocer una relación entre las distintas estructuras de la planta:
+
+- Las raíces absorben agua del suelo.
+- Las hojas incorporan dióxido de carbono del aire.
+- Los cloroplastos captan la energía lumínica.
+- Las hojas liberan oxígeno al ambiente.
+
+## 4. ¿Qué factores pueden influir en la fotosíntesis?
+
+La disponibilidad de agua, dióxido de carbono y energía lumínica influye directamente en la fotosíntesis.
+
+Por ejemplo, una planta que recibe suficiente agua y dióxido de carbono, pero permanece en un lugar con muy poca luz, tendrá dificultades para realizar este proceso a un ritmo adecuado.
+
+Del mismo modo, la falta de agua puede limitar la fotosíntesis, incluso cuando la planta recibe abundante luz solar.
+
+Por eso, estos tres elementos deben estar disponibles para que la planta pueda desarrollar adecuadamente este proceso.
+
+## 5. La fotosíntesis y la historia de la ciencia
+
+El conocimiento científico sobre la fotosíntesis se ha construido gracias al trabajo de diferentes investigadores.
+
+A lo largo del tiempo, científicos como Jan Ingenhousz, Joseph Priestley y Melvin Calvin realizaron aportes importantes para comprender cómo las plantas interactúan con la luz, el aire y otras sustancias.
+
+Sus investigaciones permitieron conocer mejor los procesos que ocurren en las plantas y explicar cómo producen azúcares y liberan oxígeno.
+
+Este conocimiento también ha permitido comprender la importancia de la vegetación para los ecosistemas y para la vida en nuestro planeta.
+
+## 6. Pongamos en práctica lo aprendido
+
+Imaginemos que una estudiante realiza una investigación con dos plantas de características similares.
+
+Ambas reciben la misma cantidad de agua y se encuentran en lugares con condiciones ambientales semejantes. Sin embargo, una de ellas permanece cerca de una ventana con abundante luz solar, mientras que la otra se mantiene durante varios días en un lugar oscuro.
+
+Al observarlas, la estudiante registra diferencias en su desarrollo.
+
+**¿Qué podemos analizar?**
+
+- La luz solar proporciona la energía necesaria para la fotosíntesis.
+- La disponibilidad de agua y dióxido de carbono también influye en este proceso.
+- Una menor disponibilidad de luz puede disminuir la actividad fotosintética.
+- Las observaciones permiten formular preguntas y desarrollar investigaciones experimentales.
+
+## Para recordar
+
+La fotosíntesis es un proceso mediante el cual las plantas utilizan agua, dióxido de carbono y energía lumínica para producir azúcares y liberar oxígeno.
+
+Gracias a este proceso, los organismos fotosintéticos producen materia orgánica que constituye la base de muchas relaciones alimentarias en los ecosistemas.
+
+**Las plantas transforman la energía de la luz solar en energía química almacenada en sustancias que permiten sostener la vida.**""".replace("'", "''")
+
+    // Contenido 4: Ciencias Naturales - Cadenas y redes alimentarias (Unidad 3)
+    val c4Markdown = """# Cadenas y redes alimentarias: cómo se relacionan los seres vivos
+
+## ¿De dónde obtienen energía los seres vivos?
+
+En los ecosistemas, los organismos necesitan obtener energía y materia para crecer, desarrollarse y realizar sus funciones vitales.
+
+Las plantas, las algas y algunos microorganismos pueden producir su propio alimento mediante la fotosíntesis. Otros seres vivos obtienen energía alimentándose de plantas o de otros animales.
+
+De esta manera, los organismos se relacionan mediante la alimentación, formando cadenas y redes alimentarias.
+
+## 1. ¿Qué es una cadena alimentaria?
+
+Una cadena alimentaria representa cómo se transfiere la materia y la energía entre los organismos de un ecosistema a través de la alimentación.
+
+Cada organismo ocupa una posición dentro de esta cadena, dependiendo de cómo obtiene su alimento.
+
+Por ejemplo:
+
+**Pasto → Saltamontes → Rana → Serpiente → Águila**
+
+En esta cadena:
+
+- El pasto produce su propio alimento mediante la fotosíntesis.
+- El saltamontes se alimenta del pasto.
+- La rana se alimenta del saltamontes.
+- La serpiente se alimenta de la rana.
+- El águila se alimenta de la serpiente.
+
+Las flechas indican la dirección en que se transfiere la materia y la energía: desde el organismo que sirve de alimento hacia el organismo que lo consume.
+
+## 2. ¿Qué función cumplen los organismos en una cadena alimentaria?
+
+Podemos clasificar a los organismos según la función que cumplen en la transferencia de materia y energía.
+
+### Productores
+
+Son organismos capaces de producir su propio alimento, principalmente mediante la fotosíntesis.
+
+Por ejemplo:
+- Plantas.
+- Algas.
+- Algunas bacterias.
+
+Los productores constituyen la base de muchas cadenas alimentarias.
+
+### Consumidores
+
+Son organismos que obtienen materia y energía alimentándose de otros seres vivos.
+
+Podemos distinguir:
+
+- **Consumidores primarios:** se alimentan directamente de los productores. Por ejemplo, un conejo que come pasto.
+- **Consumidores secundarios:** se alimentan de consumidores primarios. Por ejemplo, una serpiente que se alimenta de un ratón herbívoro.
+- **Consumidores terciarios:** se alimentan de consumidores secundarios. Por ejemplo, un águila que captura una serpiente.
+
+### Descomponedores
+
+Son organismos que obtienen materia y energía al descomponer restos de seres vivos y desechos orgánicos.
+
+Entre ellos encontramos hongos y bacterias.
+
+Su función es fundamental porque permiten que los nutrientes regresen al ambiente y puedan ser aprovechados nuevamente por los organismos productores.
+
+## 3. ¿Qué diferencia existe entre materia y energía?
+
+En una cadena alimentaria se transfieren tanto materia como energía, pero ambas siguen dinámicas diferentes.
+
+**La materia** circula entre los organismos y el ambiente. Por ejemplo, los nutrientes presentes en el suelo pueden ser absorbidos por las plantas y luego pasar a los animales que se alimentan de ellas. Mediante la descomposición, parte de esa materia regresa al ambiente.
+
+**La energía** ingresa principalmente al ecosistema desde el Sol. Los organismos productores captan parte de esa energía mediante la fotosíntesis y la transfieren a otros organismos a través de la alimentación.
+
+En cada transferencia, una parte de la energía se utiliza en las funciones vitales y se disipa al ambiente en forma de calor.
+
+Por esta razón, la energía disponible disminuye a medida que avanzamos hacia los siguientes niveles de una cadena alimentaria.
+
+## 4. ¿Qué es una red alimentaria?
+
+En la naturaleza, los organismos suelen alimentarse de distintas especies y, al mismo tiempo, pueden servir de alimento para varios organismos.
+
+Por esta razón, muchas cadenas alimentarias se conectan entre sí y forman una **red alimentaria**.
+
+Una red alimentaria representa las múltiples relaciones de alimentación que existen dentro de un ecosistema.
+
+Por ejemplo, en un ecosistema terrestre:
+
+- El pasto puede ser consumido por conejos, saltamontes y ratones.
+- Los saltamontes pueden ser consumidos por ranas y aves.
+- Los ratones pueden ser consumidos por serpientes y águilas.
+- Las serpientes pueden ser consumidas por águilas.
+
+Estas relaciones muestran que los organismos dependen unos de otros para obtener materia y energía.
+
+## 5. ¿Cómo afecta la actividad humana a las redes alimentarias?
+
+Las actividades humanas pueden modificar las condiciones de los ecosistemas y afectar las relaciones alimentarias entre sus organismos.
+
+Algunos ejemplos son:
+
+**Deforestación:** la eliminación de grandes extensiones de vegetación reduce los hábitats y los recursos alimentarios de muchas especies.
+
+**Contaminación:** la presencia de sustancias contaminantes en el agua, el suelo o el aire puede afectar a los productores, consumidores y descomponedores.
+
+**Sobreexplotación de especies:** la captura o extracción excesiva de organismos puede disminuir sus poblaciones y alterar las relaciones alimentarias.
+
+**Introducción de especies exóticas invasoras:** algunas especies introducidas pueden competir con las especies nativas o convertirse en nuevos depredadores, modificando el equilibrio del ecosistema.
+
+Cuando una población disminuye considerablemente, otros organismos que dependen de ella pueden verse afectados. Por eso, las modificaciones en una parte de la red alimentaria pueden producir consecuencias en todo el ecosistema.
+
+## 6. ¿Cómo podemos proteger las redes alimentarias?
+
+El cuidado de los ecosistemas permite mantener las relaciones entre los seres vivos y conservar la biodiversidad.
+
+Algunas acciones que contribuyen a su protección son:
+
+- Evitar la contaminación de ríos, lagos y suelos.
+- Proteger los bosques y la vegetación nativa.
+- Respetar las áreas naturales protegidas.
+- Evitar la extracción indiscriminada de especies.
+- Participar en actividades de conservación y restauración ambiental.
+
+Cada una de estas acciones contribuye a mantener las condiciones necesarias para que los organismos puedan desarrollarse y relacionarse.
+
+## 7. Pongamos en práctica lo aprendido
+
+Imaginemos un ecosistema donde encontramos pasto, conejos, zorros y hongos descomponedores.
+
+Podemos representar algunas de sus relaciones de la siguiente manera:
+
+**Pasto → Conejo → Zorro**
+
+Además, cuando los organismos mueren, sus restos pueden ser descompuestos por los hongos, permitiendo que los nutrientes regresen al suelo.
+
+Ahora imaginemos que una actividad humana provoca la desaparición de gran parte del pasto.
+
+¿Qué podría ocurrir?
+
+- Los conejos tendrían menos alimento disponible.
+- La población de conejos podría disminuir.
+- Los zorros podrían encontrar menos alimento.
+- Las relaciones alimentarias del ecosistema se verían modificadas.
+
+Este ejemplo demuestra que los organismos están conectados y que los cambios en una población pueden afectar a otras especies.
+
+## Para recordar
+
+Las cadenas y redes alimentarias representan las relaciones mediante las cuales los seres vivos transfieren materia y energía.
+
+Los productores, consumidores y descomponedores cumplen funciones fundamentales para el funcionamiento de los ecosistemas.
+
+Las actividades humanas pueden modificar estas relaciones, por lo que proteger los ambientes naturales es esencial para conservar la biodiversidad.
+
+**En un ecosistema, cada organismo cumple una función y forma parte de una red de relaciones que sostiene la vida.**""".replace("'", "''")
+
+    db.execSQL("INSERT OR IGNORE INTO contenido (contenido_id, descripcion, unidad_id, estado_id) VALUES (1, '$c1Markdown', 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO contenido (contenido_id, descripcion, unidad_id, estado_id) VALUES (2, '$c2Markdown', 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO contenido (contenido_id, descripcion, unidad_id, estado_id) VALUES (3, '$c3Markdown', 3, 4)")
+    db.execSQL("INSERT OR IGNORE INTO contenido (contenido_id, descripcion, unidad_id, estado_id) VALUES (4, '$c4Markdown', 3, 4)")
+
+    // 16. ObjetivoAprendizajeContenido
+    // Contenido 1 (Lenguaje C1): LE06 OA 02 (id 2), LE06 OA 06 (id 6), LE06 OA 08 (id 8)
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (1, 1, 2, 1)")
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (2, 1, 6, 1)")
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (3, 1, 8, 1)")
+
+    // Contenido 2 (Lenguaje C2): LE06 OA 03 (id 3), LE06 OA 04 (id 4)
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (4, 2, 3, 1)")
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (5, 2, 4, 1)")
+
+    // Contenido 3 (Ciencias C1): CN06 OA 01 (id 13)
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (6, 3, 13, 3)")
+
+    // Contenido 4 (Ciencias C2): CN06 OA 02 (id 14), CN06 OA 03 (id 15)
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (7, 4, 14, 3)")
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (8, 4, 15, 3)")
+
+    // 17. Actividades (1 por contenido)
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (1, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 1, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (2, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 2, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (3, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 3, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, habilitada, contenido_id, tipo_actividad_id, estado_id) VALUES (4, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 1, 4, 1, 4)")
+
+    // 18. Preguntas (3 por actividad, 12 en total)
+    // Actividad 1 (Lenguaje C1)
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (1, '¿Cuál es el principal propósito de activar nuestros conocimientos previos antes de leer un texto?', NULL)")
+    val p2Enunciado = """Lee el siguiente fragmento:
+
+"Martín observó por la ventana. El cielo estaba oscuro, los árboles se movían con fuerza y las primeras gotas golpeaban el techo. Rápidamente, fue a buscar su chaqueta impermeable".
+
+¿Qué podemos inferir a partir de la información del texto?""".replace("'", "''")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (2, '$p2Enunciado', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (3, '¿Cuál de las siguientes opciones describe mejor lo que significa elaborar un resumen?', NULL)")
+
+    // Actividad 2 (Lenguaje C2)
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (4, '¿Cuál es la función principal del conflicto dentro de una narración?', NULL)")
+    val p5Enunciado = """Lee el siguiente fragmento:
+
+"Pedro encontró una billetera en el patio de su escuela. Aunque necesitaba dinero para comprar materiales, decidió entregarla a su profesora para que pudiera encontrar a su dueño".
+
+¿Qué podemos concluir sobre la actitud de Pedro?""".replace("'", "''")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (5, '$p5Enunciado', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (6, '¿Qué significa la expresión ''El sol sonreía sobre los campos'' dentro de una narración?', NULL)")
+
+    // Actividad 3 (Ciencias C1)
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (7, '¿Cuáles son los tres elementos fundamentales que necesitan las plantas para realizar la fotosíntesis?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (8, '¿Qué función cumple la clorofila durante la fotosíntesis?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (9, 'Una planta recibe suficiente agua y dióxido de carbono, pero permanece varios días en un lugar con muy poca luz. ¿Qué consecuencia es más probable?', NULL)")
+
+    // Actividad 4 (Ciencias C2)
+    val p10Enunciado = """En la siguiente cadena alimentaria:
+
+Pasto → Saltamontes → Rana → Serpiente
+
+¿Qué función cumple el saltamontes?""".replace("'", "''")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (10, '$p10Enunciado', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (11, '¿Por qué se considera que las redes alimentarias representan mejor las relaciones de alimentación de un ecosistema que las cadenas alimentarias?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (12, 'En un bosque se produce una deforestación que reduce considerablemente la cantidad de plantas disponibles. ¿Cuál podría ser una consecuencia de esta situación?', NULL)")
+
+    // 19. PreguntaActividad
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (1, 1, 1)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (2, 1, 2)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (3, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (4, 2, 4)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (5, 2, 5)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (6, 2, 6)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (7, 3, 7)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (8, 3, 8)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (9, 3, 9)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (10, 4, 10)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (11, 4, 11)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (12, 4, 12)")
+
+    // 20. Alternativas (4 por pregunta, 48 en total)
+    // Pregunta 1 (Respuesta B)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (1, 'Memorizar todas las palabras que aparecen en la lectura.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (2, 'Anticipar el tema y relacionar la información con lo que ya sabemos.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (3, 'Identificar inmediatamente todas las ideas secundarias.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (4, 'Elaborar un resumen antes de comenzar la lectura.', 0, NULL)")
+
+    // Pregunta 2 (Respuesta C)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (5, 'Martín tenía que ir a comprar una chaqueta nueva.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (6, 'Martín estaba esperando a un amigo.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (7, 'Se aproximaba una tormenta o estaba comenzando a llover intensamente.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (8, 'Martín quería salir a jugar con sus amigos.', 0, NULL)")
+
+    // Pregunta 3 (Respuesta B)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (9, 'Copiar todas las oraciones del texto en el mismo orden.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (10, 'Expresar las ideas principales utilizando nuestras propias palabras.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (11, 'Escribir solamente nuestra opinión sobre el tema.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (12, 'Seleccionar las palabras más difíciles y buscar su significado.', 0, NULL)")
+
+    // Pregunta 4 (Respuesta C)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (13, 'Describir físicamente a todos los personajes.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (14, 'Presentar la época en que fue escrito el relato.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (15, 'Introducir una situación o dificultad que impulsa el desarrollo de la historia.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (16, 'Explicar la moraleja al comienzo del relato.', 0, NULL)")
+
+    // Pregunta 5 (Respuesta B)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (17, 'Es una persona distraída que suele perder sus pertenencias.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (18, 'Demuestra honestidad al decidir devolver algo que no le pertenece.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (19, 'Está preocupado porque no tiene materiales escolares.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (20, 'Quiere recibir una recompensa por parte de su profesora.', 0, NULL)")
+
+    // Pregunta 6 (Respuesta B)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (21, 'Que el sol tiene un rostro y puede expresar emociones.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (22, 'Que los campos estaban iluminados por la luz del sol, utilizando una personificación.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (23, 'Que una persona estaba sonriendo mientras observaba el sol.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (24, 'Que el sol estaba desapareciendo detrás de las montañas.', 0, NULL)")
+
+    // Pregunta 7 (Respuesta B)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (25, 'Oxígeno, azúcar y energía térmica.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (26, 'Agua, dióxido de carbono y energía lumínica.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (27, 'Agua, oxígeno y sales minerales.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (28, 'Dióxido de carbono, oxígeno y energía térmica.', 0, NULL)")
+
+    // Pregunta 8 (Respuesta A)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (29, 'Absorber la energía luminosa para que pueda utilizarse en la fotosíntesis.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (30, 'Transportar agua desde las raíces hasta las hojas.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (31, 'Liberar dióxido de carbono hacia el ambiente.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (32, 'Transformar directamente el oxígeno en azúcar.', 0, NULL)")
+
+    // Pregunta 9 (Respuesta C)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (33, 'La planta producirá más oxígeno que una planta iluminada.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (34, 'La planta dejará de necesitar agua para desarrollarse.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (35, 'La actividad fotosintética disminuirá debido a la menor disponibilidad de energía lumínica.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (36, 'La planta comenzará a producir dióxido de carbono mediante la fotosíntesis.', 0, NULL)")
+
+    // Pregunta 10 (Respuesta B)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (37, 'Productor.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (38, 'Consumidor primario.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (39, 'Consumidor secundario.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (40, 'Descomponedor.', 0, NULL)")
+
+    // Pregunta 11 (Respuesta C)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (41, 'Porque muestran que todos los organismos se alimentan exclusivamente de plantas.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (42, 'Porque representan una única secuencia de alimentación entre organismos.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (43, 'Porque muestran las múltiples conexiones entre diferentes cadenas alimentarias.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (44, 'Porque explican solamente cómo los descomponedores obtienen energía.', 0, NULL)")
+
+    // Pregunta 12 (Respuesta D)
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (45, 'Los consumidores primarios tendrían más alimento disponible.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (46, 'Las redes alimentarias permanecerían sin cambios.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (47, 'Los productores aumentarían automáticamente su población.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (48, 'Los herbívoros podrían disminuir por la falta de alimento, afectando también a sus depredadores.', 1, NULL)")
+
+    // 21. AlternativaPregunta (vinculación)
+    for (i in 1..48) {
+        val preguntaId = ((i - 1) / 4) + 1
+        db.execSQL("INSERT OR IGNORE INTO alternativa_pregunta (id, pregunta_id, alternativa_id) VALUES ($i, $preguntaId, $i)")
+    }
 }
 
 @Database(
@@ -241,7 +916,7 @@ fun seedInitialData(db: SupportSQLiteDatabase) {
         InformePedagogicoEntity::class,
         DetalleInformePedagogicoEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -268,7 +943,7 @@ abstract class MpazDatabase : RoomDatabase() {
                     MpazDatabase::class.java,
                     "mpaz_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_1_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_1_3, MIGRATION_3_4, MIGRATION_1_4, MIGRATION_2_4)
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)

@@ -89,6 +89,9 @@ com.ccstudio.mpaz_pro_6/
    - `UsuarioResponse` y `UsuarioResumen` **nunca** exponen la contraseña ni `passwordHash`.
    - `UsuarioRequest` sobrescribe `toString()` para imprimir `password='***'` e impedir fugas en logs.
    - Toda la navegación interna está protegida por `SessionManager` (DataStore Preferences) y `NavDestination.isRouteAllowedForRole` mediante `ProtectedScreen`. Para mayores detalles consultar `specs/5_seguridad.md`.
+5. **Navegación y Gestión de Cabecera / Menú Inferior:**
+   - Las vistas principales (Top-Level) muestran la `BottomBar` y no llevan botón de retroceso.
+   - Las vistas secundarias o de detalle (`isTopLevel = false`) ocultan automáticamente la `BottomBar` y muestran la flecha de retroceso (`ArrowBack`) en la `TopAppBar`. Para mayores detalles consultar `specs/6_navegacion.md`.
 
 ---
 
@@ -101,17 +104,17 @@ com.ccstudio.mpaz_pro_6/
   - Tras realizar cambios significativos en Room, DTOs o UI, validar la compilación ejecutando:
     `gradle_build("app:compileDebugKotlin")` o `gradle_build("app:assembleDebug")`.
 - **CONSISTENCIA DE CONVENCIONES:**
-  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md`, `specs/4_constantes_y_credenciales.md` y `specs/5_seguridad.md`).
+  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md`, `specs/4_constantes_y_credenciales.md`, `specs/5_seguridad.md` y `specs/6_navegacion.md`).
 
 ---
 
 ## 6. Credenciales de Prueba y Constantes
 
-Para el desarrollo y pruebas de la aplicación, la base de datos local (versión 3) incluye datos semilla cargados automáticamente. Para más detalles, consultar `specs/4_constantes_y_credenciales.md` y `specs/5_seguridad.md`.
+Para el desarrollo y pruebas de la aplicación, la base de datos local (versión 3) incluye datos semilla cargados automáticamente. Para más detalles, consultar `specs/4_constantes_y_credenciales.md`, `specs/5_seguridad.md` y `specs/6_navegacion.md`.
 
 - **Contraseña universal de prueba:** `mpaz123`
 - **Usuarios de prueba:**
   - UTP: `utp` (Rol: `UTP`)
   - Docentes: `docente`, `docente2`, `docente3`, `docente4` (Rol: `DOCENTE`)
   - Estudiantes: `alumno`, `estudiante2`, `estudiante3`, `estudiante4` (Rol: `ESTUDIANTE`)
-- **Base de Datos Local:** `MpazDatabase` (Versión 3, migraciones `MIGRATION_1_2`, `MIGRATION_2_3`, `MIGRATION_1_3`).
+- **Base de Datos Local:** `MpazDatabase` (Versión 4, migraciones `MIGRATION_1_2`, `MIGRATION_2_3`, `MIGRATION_1_3`, `MIGRATION_3_4`, `MIGRATION_1_4`, `MIGRATION_2_4`).

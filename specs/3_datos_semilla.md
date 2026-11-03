@@ -203,3 +203,16 @@ Demostrar que comprenden la multiplicación y la división de decimales por núm
 * MA06 OA 08
 Resolver problemas rutinarios y no rutinarios que involucren adiciones y sustracciones de fracciones propias, impropias, números mixtos o decimales hasta la milésima.
 
+5. Contenidos y Actividades (Migración Versión 4)
+- Lenguaje y Comunicación (Unidad: Lectura - Comprensión)
+  - Contenido 1 (ID 1): "Estrategias para comprender lo que leemos" (Markdown). Evaluando LE06 OA 02, LE06 OA 06, LE06 OA 08.
+    - Actividad 1 (ID 1): 3 Preguntas de opción múltiple con 4 alternativas cada una.
+  - Contenido 2 (ID 2): "Comprendemos y analizamos textos narrativos" (Markdown). Evaluando LE06 OA 03, LE06 OA 04.
+    - Actividad 2 (ID 2): 3 Preguntas de opción múltiple con 4 alternativas cada una.
+- Ciencias Naturales (Unidad: Ciencias de la Vida)
+  - Contenido 3 (ID 3): "La fotosíntesis: cómo las plantas producen su alimento" (Markdown). Evaluando CN06 OA 01.
+    - Actividad 3 (ID 3): 3 Preguntas de opción múltiple con 4 alternativas cada una.
+  - Contenido 4 (ID 4): "Cadenas y redes alimentarias: cómo se relacionan los seres vivos" (Markdown). Evaluando CN06 OA 02, CN06 OA 03.
+    - Actividad 4 (ID 4): 3 Preguntas de opción múltiple con 4 alternativas cada una.
+
+
