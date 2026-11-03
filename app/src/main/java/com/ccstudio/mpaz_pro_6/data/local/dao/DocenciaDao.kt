@@ -6,9 +6,17 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Embedded
+import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
+
+data class AsignaturaConDocente(
+    @Embedded val asignatura: AsignaturaEntity,
+    @Embedded(prefix = "doc_") val docente: UsuarioEntity?
+)
 
 @Dao
 interface DocenciaDao {
@@ -22,6 +30,33 @@ interface DocenciaDao {
     @Query("SELECT * FROM asignatura_curso WHERE curso_id = :cursoId")
     suspend fun getAsignaturasByCursoId(cursoId: Long): List<AsignaturaCursoEntity>
 
+    @Query("SELECT a.* FROM asignatura a INNER JOIN asignatura_curso ac ON a.asignatura_id = ac.asignatura_id WHERE ac.curso_id = :cursoId")
+    suspend fun getAsignaturasEntityByCursoId(cursoId: Long): List<com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity>
+
+    @Query("""
+        SELECT a.*, 
+               u.usuario_id AS doc_usuario_id,
+               u.nombre_usuario AS doc_nombre_usuario,
+               u.password_hash AS doc_password_hash,
+               u.pnombre AS doc_pnombre,
+               u.snombre AS doc_snombre,
+               u.apaterno AS doc_apaterno,
+               u.amaterno AS doc_amaterno,
+               u.rol_id AS doc_rol_id,
+               u.activo AS doc_activo
+        FROM asignatura a
+        INNER JOIN asignatura_curso ac ON a.asignatura_id = ac.asignatura_id
+        LEFT JOIN usuario u ON ac.docente_id = u.usuario_id
+        WHERE ac.curso_id = :cursoId
+    """)
+    suspend fun getAsignaturasConDocenteByCursoId(cursoId: Long): List<AsignaturaConDocente>
+
+    @Query("UPDATE asignatura_curso SET docente_id = :docenteId WHERE curso_id = :cursoId AND asignatura_id = :asignaturaId")
+    suspend fun updateDocenteInAsignaturaCurso(cursoId: Long, asignaturaId: Long, docenteId: Long?)
+
+    @Query("DELETE FROM asignatura_curso WHERE curso_id = :cursoId AND asignatura_id = :asignaturaId")
+    suspend fun deleteAsignaturaCursoByCursoYAsignatura(cursoId: Long, asignaturaId: Long)
+
     @Query("SELECT * FROM asignatura_curso WHERE asignatura_id = :asignaturaId")
     suspend fun getCursosByAsignaturaId(asignaturaId: Long): List<AsignaturaCursoEntity>
 
@@ -32,8 +67,17 @@ interface DocenciaDao {
     @Delete
     suspend fun deleteUsuarioCurso(entity: UsuarioCursoEntity)
 
+    @Query("DELETE FROM usuario_curso WHERE curso_id = :cursoId AND usuario_id = :usuarioId")
+    suspend fun deleteUsuarioCursoByCursoYUsuario(cursoId: Long, usuarioId: Long)
+
     @Query("SELECT * FROM usuario_curso WHERE curso_id = :cursoId")
     suspend fun getUsuariosByCursoId(cursoId: Long): List<UsuarioCursoEntity>
+
+    @Query("SELECT u.* FROM usuario u INNER JOIN usuario_curso uc ON u.usuario_id = uc.usuario_id WHERE uc.curso_id = :cursoId AND u.rol_id = 2")
+    suspend fun getDocentesByCursoId(cursoId: Long): List<com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity>
+
+    @Query("SELECT u.* FROM usuario u INNER JOIN usuario_curso uc ON u.usuario_id = uc.usuario_id WHERE uc.curso_id = :cursoId AND u.rol_id = 3")
+    suspend fun getEstudiantesByCursoId(cursoId: Long): List<com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity>
 
     @Query("SELECT * FROM usuario_curso WHERE usuario_id = :usuarioId")
     suspend fun getCursosByUsuarioId(usuarioId: Long): List<UsuarioCursoEntity>

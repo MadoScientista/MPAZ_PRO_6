@@ -39,6 +39,12 @@ sealed class NavDestination(
     data object VistaPreviaActividad : NavDestination("actividad_vistaprevia/{actividadId}", "Vista Previa de Actividad", isTopLevel = false) {
         fun createRoute(actividadId: Long) = "actividad_vistaprevia/$actividadId"
     }
+    data object DetalleCurso : NavDestination("curso_detalle/{cursoId}", "Detalle del Curso", isTopLevel = false) {
+        fun createRoute(cursoId: Long) = "curso_detalle/$cursoId"
+    }
+    data object DetalleAsignaturaCurso : NavDestination("curso_asignatura_detalle/{cursoId}/{asignaturaId}", "Detalle de Asignatura", isTopLevel = false) {
+        fun createRoute(cursoId: Long, asignaturaId: Long) = "curso_asignatura_detalle/$cursoId/$asignaturaId"
+    }
 
     companion object {
         fun getNavItemsForRole(rol: String): List<NavDestination> {
@@ -74,12 +80,11 @@ sealed class NavDestination(
 
             // Sub-rutas permitidas por rol
             return when (rol.uppercase()) {
-                "UTP" -> route.startsWith("unidad_detalle/") ||
-                         route.startsWith("contenido_detalle/") ||
-                         route.startsWith("actividad_vistaprevia/")
-                "DOCENTE" -> route.startsWith("unidad_detalle/") ||
-                             route.startsWith("contenido_detalle/") ||
-                             route.startsWith("actividad_vistaprevia/")
+                "UTP", "DOCENTE" -> route.startsWith("unidad_detalle/") ||
+                                    route.startsWith("contenido_detalle/") ||
+                                    route.startsWith("actividad_vistaprevia/") ||
+                                    route.startsWith("curso_detalle/") ||
+                                    route.startsWith("curso_asignatura_detalle/")
                 "ESTUDIANTE" -> route.startsWith("contenido_detalle/") ||
                                 route.startsWith("actividad_vistaprevia/")
                 else -> false

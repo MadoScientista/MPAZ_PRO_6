@@ -14,7 +14,8 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
     indices = [
         Index(value = ["curso_id", "asignatura_id"], unique = true),
         Index(value = ["curso_id"]),
-        Index(value = ["asignatura_id"])
+        Index(value = ["asignatura_id"]),
+        Index(value = ["docente_id"])
     ],
     foreignKeys = [
         ForeignKey(
@@ -28,6 +29,12 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
             parentColumns = ["asignatura_id"],
             childColumns = ["asignatura_id"],
             onDelete = ForeignKey.NO_ACTION
+        ),
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["usuario_id"],
+            childColumns = ["docente_id"],
+            onDelete = ForeignKey.SET_NULL
         )
     ]
 )
@@ -38,7 +45,9 @@ data class AsignaturaCursoEntity(
     @ColumnInfo(name = "curso_id")
     val cursoId: Long,
     @ColumnInfo(name = "asignatura_id")
-    val asignaturaId: Long
+    val asignaturaId: Long,
+    @ColumnInfo(name = "docente_id")
+    val docenteId: Long? = null
 )
 
 @Entity(

@@ -226,6 +226,8 @@ Decisiones específicas:
 | `UsuarioCurso` | `UsuarioCursoRequest` | — | `UsuarioCursoResponse` | `UsuarioCursoMapper` |
 | `ActividadCurso` | `ActividadCursoRequest` | `ActividadCursoUpdateRequest` | `ActividadCursoResponse` | `ActividadCursoMapper` |
 
+`AsignaturaCursoRequest` recibe `cursoId`, `asignaturaId` y `docenteId` opcional. `AsignaturaCursoResponse` incluye `curso`, `asignatura` y `docente` (`UsuarioResumen` opcional).
+
 `UsuarioCursoRequest` no distingue rol ni tipo de participación; esa regla se
 valida en servicio.
 

@@ -117,4 +117,4 @@ Para el desarrollo y pruebas de la aplicación, la base de datos local (versión
   - UTP: `utp` (Rol: `UTP`)
   - Docentes: `docente`, `docente2`, `docente3`, `docente4` (Rol: `DOCENTE`)
   - Estudiantes: `alumno`, `estudiante2`, `estudiante3`, `estudiante4` (Rol: `ESTUDIANTE`)
-- **Base de Datos Local:** `MpazDatabase` (Versión 4, migraciones `MIGRATION_1_2`, `MIGRATION_2_3`, `MIGRATION_1_3`, `MIGRATION_3_4`, `MIGRATION_1_4`, `MIGRATION_2_4`).
+- **Base de Datos Local:** `MpazDatabase` (Versión 5, migraciones `MIGRATION_1_2`, `MIGRATION_2_3`, `MIGRATION_1_3`, `MIGRATION_3_4`, `MIGRATION_1_4`, `MIGRATION_2_4`, `MIGRATION_4_5`, `MIGRATION_1_5`, `MIGRATION_2_5`, `MIGRATION_3_5`).

@@ -31,6 +31,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoRecursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.evaluacion.IntentoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.CursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.NivelEntity
@@ -127,6 +128,17 @@ object ResumenMapper {
         habilitada = habilitada,
         visible = visible,
         maxIntentos = maxIntentos
+    )
+
+    fun AsignaturaCursoEntity.toResponse(
+        curso: CursoResumen,
+        asignatura: AsignaturaResumen,
+        docente: UsuarioResumen? = null
+    ) = com.ccstudio.mpaz_pro_6.data.dto.docencia.AsignaturaCursoResponse(
+        id = id,
+        curso = curso,
+        asignatura = asignatura,
+        docente = docente
     )
 
     fun PreguntaEntity.toResumen() = PreguntaResumen(

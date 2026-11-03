@@ -32,6 +32,9 @@ import com.ccstudio.mpaz_pro_6.ui.screens.InicioScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.RestrictedAccessScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.ActividadVistaPreviaScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.ContenidoDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.CursoAsignaturaDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.CursoDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.CursosListScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.RevisionesPendientesScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UnidadDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
@@ -70,6 +73,8 @@ fun HomeScreen(
                 currentRoute.startsWith("unidad_detalle/") -> NavDestination.DetalleUnidad.title
                 currentRoute.startsWith("contenido_detalle/") -> NavDestination.DetalleContenido.title
                 currentRoute.startsWith("actividad_vistaprevia/") -> NavDestination.VistaPreviaActividad.title
+                currentRoute.startsWith("curso_detalle/") -> NavDestination.DetalleCurso.title
+                currentRoute.startsWith("curso_asignatura_detalle/") -> NavDestination.DetalleAsignaturaCurso.title
                 else -> "MPAZ PRO"
             }
     } else {
@@ -231,7 +236,55 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.Cursos.title)
+                    CursosListScreen(
+                        viewModel = utpViewModel,
+                        onCourseClick = { cursoId ->
+                            navController.navigate(NavDestination.DetalleCurso.createRoute(cursoId))
+                        },
+                    )
+                }
+            }
+            composable(
+                route = NavDestination.DetalleCurso.route,
+                arguments = listOf(navArgument("cursoId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val cursoId = backStackEntry.arguments?.getLong("cursoId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.DetalleCurso.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    CursoDetalleScreen(
+                        cursoId = cursoId,
+                        viewModel = utpViewModel,
+                        onAsignaturaClick = { asignaturaId ->
+                            navController.navigate(NavDestination.DetalleAsignaturaCurso.createRoute(cursoId, asignaturaId))
+                        },
+                    )
+                }
+            }
+            composable(
+                route = NavDestination.DetalleAsignaturaCurso.route,
+                arguments = listOf(
+                    navArgument("cursoId") { type = NavType.LongType },
+                    navArgument("asignaturaId") { type = NavType.LongType },
+                ),
+            ) { backStackEntry ->
+                val cursoId = backStackEntry.arguments?.getLong("cursoId") ?: 0L
+                val asignaturaId = backStackEntry.arguments?.getLong("asignaturaId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.DetalleAsignaturaCurso.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    CursoAsignaturaDetalleScreen(
+                        cursoId = cursoId,
+                        asignaturaId = asignaturaId,
+                        viewModel = utpViewModel,
+                        onUnidadClick = { unidadId ->
+                            navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId))
+                        },
+                    )
                 }
             }
             composable(NavDestination.Docentes.route) {

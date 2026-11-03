@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "2d28345f1406f0b98932cdf91401e53f",
+    "identityHash": "b9f61e83f180fabb3224e36488a8080d",
     "entities": [
       {
         "tableName": "rol",
@@ -1268,7 +1268,7 @@
       },
       {
         "tableName": "asignatura_curso",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `curso_id` INTEGER NOT NULL, `asignatura_id` INTEGER NOT NULL, FOREIGN KEY(`curso_id`) REFERENCES `curso`(`curso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`asignatura_id`) REFERENCES `asignatura`(`asignatura_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `curso_id` INTEGER NOT NULL, `asignatura_id` INTEGER NOT NULL, `docente_id` INTEGER, FOREIGN KEY(`curso_id`) REFERENCES `curso`(`curso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`asignatura_id`) REFERENCES `asignatura`(`asignatura_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`docente_id`) REFERENCES `usuario`(`usuario_id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1287,6 +1287,11 @@
             "columnName": "asignatura_id",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "docenteId",
+            "columnName": "docente_id",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -1323,6 +1328,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_asignatura_curso_asignatura_id` ON `${TABLE_NAME}` (`asignatura_id`)"
+          },
+          {
+            "name": "index_asignatura_curso_docente_id",
+            "unique": false,
+            "columnNames": [
+              "docente_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_asignatura_curso_docente_id` ON `${TABLE_NAME}` (`docente_id`)"
           }
         ],
         "foreignKeys": [
@@ -1346,6 +1360,17 @@
             ],
             "referencedColumns": [
               "asignatura_id"
+            ]
+          },
+          {
+            "table": "usuario",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "docente_id"
+            ],
+            "referencedColumns": [
+              "usuario_id"
             ]
           }
         ]
@@ -1925,7 +1950,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2d28345f1406f0b98932cdf91401e53f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b9f61e83f180fabb3224e36488a8080d')"
     ]
   }
 }

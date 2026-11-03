@@ -116,6 +116,10 @@ interface CurriculoDao {
     @Query("SELECT * FROM unidad WHERE unidad_id = :id")
     suspend fun getUnidadConDetallesById(id: Long): UnidadConDetalles?
 
+    @Transaction
+    @Query("SELECT * FROM unidad WHERE asignatura_id = :asignaturaId")
+    suspend fun getUnidadesConDetallesByAsignaturaId(asignaturaId: Long): List<UnidadConDetalles>
+
     @Query("UPDATE unidad SET estado_id = :nuevoEstadoId WHERE unidad_id = :unidadId")
     suspend fun updateUnidadEstado(unidadId: Long, nuevoEstadoId: Long)
 

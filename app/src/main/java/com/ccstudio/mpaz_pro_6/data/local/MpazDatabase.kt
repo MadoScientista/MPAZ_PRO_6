@@ -77,7 +77,12 @@ val MIGRATION_2_4 = object : Migration(2, 4) {
 
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        seedInitialData(db)
+        db.execSQL("ALTER TABLE asignatura_curso ADD COLUMN docente_id INTEGER REFERENCES usuario(usuario_id) ON DELETE SET NULL")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_asignatura_curso_docente_id ON asignatura_curso (docente_id)")
+        db.execSQL("UPDATE asignatura_curso SET docente_id = 2 WHERE id IN (1, 5)")
+        db.execSQL("UPDATE asignatura_curso SET docente_id = 3 WHERE id IN (2, 6)")
+        db.execSQL("UPDATE asignatura_curso SET docente_id = 4 WHERE id IN (3, 7)")
+        db.execSQL("UPDATE asignatura_curso SET docente_id = 5 WHERE id IN (4, 8)")
     }
 }
 
@@ -157,14 +162,14 @@ fun seedInitialData(db: SupportSQLiteDatabase) {
     db.execSQL("INSERT OR IGNORE INTO unidad (unidad_id, nombre, asignatura_id, estado_id) VALUES (4, 'Historia', 4, 4)")
 
     // 11. AsignaturaCurso
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (1, 1, 1)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (2, 1, 2)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (3, 1, 3)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (4, 1, 4)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (5, 2, 1)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (6, 2, 2)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (7, 2, 3)")
-    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id) VALUES (8, 2, 4)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (1, 1, 1, 2)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (2, 1, 2, 3)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (3, 1, 3, 4)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (4, 1, 4, 5)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (5, 2, 1, 2)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (6, 2, 2, 3)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (7, 2, 3, 4)")
+    db.execSQL("INSERT OR IGNORE INTO asignatura_curso (id, curso_id, asignatura_id, docente_id) VALUES (8, 2, 4, 5)")
 
     // 12. UsuarioCurso
     db.execSQL("INSERT OR IGNORE INTO usuario_curso (id, usuario_id, curso_id) VALUES (1, 2, 1)")

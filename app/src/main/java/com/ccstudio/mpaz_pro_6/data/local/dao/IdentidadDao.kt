@@ -78,6 +78,14 @@ interface IdentidadDao {
     @Query("SELECT * FROM curso")
     suspend fun getAllCursos(): List<CursoEntity>
 
+    @androidx.room.Transaction
+    @Query("SELECT * FROM curso")
+    suspend fun getCursosConDetalles(): List<CursoConDetalles>
+
+    @androidx.room.Transaction
+    @Query("SELECT * FROM curso WHERE curso_id = :id")
+    suspend fun getCursoConDetallesById(id: Long): CursoConDetalles?
+
     // Usuario
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUsuario(usuario: UsuarioEntity): Long
@@ -96,4 +104,10 @@ interface IdentidadDao {
 
     @Query("SELECT * FROM usuario")
     suspend fun getAllUsuarios(): List<UsuarioEntity>
+
+    @Query("SELECT * FROM usuario WHERE rol_id = 2 AND activo = 1")
+    suspend fun getAllDocentes(): List<UsuarioEntity>
+
+    @Query("SELECT * FROM usuario WHERE rol_id = 3 AND activo = 1")
+    suspend fun getAllEstudiantes(): List<UsuarioEntity>
 }

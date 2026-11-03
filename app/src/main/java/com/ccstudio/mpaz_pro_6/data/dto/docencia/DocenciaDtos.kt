@@ -9,14 +9,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AsignaturaCursoRequest(
     val cursoId: Long,
-    val asignaturaId: Long
+    val asignaturaId: Long,
+    val docenteId: Long? = null
 )
 
 @Serializable
 data class AsignaturaCursoResponse(
     val id: Long,
     val curso: CursoResumen,
-    val asignatura: AsignaturaResumen
+    val asignatura: AsignaturaResumen,
+    val docente: UsuarioResumen? = null
 )
 
 @Serializable
