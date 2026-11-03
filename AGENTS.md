@@ -46,7 +46,7 @@ com.ccstudio.mpaz_pro_6/
 │   │   ├── evaluacion/     # DTOs y Resúmenes de Evaluación
 │   │   └── informe/        # DTOs y Resúmenes de Informe
 │   ├── local/
-│   │   ├── MpazDatabase.kt  # Base de datos Room (Versión 1, exportSchema = true)
+│   │   ├── MpazDatabase.kt  # Base de datos Room (Versión 3, exportSchema = true)
 │   │   ├── dao/
 │   │   │   ├── IdentidadDao.kt
 │   │   │   ├── CurriculoDao.kt
@@ -94,4 +94,18 @@ com.ccstudio.mpaz_pro_6/
   - Tras realizar cambios significativos en Room o DTOs, validar la compilación ejecutando:
     `gradle_build("app:compileDebugKotlin")` o `gradle_build("app:assembleDebug")`.
 - **CONSISTENCIA DE CONVENCIONES:**
-  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md` y `specs/2_dtos.md`).
+  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md` y `specs/4_constantes_y_credenciales.md`).
+
+---
+
+## 6. Credenciales de Prueba y Constantes
+
+Para el desarrollo y pruebas de la aplicación, la base de datos local (versión 3) incluye datos semilla cargados automáticamente. Para más detalles, consultar `specs/4_constantes_y_credenciales.md`.
+
+- **Contraseña universal de prueba:** `mpaz123`
+- **Usuarios de prueba:**
+  - UTP: `utp` (Rol: `UTP`)
+  - Docentes: `docente`, `docente2`, `docente3`, `docente4` (Rol: `DOCENTE`)
+  - Estudiantes: `alumno`, `estudiante2`, `estudiante3`, `estudiante4` (Rol: `ESTUDIANTE`)
+- **Base de Datos Local:** `MpazDatabase` (Versión 3, migraciones `MIGRATION_1_2`, `MIGRATION_2_3`, `MIGRATION_1_3`).
+
