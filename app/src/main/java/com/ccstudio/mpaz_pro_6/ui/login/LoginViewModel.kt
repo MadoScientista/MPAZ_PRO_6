@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
+import com.ccstudio.mpaz_pro_6.data.local.preferences.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,16 +18,33 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val loggedInRol: String? = null,
-    val resetMessage: String? = null
+    val loggedInUserId: Long? = null,
+    val loggedInUsername: String? = null,
+    val resetMessage: String? = null,
 )
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = MpazDatabase.getDatabase(application)
     private val identidadDao = db.identidadDao()
+    private val sessionManager = SessionManager(application)
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            sessionManager.userSessionFlow.collect { session ->
+                _uiState.update {
+                    it.copy(
+                        loggedInRol = session?.rol,
+                        loggedInUserId = session?.userId,
+                        loggedInUsername = session?.username,
+                    )
+                }
+            }
+        }
+    }
 
     fun onUsernameChange(newUsername: String) {
         _uiState.update { it.copy(username = newUsername, errorMessage = null, resetMessage = null) }
@@ -53,7 +71,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "Usuario o contraseña incorrectos"
+                        errorMessage = "Usuario o contraseña incorrectos",
                     )
                 }
                 return@launch
@@ -63,7 +81,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "El usuario se encuentra inactivo"
+                        errorMessage = "El usuario se encuentra inactivo",
                     )
                 }
                 return@launch
@@ -72,11 +90,19 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             val rol = identidadDao.getRolById(user.rolId)
             val rolNombre = rol?.nombre ?: "USUARIO"
 
+            sessionManager.saveSession(
+                userId = user.id,
+                username = user.nombreUsuario,
+                rol = rolNombre,
+            )
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     loggedInRol = rolNombre,
-                    errorMessage = null
+                    loggedInUserId = user.id,
+                    loggedInUsername = user.nombreUsuario,
+                    errorMessage = null,
                 )
             }
         }
@@ -85,6 +111,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun resetLocalData() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null, resetMessage = null) }
         viewModelScope.launch(Dispatchers.IO) {
+            sessionManager.clearSession()
             db.resetDatabase()
             _uiState.update {
                 it.copy(
@@ -92,15 +119,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     password = "",
                     isLoading = false,
                     errorMessage = null,
-                    resetMessage = "Datos locales reseteados con éxito"
+                    resetMessage = "Datos locales reseteados con éxito",
                 )
             }
         }
     }
 
     fun logout() {
-        _uiState.update {
-            LoginUiState()
+        viewModelScope.launch {
+            sessionManager.clearSession()
+            _uiState.update {
+                LoginUiState()
+            }
         }
     }
 }

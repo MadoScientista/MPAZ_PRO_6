@@ -35,24 +35,29 @@ sealed class NavDestination(
                     RevisionesPendientes,
                     Cursos,
                     Docentes,
-                    Usuarios
+                    Usuarios,
                 )
                 "DOCENTE" -> listOf(
                     Inicio,
                     Cursos,
                     Asignaturas,
                     Crear,
-                    Informes
+                    Informes,
                 )
                 "ESTUDIANTE" -> listOf(
                     Inicio,
                     Asignaturas,
-                    ActividadesPendientes
+                    ActividadesPendientes,
                 )
                 else -> listOf(
-                    Inicio
+                    Inicio,
                 )
             }
+        }
+
+        fun isRouteAllowedForRole(route: String, rol: String): Boolean {
+            val allowedRoutes = getNavItemsForRole(rol).map { it.route }
+            return allowedRoutes.contains(route)
         }
     }
 }

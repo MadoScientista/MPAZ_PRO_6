@@ -15,7 +15,7 @@ Este documento contiene las directrices de arquitectura, convenciones de código
 - **UI:** Jetpack Compose (Material3, Navigation Compose, Activity Compose)
 - **Base de Datos Local:** Room DB 2.8.5 con KSP (Kotlin Symbol Processing)
 - **Red & API:** Retrofit 3.0 + OkHttp 5.5 + `kotlinx.serialization`
-- **Preferencias:** DataStore Preferences
+- **Preferencias:** DataStore Preferences (`SessionManager`)
 - **Compatibilidad de Fechas:** `java.time` mediante Core Library Desugaring (`minSdk 24`)
 
 ---
@@ -46,6 +46,8 @@ com.ccstudio.mpaz_pro_6/
 │   │   ├── evaluacion/     # DTOs y Resúmenes de Evaluación
 │   │   └── informe/        # DTOs y Resúmenes de Informe
 │   ├── local/
+│   │   ├── preferences/
+│   │   │   └── SessionManager.kt # Persistencia de sesión mediante DataStore Preferences
 │   │   ├── MpazDatabase.kt  # Base de datos Room (Versión 3, exportSchema = true)
 │   │   ├── dao/
 │   │   │   ├── IdentidadDao.kt
@@ -62,6 +64,10 @@ com.ccstudio.mpaz_pro_6/
 │   └── mapper/
 │       └── ResumenMapper.kt # Mapeadores entre entidades y DTOs/Resúmenes
 ├── ui/                     # Pantallas, componentes y ViewModel en Compose
+│   ├── home/               # HomeScreen y layout principal
+│   ├── login/              # LoginScreen y LoginViewModel
+│   ├── navigation/         # NavDestination (definición de rutas y permisos RBAC)
+│   └── screens/            # Vistas protegidas y pantallas específicas
 └── MainActivity.kt
 ```
 
@@ -79,9 +85,10 @@ com.ccstudio.mpaz_pro_6/
    - Tablas intermedias (`asignatura_curso`, `usuario_curso`, `objetivo_aprendizaje_unidad`, `alternativa_pregunta`, `pregunta_actividad`, `objetivo_aprendizaje_contenido`, `respuesta`, `detalle_informe_pedagogico`): la combinación de claves debe ser **única**.
 3. **Resúmenes anidados:**
    - Las respuestas de consulta no exponen entidades Room ni colecciones cíclicas. Usan DTOs `XxxResumen` (e.g., `CursoResumen`, `UnidadResumen`, `UsuarioResumen`).
-4. **Seguridad y Passwords:**
+4. **Seguridad, Autenticación y Control de Acceso (RBAC):**
    - `UsuarioResponse` y `UsuarioResumen` **nunca** exponen la contraseña ni `passwordHash`.
    - `UsuarioRequest` sobrescribe `toString()` para imprimir `password='***'` e impedir fugas en logs.
+   - Toda la navegación interna está protegida por `SessionManager` (DataStore Preferences) y `NavDestination.isRouteAllowedForRole` mediante `ProtectedScreen`. Para mayores detalles consultar `specs/5_seguridad.md`.
 
 ---
 
@@ -91,16 +98,16 @@ com.ccstudio.mpaz_pro_6/
   - Usar siempre las herramientas quirúrgicas `write_file`, `replace_file_content` o `multi_replace_file_content`.
   - **PROHIBIDO** ejecutar comandos de consola como `sed`, `awk`, `perl` o redirecciones (`>`) para editar archivos en disco (esto desincroniza los buffers de memoria del IDE).
 - **VERIFICACIÓN DE COMPILACIÓN:**
-  - Tras realizar cambios significativos en Room o DTOs, validar la compilación ejecutando:
+  - Tras realizar cambios significativos en Room, DTOs o UI, validar la compilación ejecutando:
     `gradle_build("app:compileDebugKotlin")` o `gradle_build("app:assembleDebug")`.
 - **CONSISTENCIA DE CONVENCIONES:**
-  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md` y `specs/4_constantes_y_credenciales.md`).
+  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md`, `specs/4_constantes_y_credenciales.md` y `specs/5_seguridad.md`).
 
 ---
 
 ## 6. Credenciales de Prueba y Constantes
 
-Para el desarrollo y pruebas de la aplicación, la base de datos local (versión 3) incluye datos semilla cargados automáticamente. Para más detalles, consultar `specs/4_constantes_y_credenciales.md`.
+Para el desarrollo y pruebas de la aplicación, la base de datos local (versión 3) incluye datos semilla cargados automáticamente. Para más detalles, consultar `specs/4_constantes_y_credenciales.md` y `specs/5_seguridad.md`.
 
 - **Contraseña universal de prueba:** `mpaz123`
 - **Usuarios de prueba:**
@@ -108,4 +115,3 @@ Para el desarrollo y pruebas de la aplicación, la base de datos local (versión
   - Docentes: `docente`, `docente2`, `docente3`, `docente4` (Rol: `DOCENTE`)
   - Estudiantes: `alumno`, `estudiante2`, `estudiante3`, `estudiante4` (Rol: `ESTUDIANTE`)
 - **Base de Datos Local:** `MpazDatabase` (Versión 3, migraciones `MIGRATION_1_2`, `MIGRATION_2_3`, `MIGRATION_1_3`).
-
