@@ -189,4 +189,11 @@ interface DocenciaDao {
 
     @Query("SELECT * FROM actividad_curso WHERE curso_id = :cursoId AND visible = 1 AND habilitada = 1")
     suspend fun getActividadesVisiblesByCursoId(cursoId: Long): List<ActividadCursoEntity>
+
+    @Query("SELECT * FROM actividad_curso WHERE actividad_id = :actividadId")
+    suspend fun getActividadesCursoByActividadId(actividadId: Long): List<ActividadCursoEntity>
+
+    @androidx.room.Transaction
+    @Query("SELECT * FROM actividad_curso WHERE actividad_id = :actividadId")
+    suspend fun getActividadesCursoConDetallesByActividadId(actividadId: Long): List<ActividadCursoConDetalles>
 }

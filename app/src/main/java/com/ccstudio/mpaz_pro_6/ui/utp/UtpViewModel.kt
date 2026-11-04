@@ -5,15 +5,21 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadConTipo
+import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadCursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaConDocente
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 import com.ccstudio.mpaz_pro_6.data.local.dao.CursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnidadConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.UsuarioConRol
+import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AlternativaEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AlternativaPreguntaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ContenidoEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.PreguntaActividadEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.PreguntaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.ActividadCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.RolEntity
@@ -42,7 +48,11 @@ data class ContentDetailUiState(
 data class ActivityPreviewUiState(
     val isLoading: Boolean = true,
     val actividadConTipo: ActividadConTipo? = null,
-    val preguntas: List<PreguntaConAlternativas> = emptyList()
+    val preguntas: List<PreguntaConAlternativas> = emptyList(),
+    val actividadesCurso: List<ActividadCursoConDetalles> = emptyList(),
+    val allCursos: List<CursoConDetalles> = emptyList(),
+    val isEditing: Boolean = false,
+    val actionMessage: String? = null
 )
 
 data class CursosUiState(
@@ -209,11 +219,182 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             _activityPreviewState.value = ActivityPreviewUiState(isLoading = true)
             val actividad = curriculoDao.getActividadConTipoById(actividadId)
             val preguntas = curriculoDao.getPreguntasConAlternativasByActividadId(actividadId)
+            var actividadesCurso = docenciaDao.getActividadesCursoConDetallesByActividadId(actividadId)
+            val allCursos = identidadDao.getCursosConDetalles()
+
+            if (actividadesCurso.isEmpty() && allCursos.isNotEmpty()) {
+                allCursos.forEach { cursoDetalle ->
+                    docenciaDao.insertActividadCurso(
+                        ActividadCursoEntity(
+                            actividadId = actividadId,
+                            cursoId = cursoDetalle.curso.id,
+                            habilitada = true,
+                            visible = true,
+                            maxIntentos = 3
+                        )
+                    )
+                }
+                actividadesCurso = docenciaDao.getActividadesCursoConDetallesByActividadId(actividadId)
+            }
+
             _activityPreviewState.value = ActivityPreviewUiState(
                 isLoading = false,
                 actividadConTipo = actividad,
-                preguntas = preguntas
+                preguntas = preguntas,
+                actividadesCurso = actividadesCurso,
+                allCursos = allCursos
             )
+        }
+    }
+
+    fun updateActividadCursoConfig(
+        actividadCursoId: Long,
+        visible: Boolean,
+        habilitada: Boolean,
+        maxIntentos: Int?,
+        fechaInicio: String?,
+        fechaFin: String?
+    ) {
+        viewModelScope.launch {
+            val current = docenciaDao.getActividadCursoById(actividadCursoId)
+            if (current != null) {
+                val updated = current.copy(
+                    visible = visible,
+                    habilitada = habilitada,
+                    maxIntentos = maxIntentos,
+                    fechaInicio = fechaInicio?.ifBlank { null },
+                    fechaFin = fechaFin?.ifBlank { null }
+                )
+                docenciaDao.updateActividadCurso(updated)
+                loadActivityPreview(current.actividadId)
+            }
+        }
+    }
+
+    fun updateActividadInstrucciones(actividadId: Long, instrucciones: String) {
+        viewModelScope.launch {
+            val actividad = curriculoDao.getActividadById(actividadId)
+            if (actividad != null) {
+                curriculoDao.updateActividad(actividad.copy(instrucciones = instrucciones))
+                loadActivityPreview(actividadId)
+            }
+        }
+    }
+
+    fun updatePreguntaEnunciado(actividadId: Long, preguntaId: Long, nuevoEnunciado: String) {
+        viewModelScope.launch {
+            val pregunta = curriculoDao.getPreguntaById(preguntaId)
+            if (pregunta != null) {
+                curriculoDao.updatePregunta(pregunta.copy(enunciado = nuevoEnunciado))
+                loadActivityPreview(actividadId)
+            }
+        }
+    }
+
+    fun updateAlternativaEnunciado(actividadId: Long, alternativaId: Long, nuevoEnunciado: String) {
+        viewModelScope.launch {
+            val alternativa = curriculoDao.getAlternativaById(alternativaId)
+            if (alternativa != null) {
+                curriculoDao.updateAlternativa(alternativa.copy(enunciado = nuevoEnunciado))
+                loadActivityPreview(actividadId)
+            }
+        }
+    }
+
+    fun setAlternativaCorrecta(actividadId: Long, preguntaId: Long, alternativaIdCorrecta: Long) {
+        viewModelScope.launch {
+            val rels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+            rels.forEach { rel ->
+                val alt = curriculoDao.getAlternativaById(rel.alternativaId)
+                if (alt != null) {
+                    val shouldBeCorrect = (alt.id == alternativaIdCorrecta)
+                    if (alt.correcta != shouldBeCorrect) {
+                        curriculoDao.updateAlternativa(alt.copy(correcta = shouldBeCorrect))
+                    }
+                }
+            }
+            loadActivityPreview(actividadId)
+        }
+    }
+
+    fun addPreguntaToActividad(
+        actividadId: Long,
+        enunciado: String,
+        alternativasTexto: List<String>,
+        correctaIndex: Int
+    ) {
+        viewModelScope.launch {
+            val preguntaId = curriculoDao.insertPregunta(
+                PreguntaEntity(enunciado = enunciado)
+            )
+            curriculoDao.insertPreguntaActividad(
+                PreguntaActividadEntity(actividadId = actividadId, preguntaId = preguntaId)
+            )
+            alternativasTexto.forEachIndexed { index, texto ->
+                val altId = curriculoDao.insertAlternativa(
+                    AlternativaEntity(enunciado = texto, correcta = (index == correctaIndex))
+                )
+                curriculoDao.insertAlternativaPregunta(
+                    AlternativaPreguntaEntity(preguntaId = preguntaId, alternativaId = altId)
+                )
+            }
+            loadActivityPreview(actividadId)
+        }
+    }
+
+    fun deletePreguntaFromActividad(actividadId: Long, preguntaId: Long) {
+        viewModelScope.launch {
+            val altRels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+            altRels.forEach { rel ->
+                curriculoDao.deleteAlternativaPreguntaByAlternativaId(rel.alternativaId)
+                val alt = curriculoDao.getAlternativaById(rel.alternativaId)
+                if (alt != null) curriculoDao.deleteAlternativa(alt)
+            }
+            curriculoDao.deletePreguntaActividadByActividadYPregunta(actividadId, preguntaId)
+            val pregunta = curriculoDao.getPreguntaById(preguntaId)
+            if (pregunta != null) curriculoDao.deletePregunta(pregunta)
+            loadActivityPreview(actividadId)
+        }
+    }
+
+    fun addAlternativaToPregunta(actividadId: Long, preguntaId: Long, enunciado: String, correcta: Boolean) {
+        viewModelScope.launch {
+            if (correcta) {
+                val rels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+                rels.forEach { rel ->
+                    val alt = curriculoDao.getAlternativaById(rel.alternativaId)
+                    if (alt != null && alt.correcta) {
+                        curriculoDao.updateAlternativa(alt.copy(correcta = false))
+                    }
+                }
+            }
+            val altId = curriculoDao.insertAlternativa(
+                AlternativaEntity(enunciado = enunciado, correcta = correcta)
+            )
+            curriculoDao.insertAlternativaPregunta(
+                AlternativaPreguntaEntity(preguntaId = preguntaId, alternativaId = altId)
+            )
+            loadActivityPreview(actividadId)
+        }
+    }
+
+    fun deleteAlternativaFromPregunta(actividadId: Long, preguntaId: Long, alternativaId: Long) {
+        viewModelScope.launch {
+            val altToDelete = curriculoDao.getAlternativaById(alternativaId)
+            curriculoDao.deleteAlternativaPreguntaByAlternativaId(alternativaId)
+            if (altToDelete != null) {
+                curriculoDao.deleteAlternativa(altToDelete)
+            }
+            if (altToDelete?.correcta == true) {
+                val remainingRels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+                if (remainingRels.isNotEmpty()) {
+                    val firstAlt = curriculoDao.getAlternativaById(remainingRels.first().alternativaId)
+                    if (firstAlt != null) {
+                        curriculoDao.updateAlternativa(firstAlt.copy(correcta = true))
+                    }
+                }
+            }
+            loadActivityPreview(actividadId)
         }
     }
 

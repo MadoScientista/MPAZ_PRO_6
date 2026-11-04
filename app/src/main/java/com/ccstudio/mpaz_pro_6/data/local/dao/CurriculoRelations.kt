@@ -60,10 +60,11 @@ data class ActividadCursoConDetalles(
     )
     val actividad: ActividadEntity,
     @Relation(
+        entity = CursoEntity::class,
         parentColumn = "curso_id",
         entityColumn = "curso_id"
     )
-    val curso: CursoEntity
+    val curso: CursoConDetalles
 )
 
 data class PreguntaConAlternativas(

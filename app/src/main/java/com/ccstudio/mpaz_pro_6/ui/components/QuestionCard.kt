@@ -12,9 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,7 +34,8 @@ fun QuestionCard(
     index: Int,
     preguntaConAlternativas: PreguntaConAlternativas,
     modifier: Modifier = Modifier,
-    isPreviewMode: Boolean = true
+    isPreviewMode: Boolean = true,
+    onEditClick: (() -> Unit)? = null
 ) {
     val pregunta = preguntaConAlternativas.pregunta
     val alternativas = preguntaConAlternativas.alternativas
@@ -44,14 +47,29 @@ fun QuestionCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Pregunta Enunciado
-            Text(
-                text = "Pregunta $index",
-                style = MaterialTheme.typography.labelLarge.copy(
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Pregunta $index",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+                if (onEditClick != null) {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar pregunta",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = pregunta.enunciado,
                 style = MaterialTheme.typography.bodyLarge.copy(

@@ -258,6 +258,12 @@ interface CurriculoDao {
     @Query("SELECT * FROM alternativa_pregunta WHERE pregunta_id = :preguntaId")
     suspend fun getAlternativasByPreguntaId(preguntaId: Long): List<AlternativaPreguntaEntity>
 
+    @Query("DELETE FROM alternativa_pregunta WHERE pregunta_id = :preguntaId")
+    suspend fun deleteAlternativaPreguntaByPreguntaId(preguntaId: Long)
+
+    @Query("DELETE FROM alternativa_pregunta WHERE alternativa_id = :alternativaId")
+    suspend fun deleteAlternativaPreguntaByAlternativaId(alternativaId: Long)
+
     // PreguntaActividad
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPreguntaActividad(entity: PreguntaActividadEntity): Long
@@ -267,6 +273,9 @@ interface CurriculoDao {
 
     @Query("SELECT * FROM pregunta_actividad WHERE actividad_id = :actividadId")
     suspend fun getPreguntasByActividadId(actividadId: Long): List<PreguntaActividadEntity>
+
+    @Query("DELETE FROM pregunta_actividad WHERE actividad_id = :actividadId AND pregunta_id = :preguntaId")
+    suspend fun deletePreguntaActividadByActividadYPregunta(actividadId: Long, preguntaId: Long)
 
     // ObjetivoAprendizajeContenido
     @Insert(onConflict = OnConflictStrategy.REPLACE)
