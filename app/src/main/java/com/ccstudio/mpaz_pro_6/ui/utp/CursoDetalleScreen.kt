@@ -62,10 +62,12 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
 fun CursoDetalleScreen(
     cursoId: Long,
     viewModel: UtpViewModel,
+    rol: String = "UTP",
     onAsignaturaClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.cursoDetailState.collectAsState()
+    val isUtp = rol.equals("UTP", ignoreCase = true)
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     var showAddAsignaturaDialog by remember { mutableStateOf(false) }
@@ -146,6 +148,7 @@ fun CursoDetalleScreen(
             when (selectedTabIndex) {
                 0 -> AsignaturasTabContent(
                     asignaturasConDocente = state.asignaturasConDocente,
+                    isUtp = isUtp,
                     onAsignaturaClick = onAsignaturaClick,
                     onRemoveAsignatura = { asignaturaId ->
                         viewModel.removeAsignaturaFromCurso(cursoId, asignaturaId)
@@ -157,6 +160,7 @@ fun CursoDetalleScreen(
                 )
                 1 -> DocentesTabContent(
                     docentes = state.docentes,
+                    isUtp = isUtp,
                     onRemoveDocente = { docenteId ->
                         viewModel.removeDocenteFromCurso(cursoId, docenteId)
                     },
@@ -164,6 +168,7 @@ fun CursoDetalleScreen(
                 )
                 2 -> EstudiantesTabContent(
                     estudiantes = state.estudiantes,
+                    isUtp = isUtp,
                     onRemoveEstudiante = { estudianteId ->
                         viewModel.removeEstudianteFromCurso(cursoId, estudianteId)
                     },
@@ -239,6 +244,7 @@ fun CursoDetalleScreen(
 @Composable
 private fun AsignaturasTabContent(
     asignaturasConDocente: List<com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaConDocente>,
+    isUtp: Boolean = true,
     onAsignaturaClick: (Long) -> Unit,
     onRemoveAsignatura: (Long) -> Unit,
     onAssignDocenteClick: (Long) -> Unit,
@@ -257,10 +263,12 @@ private fun AsignaturasTabContent(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Button(onClick = onOpenAddDialog) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Agregar Asignatura")
+            if (isUtp) {
+                Button(onClick = onOpenAddDialog) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Agregar Asignatura")
+                }
             }
         }
 
@@ -318,19 +326,21 @@ private fun AsignaturasTabContent(
                                     color = if (docente != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                                 )
                             }
-                            IconButton(onClick = { onAssignDocenteClick(asignatura.id) }) {
-                                Icon(
-                                    imageVector = Icons.Default.Badge,
-                                    contentDescription = "Asignar / Cambiar Docente",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            IconButton(onClick = { onRemoveAsignatura(asignatura.id) }) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Quitar Asignatura",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
+                            if (isUtp) {
+                                IconButton(onClick = { onAssignDocenteClick(asignatura.id) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Badge,
+                                        contentDescription = "Asignar / Cambiar Docente",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                IconButton(onClick = { onRemoveAsignatura(asignatura.id) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Quitar Asignatura",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -348,6 +358,7 @@ private fun AsignaturasTabContent(
 @Composable
 private fun DocentesTabContent(
     docentes: List<UsuarioEntity>,
+    isUtp: Boolean = true,
     onRemoveDocente: (Long) -> Unit,
     onOpenAddDialog: () -> Unit
 ) {
@@ -364,10 +375,12 @@ private fun DocentesTabContent(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Button(onClick = onOpenAddDialog) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(if (docentes.isEmpty()) "Asignar Docente" else "Gestionar / Cambiar")
+            if (isUtp) {
+                Button(onClick = onOpenAddDialog) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (docentes.isEmpty()) "Asignar Docente" else "Gestionar / Cambiar")
+                }
             }
         }
 
@@ -393,6 +406,7 @@ private fun DocentesTabContent(
                     UserCardItem(
                         usuario = docente,
                         icon = Icons.Default.Badge,
+                        showRemove = isUtp,
                         onRemove = { onRemoveDocente(docente.id) }
                     )
                 }
@@ -404,6 +418,7 @@ private fun DocentesTabContent(
 @Composable
 private fun EstudiantesTabContent(
     estudiantes: List<UsuarioEntity>,
+    isUtp: Boolean = true,
     onRemoveEstudiante: (Long) -> Unit,
     onOpenAddDialog: () -> Unit
 ) {
@@ -420,10 +435,12 @@ private fun EstudiantesTabContent(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Button(onClick = onOpenAddDialog) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Agregar Estudiante")
+            if (isUtp) {
+                Button(onClick = onOpenAddDialog) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Agregar Estudiante")
+                }
             }
         }
 
@@ -449,6 +466,7 @@ private fun EstudiantesTabContent(
                     UserCardItem(
                         usuario = estudiante,
                         icon = Icons.Default.Person,
+                        showRemove = isUtp,
                         onRemove = { onRemoveEstudiante(estudiante.id) }
                     )
                 }
@@ -461,6 +479,7 @@ private fun EstudiantesTabContent(
 private fun UserCardItem(
     usuario: UsuarioEntity,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    showRemove: Boolean = true,
     onRemove: () -> Unit
 ) {
     Card(
@@ -494,12 +513,14 @@ private fun UserCardItem(
                     color = MaterialTheme.colorScheme.outline
                 )
             }
-            IconButton(onClick = onRemove) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Remover",
-                    tint = MaterialTheme.colorScheme.error
-                )
+            if (showRemove) {
+                IconButton(onClick = onRemove) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Remover",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

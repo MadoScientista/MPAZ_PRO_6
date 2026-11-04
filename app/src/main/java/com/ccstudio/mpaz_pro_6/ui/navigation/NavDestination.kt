@@ -95,8 +95,7 @@ sealed class NavDestination(
                             route.startsWith("contenido_detalle/") ||
                             route.startsWith("actividad_vistaprevia/") ||
                             route.startsWith("curso_detalle/") ||
-                            route.startsWith("curso_asignatura_detalle/") ||
-                            route.startsWith("docente_detalle/")
+                            route.startsWith("curso_asignatura_detalle/")
                 "ESTUDIANTE" -> route.startsWith("contenido_detalle/") ||
                                 route.startsWith("actividad_vistaprevia/")
                 else -> false

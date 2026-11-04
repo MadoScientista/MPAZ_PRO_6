@@ -18,9 +18,11 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.RolEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
+import com.ccstudio.mpaz_pro_6.data.local.preferences.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 data class UnitDetailUiState(
@@ -86,6 +88,12 @@ data class DocenteDetailUiState(
     val availableAsignaturasCurso: List<AsignaturaCursoDetalle> = emptyList()
 )
 
+data class DocenteAsignaturasUiState(
+    val isLoading: Boolean = true,
+    val asignaturas: List<AsignaturaCursoDetalle> = emptyList(),
+    val searchQuery: String = ""
+)
+
 data class UsuariosUiState(
     val isLoading: Boolean = true,
     val usuarios: List<UsuarioConRol> = emptyList(),
@@ -114,6 +122,7 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     private val curriculoDao = db.curriculoDao()
     private val identidadDao = db.identidadDao()
     private val docenciaDao = db.docenciaDao()
+    private val sessionManager = SessionManager(application)
 
     private val _pendingUnits = MutableStateFlow<List<UnidadConDetalles>>(emptyList())
     val pendingUnits: StateFlow<List<UnidadConDetalles>> = _pendingUnits.asStateFlow()
@@ -141,6 +150,9 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _docenteDetailState = MutableStateFlow(DocenteDetailUiState())
     val docenteDetailState: StateFlow<DocenteDetailUiState> = _docenteDetailState.asStateFlow()
+
+    private val _docenteAsignaturasState = MutableStateFlow(DocenteAsignaturasUiState())
+    val docenteAsignaturasState: StateFlow<DocenteAsignaturasUiState> = _docenteAsignaturasState.asStateFlow()
 
     private val _usuariosState = MutableStateFlow(UsuariosUiState())
     val usuariosState: StateFlow<UsuariosUiState> = _usuariosState.asStateFlow()
@@ -219,7 +231,12 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun loadCursos() {
         viewModelScope.launch {
             _cursosState.value = CursosUiState(isLoading = true)
-            val cursos = identidadDao.getCursosConDetalles()
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            val cursos = if (session != null && session.rol.equals("DOCENTE", ignoreCase = true)) {
+                identidadDao.getCursosConDetallesByDocenteId(session.userId)
+            } else {
+                identidadDao.getCursosConDetalles()
+            }
             _cursosState.value = CursosUiState(
                 isLoading = false,
                 cursos = cursos
@@ -230,9 +247,20 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun loadCursoDetail(cursoId: Long) {
         viewModelScope.launch {
             _cursoDetailState.value = CursoDetailUiState(isLoading = true)
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            val isDocente = session?.rol?.equals("DOCENTE", ignoreCase = true) == true
+            val docenteId = session?.userId
+
             val cursoConDetalles = identidadDao.getCursoConDetallesById(cursoId)
-            val asignaturas = docenciaDao.getAsignaturasEntityByCursoId(cursoId)
-            val asignaturasConDocente = docenciaDao.getAsignaturasConDocenteByCursoId(cursoId)
+            var asignaturas = docenciaDao.getAsignaturasEntityByCursoId(cursoId)
+            var asignaturasConDocente = docenciaDao.getAsignaturasConDocenteByCursoId(cursoId)
+
+            if (isDocente && docenteId != null) {
+                asignaturasConDocente = asignaturasConDocente.filter { it.docente?.id == docenteId }
+                val assignedAsigIds = asignaturasConDocente.map { it.asignatura.id }.toSet()
+                asignaturas = asignaturas.filter { it.id in assignedAsigIds }
+            }
+
             val docentes = docenciaDao.getDocentesByCursoId(cursoId)
             val estudiantes = docenciaDao.getEstudiantesByCursoId(cursoId)
 
@@ -450,6 +478,29 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             loadDocenteDetail(docenteId)
             loadDocentes()
         }
+    }
+
+    // --- ASIGNATURAS DOCENTE ---
+
+    fun loadDocenteAsignaturas() {
+        viewModelScope.launch {
+            _docenteAsignaturasState.value = _docenteAsignaturasState.value.copy(isLoading = true)
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            val userId = session?.userId
+            val asignaturas = if (userId != null) {
+                docenciaDao.getAsignaturasCursoByDocenteId(userId)
+            } else {
+                emptyList()
+            }
+            _docenteAsignaturasState.value = _docenteAsignaturasState.value.copy(
+                isLoading = false,
+                asignaturas = asignaturas
+            )
+        }
+    }
+
+    fun updateDocenteAsignaturasSearchQuery(query: String) {
+        _docenteAsignaturasState.value = _docenteAsignaturasState.value.copy(searchQuery = query)
     }
 
     // --- GESTIÓN DE USUARIOS ---

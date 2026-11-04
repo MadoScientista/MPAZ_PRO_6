@@ -48,11 +48,13 @@ import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 fun UnidadDetalleScreen(
     unidadId: Long,
     viewModel: UtpViewModel,
+    rol: String = "UTP",
     onContentClick: (Long) -> Unit,
     onPruebaFinalClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.unitDetailState.collectAsState()
+    val isUtp = rol.equals("UTP", ignoreCase = true)
 
     LaunchedEffect(unidadId) {
         viewModel.loadUnitDetail(unidadId)
@@ -224,7 +226,7 @@ fun UnidadDetalleScreen(
                     )
                 }
             }
-        } else {
+        } else if (isUtp) {
             Button(
                 onClick = { viewModel.autorizarUnidad(unidadId) },
                 modifier = Modifier
@@ -244,6 +246,32 @@ fun UnidadDetalleScreen(
                     text = "Autorizar Unidad",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
+            }
+        } else {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "Unidad En Revisión (Pendiente de Autorización UTP)",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
             }
         }
     }

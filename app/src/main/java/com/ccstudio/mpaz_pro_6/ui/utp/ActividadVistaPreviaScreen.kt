@@ -37,6 +37,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 fun ActividadVistaPreviaScreen(
     actividadId: Long,
     viewModel: UtpViewModel,
+    rol: String = "UTP",
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.activityPreviewState.collectAsState()
@@ -95,7 +96,7 @@ fun ActividadVistaPreviaScreen(
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Vista Previa de la Actividad (Modo UTP)",
+                        text = "Vista Previa de la Actividad (Modo $rol)",
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer

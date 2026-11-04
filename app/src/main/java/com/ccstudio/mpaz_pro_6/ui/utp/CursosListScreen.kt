@@ -62,7 +62,7 @@ fun CursosListScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "No hay cursos registrados en el sistema.",
+                text = "No hay cursos asignados o registrados en el sistema.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -83,6 +83,15 @@ interface IdentidadDao {
     suspend fun getCursosConDetalles(): List<CursoConDetalles>
 
     @androidx.room.Transaction
+    @Query("""
+        SELECT DISTINCT c.* 
+        FROM curso c 
+        INNER JOIN asignatura_curso ac ON c.curso_id = ac.curso_id 
+        WHERE ac.docente_id = :docenteId
+    """)
+    suspend fun getCursosConDetallesByDocenteId(docenteId: Long): List<CursoConDetalles>
+
+    @androidx.room.Transaction
     @Query("SELECT * FROM curso WHERE curso_id = :id")
     suspend fun getCursoConDetallesById(id: Long): CursoConDetalles?
 

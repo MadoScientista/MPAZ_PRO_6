@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ccstudio.mpaz_pro_6.ui.docente.DocenteAsignaturasScreen
 import com.ccstudio.mpaz_pro_6.ui.navigation.NavDestination
 import com.ccstudio.mpaz_pro_6.ui.screens.GenericSectionScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.InicioScreen
@@ -192,6 +193,7 @@ fun HomeScreen(
                     UnidadDetalleScreen(
                         unidadId = unidadId,
                         viewModel = utpViewModel,
+                        rol = rol,
                         onContentClick = { contentId ->
                             navController.navigate(NavDestination.DetalleContenido.createRoute(contentId))
                         },
@@ -233,6 +235,7 @@ fun HomeScreen(
                     ActividadVistaPreviaScreen(
                         actividadId = actividadId,
                         viewModel = utpViewModel,
+                        rol = rol,
                     )
                 }
             }
@@ -263,6 +266,7 @@ fun HomeScreen(
                     CursoDetalleScreen(
                         cursoId = cursoId,
                         viewModel = utpViewModel,
+                        rol = rol,
                         onAsignaturaClick = { asignaturaId ->
                             navController.navigate(NavDestination.DetalleAsignaturaCurso.createRoute(cursoId, asignaturaId))
                         },
@@ -360,7 +364,14 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.Asignaturas.title)
+                    DocenteAsignaturasScreen(
+                        viewModel = utpViewModel,
+                        onAsignaturaClick = { cursoId, asignaturaId ->
+                            navController.navigate(
+                                NavDestination.DetalleAsignaturaCurso.createRoute(cursoId, asignaturaId),
+                            )
+                        },
+                    )
                 }
             }
             composable(NavDestination.Crear.route) {
