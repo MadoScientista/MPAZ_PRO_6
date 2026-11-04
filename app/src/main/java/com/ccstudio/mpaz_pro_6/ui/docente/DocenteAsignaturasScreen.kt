@@ -38,16 +38,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
-import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 
 @Composable
 fun DocenteAsignaturasScreen(
-    viewModel: UtpViewModel,
     onAsignaturaClick: (cursoId: Long, asignaturaId: Long) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: DocenteViewModel = viewModel(),
 ) {
-    val state by viewModel.docenteAsignaturasState.collectAsState()
+    val state by viewModel.asignaturasState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadDocenteAsignaturas()
@@ -70,31 +70,31 @@ fun DocenteAsignaturasScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Buscador
         OutlinedTextField(
             value = state.searchQuery,
-            onValueChange = { viewModel.updateDocenteAsignaturasSearchQuery(it) },
+            onValueChange = { viewModel.updateSearchQuery(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Buscar asignatura o curso...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Buscar"
+                    contentDescription = "Buscar",
                 )
             },
             trailingIcon = {
                 if (state.searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.updateDocenteAsignaturasSearchQuery("") }) {
+                    IconButton(onClick = { viewModel.updateSearchQuery("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Limpiar"
+                            contentDescription = "Limpiar",
                         )
                     }
                 }
             },
-            singleLine = true
+            singleLine = true,
         )
 
         // Subtítulo con conteo
@@ -102,14 +102,14 @@ fun DocenteAsignaturasScreen(
             text = "Asignaturas a su cargo (${filteredList.size})",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
         )
 
         // Contenido según estado
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
             }
@@ -117,19 +117,19 @@ fun DocenteAsignaturasScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "No tiene asignaturas asignadas a su cargo actualmente.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -137,26 +137,26 @@ fun DocenteAsignaturasScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "No se encontraron asignaturas con '${state.searchQuery}'.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
+                contentPadding = PaddingValues(bottom = 16.dp),
             ) {
                 items(filteredList) { item ->
                     DocenteAsignaturaCard(
@@ -164,9 +164,9 @@ fun DocenteAsignaturasScreen(
                         onClick = {
                             onAsignaturaClick(
                                 item.asignaturaCurso.cursoId,
-                                item.asignaturaCurso.asignaturaId
+                                item.asignaturaCurso.asignaturaId,
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -177,33 +177,33 @@ fun DocenteAsignaturasScreen(
 @Composable
 private fun DocenteAsignaturaCard(
     item: AsignaturaCursoDetalle,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.padding(end = 16.dp)
+                modifier = Modifier.padding(end = 16.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Book,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(12.dp),
                 )
             }
 
@@ -212,7 +212,7 @@ private fun DocenteAsignaturaCard(
                     text = item.asignatura.nombre,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -224,13 +224,13 @@ private fun DocenteAsignaturaCard(
                         tint = MaterialTheme.colorScheme.outline,
                         modifier = Modifier
                             .height(16.dp)
-                            .width(16.dp)
+                            .width(16.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Curso: ${item.nombreCompletoCurso}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -238,7 +238,7 @@ private fun DocenteAsignaturaCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Ver Asignatura",
-                tint = MaterialTheme.colorScheme.outline
+                tint = MaterialTheme.colorScheme.outline,
             )
         }
     }

@@ -88,12 +88,6 @@ data class DocenteDetailUiState(
     val availableAsignaturasCurso: List<AsignaturaCursoDetalle> = emptyList()
 )
 
-data class DocenteAsignaturasUiState(
-    val isLoading: Boolean = true,
-    val asignaturas: List<AsignaturaCursoDetalle> = emptyList(),
-    val searchQuery: String = ""
-)
-
 data class UsuariosUiState(
     val isLoading: Boolean = true,
     val usuarios: List<UsuarioConRol> = emptyList(),
@@ -150,9 +144,6 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _docenteDetailState = MutableStateFlow(DocenteDetailUiState())
     val docenteDetailState: StateFlow<DocenteDetailUiState> = _docenteDetailState.asStateFlow()
-
-    private val _docenteAsignaturasState = MutableStateFlow(DocenteAsignaturasUiState())
-    val docenteAsignaturasState: StateFlow<DocenteAsignaturasUiState> = _docenteAsignaturasState.asStateFlow()
 
     private val _usuariosState = MutableStateFlow(UsuariosUiState())
     val usuariosState: StateFlow<UsuariosUiState> = _usuariosState.asStateFlow()
@@ -478,29 +469,6 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             loadDocenteDetail(docenteId)
             loadDocentes()
         }
-    }
-
-    // --- ASIGNATURAS DOCENTE ---
-
-    fun loadDocenteAsignaturas() {
-        viewModelScope.launch {
-            _docenteAsignaturasState.value = _docenteAsignaturasState.value.copy(isLoading = true)
-            val session = sessionManager.userSessionFlow.firstOrNull()
-            val userId = session?.userId
-            val asignaturas = if (userId != null) {
-                docenciaDao.getAsignaturasCursoByDocenteId(userId)
-            } else {
-                emptyList()
-            }
-            _docenteAsignaturasState.value = _docenteAsignaturasState.value.copy(
-                isLoading = false,
-                asignaturas = asignaturas
-            )
-        }
-    }
-
-    fun updateDocenteAsignaturasSearchQuery(query: String) {
-        _docenteAsignaturasState.value = _docenteAsignaturasState.value.copy(searchQuery = query)
     }
 
     // --- GESTIÓN DE USUARIOS ---

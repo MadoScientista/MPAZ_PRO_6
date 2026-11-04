@@ -365,7 +365,6 @@ fun HomeScreen(
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
                     DocenteAsignaturasScreen(
-                        viewModel = utpViewModel,
                         onAsignaturaClick = { cursoId, asignaturaId ->
                             navController.navigate(
                                 NavDestination.DetalleAsignaturaCurso.createRoute(cursoId, asignaturaId),
