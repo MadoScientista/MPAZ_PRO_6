@@ -10,11 +10,13 @@ import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 import com.ccstudio.mpaz_pro_6.data.local.dao.CursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnidadConDetalles
+import com.ccstudio.mpaz_pro_6.data.local.dao.UsuarioConRol
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ContenidoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.AsignaturaCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
+import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.RolEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,6 +86,28 @@ data class DocenteDetailUiState(
     val availableAsignaturasCurso: List<AsignaturaCursoDetalle> = emptyList()
 )
 
+data class UsuariosUiState(
+    val isLoading: Boolean = true,
+    val usuarios: List<UsuarioConRol> = emptyList(),
+    val searchQuery: String = "",
+    val selectedRolFilter: Long? = null
+)
+
+data class CrearUsuarioUiState(
+    val nombreUsuario: String = "",
+    val password: String = "mpaz123",
+    val pnombre: String = "",
+    val snombre: String = "",
+    val apaterno: String = "",
+    val amaterno: String = "",
+    val rolId: Long = 3L,
+    val activo: Boolean = true,
+    val roles: List<RolEntity> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val isSuccess: Boolean = false
+)
+
 class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = MpazDatabase.getDatabase(application)
@@ -118,10 +142,17 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     private val _docenteDetailState = MutableStateFlow(DocenteDetailUiState())
     val docenteDetailState: StateFlow<DocenteDetailUiState> = _docenteDetailState.asStateFlow()
 
+    private val _usuariosState = MutableStateFlow(UsuariosUiState())
+    val usuariosState: StateFlow<UsuariosUiState> = _usuariosState.asStateFlow()
+
+    private val _crearUsuarioState = MutableStateFlow(CrearUsuarioUiState())
+    val crearUsuarioState: StateFlow<CrearUsuarioUiState> = _crearUsuarioState.asStateFlow()
+
     init {
         loadPendingUnits()
         loadCursos()
         loadDocentes()
+        loadUsuarios()
     }
 
     fun loadPendingUnits() {
@@ -418,6 +449,135 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
             loadDocenteDetail(docenteId)
             loadDocentes()
+        }
+    }
+
+    // --- GESTIÓN DE USUARIOS ---
+
+    fun loadUsuarios() {
+        viewModelScope.launch {
+            _usuariosState.value = _usuariosState.value.copy(isLoading = true)
+            val usuariosConRol = identidadDao.getAllUsuariosConRol()
+            _usuariosState.value = _usuariosState.value.copy(
+                isLoading = false,
+                usuarios = usuariosConRol
+            )
+        }
+    }
+
+    fun updateUsuariosSearchQuery(query: String) {
+        _usuariosState.value = _usuariosState.value.copy(searchQuery = query)
+    }
+
+    fun updateUsuariosRolFilter(rolId: Long?) {
+        _usuariosState.value = _usuariosState.value.copy(selectedRolFilter = rolId)
+    }
+
+    fun toggleUsuarioActivo(usuario: UsuarioEntity) {
+        viewModelScope.launch {
+            identidadDao.updateUsuario(usuario.copy(activo = !usuario.activo))
+            loadUsuarios()
+        }
+    }
+
+    // --- CREAR USUARIO ---
+
+    fun initCrearUsuarioForm() {
+        viewModelScope.launch {
+            val roles = identidadDao.getAllRoles()
+            val defaultRolId = roles.firstOrNull { it.nombre.uppercase() == "ESTUDIANTE" }?.id
+                ?: roles.firstOrNull()?.id
+                ?: 3L
+            _crearUsuarioState.value = CrearUsuarioUiState(
+                roles = roles,
+                rolId = defaultRolId
+            )
+        }
+    }
+
+    fun updateCrearUsuarioNombreUsuario(value: String) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(nombreUsuario = value, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioPassword(value: String) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(password = value, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioPnombre(value: String) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(pnombre = value, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioSnombre(value: String) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(snombre = value, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioApaterno(value: String) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(apaterno = value, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioAmaterno(value: String) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(amaterno = value, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioRolId(rolId: Long) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(rolId = rolId, errorMessage = null)
+    }
+
+    fun updateCrearUsuarioActivo(activo: Boolean) {
+        _crearUsuarioState.value = _crearUsuarioState.value.copy(activo = activo)
+    }
+
+    fun crearUsuario(onSuccess: () -> Unit) {
+        val state = _crearUsuarioState.value
+
+        if (state.nombreUsuario.isBlank()) {
+            _crearUsuarioState.value = state.copy(errorMessage = "El nombre de usuario es obligatorio.")
+            return
+        }
+        if (state.password.isBlank()) {
+            _crearUsuarioState.value = state.copy(errorMessage = "La contraseña es obligatoria.")
+            return
+        }
+        if (state.pnombre.isBlank()) {
+            _crearUsuarioState.value = state.copy(errorMessage = "El primer nombre es obligatorio.")
+            return
+        }
+        if (state.apaterno.isBlank()) {
+            _crearUsuarioState.value = state.copy(errorMessage = "El apellido paterno es obligatorio.")
+            return
+        }
+
+        viewModelScope.launch {
+            _crearUsuarioState.value = _crearUsuarioState.value.copy(isLoading = true, errorMessage = null)
+
+            val existing = identidadDao.getUsuarioByNombre(state.nombreUsuario.trim())
+            if (existing != null) {
+                _crearUsuarioState.value = _crearUsuarioState.value.copy(
+                    isLoading = false,
+                    errorMessage = "El nombre de usuario '@${state.nombreUsuario.trim()}' ya está registrado."
+                )
+                return@launch
+            }
+
+            val newUsuario = UsuarioEntity(
+                nombreUsuario = state.nombreUsuario.trim(),
+                passwordHash = state.password.trim(),
+                pnombre = state.pnombre.trim(),
+                snombre = state.snombre.trim().ifBlank { null },
+                apaterno = state.apaterno.trim(),
+                amaterno = state.amaterno.trim().ifBlank { null },
+                rolId = state.rolId,
+                activo = state.activo
+            )
+
+            identidadDao.insertUsuario(newUsuario)
+            loadUsuarios()
+
+            _crearUsuarioState.value = _crearUsuarioState.value.copy(
+                isLoading = false,
+                isSuccess = true
+            )
+            onSuccess()
         }
     }
 }

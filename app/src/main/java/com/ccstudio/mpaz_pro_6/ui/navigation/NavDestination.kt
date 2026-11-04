@@ -48,6 +48,7 @@ sealed class NavDestination(
     data object DetalleDocente : NavDestination("docente_detalle/{docenteId}", "Detalle de Docente", isTopLevel = false) {
         fun createRoute(docenteId: Long) = "docente_detalle/$docenteId"
     }
+    data object CrearUsuario : NavDestination("usuario_crear", "Crear Usuario", isTopLevel = false)
 
     companion object {
         fun getNavItemsForRole(rol: String): List<NavDestination> {
@@ -83,12 +84,19 @@ sealed class NavDestination(
 
             // Sub-rutas permitidas por rol
             return when (rol.uppercase()) {
-                "UTP", "DOCENTE" -> route.startsWith("unidad_detalle/") ||
-                                    route.startsWith("contenido_detalle/") ||
-                                    route.startsWith("actividad_vistaprevia/") ||
-                                    route.startsWith("curso_detalle/") ||
-                                    route.startsWith("curso_asignatura_detalle/") ||
-                                    route.startsWith("docente_detalle/")
+                "UTP" -> route.startsWith("unidad_detalle/") ||
+                         route.startsWith("contenido_detalle/") ||
+                         route.startsWith("actividad_vistaprevia/") ||
+                         route.startsWith("curso_detalle/") ||
+                         route.startsWith("curso_asignatura_detalle/") ||
+                         route.startsWith("docente_detalle/") ||
+                         route == "usuario_crear"
+                "DOCENTE" -> route.startsWith("unidad_detalle/") ||
+                            route.startsWith("contenido_detalle/") ||
+                            route.startsWith("actividad_vistaprevia/") ||
+                            route.startsWith("curso_detalle/") ||
+                            route.startsWith("curso_asignatura_detalle/") ||
+                            route.startsWith("docente_detalle/")
                 "ESTUDIANTE" -> route.startsWith("contenido_detalle/") ||
                                 route.startsWith("actividad_vistaprevia/")
                 else -> false

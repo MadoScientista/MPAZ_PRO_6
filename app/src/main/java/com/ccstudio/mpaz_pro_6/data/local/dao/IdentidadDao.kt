@@ -105,6 +105,10 @@ interface IdentidadDao {
     @Query("SELECT * FROM usuario")
     suspend fun getAllUsuarios(): List<UsuarioEntity>
 
+    @androidx.room.Transaction
+    @Query("SELECT * FROM usuario")
+    suspend fun getAllUsuariosConRol(): List<UsuarioConRol>
+
     @Query("SELECT * FROM usuario WHERE rol_id = 2 AND activo = 1")
     suspend fun getAllDocentes(): List<UsuarioEntity>
 

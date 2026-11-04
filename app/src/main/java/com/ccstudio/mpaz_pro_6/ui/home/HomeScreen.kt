@@ -32,6 +32,7 @@ import com.ccstudio.mpaz_pro_6.ui.screens.InicioScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.RestrictedAccessScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.ActividadVistaPreviaScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.ContenidoDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.CrearUsuarioScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.CursoAsignaturaDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.CursoDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.CursosListScreen
@@ -39,6 +40,7 @@ import com.ccstudio.mpaz_pro_6.ui.utp.DocenteDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.DocentesListScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.RevisionesPendientesScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UnidadDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.UsuariosListScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,6 +80,7 @@ fun HomeScreen(
                 currentRoute.startsWith("curso_detalle/") -> NavDestination.DetalleCurso.title
                 currentRoute.startsWith("curso_asignatura_detalle/") -> NavDestination.DetalleAsignaturaCurso.title
                 currentRoute.startsWith("docente_detalle/") -> NavDestination.DetalleDocente.title
+                currentRoute == NavDestination.CrearUsuario.route -> NavDestination.CrearUsuario.title
                 else -> "MPAZ PRO"
             }
     } else {
@@ -326,7 +329,29 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.Usuarios.title)
+                    UsuariosListScreen(
+                        viewModel = utpViewModel,
+                        onCreateUserClick = {
+                            navController.navigate(NavDestination.CrearUsuario.route)
+                        },
+                    )
+                }
+            }
+            composable(NavDestination.CrearUsuario.route) {
+                ProtectedScreen(
+                    route = NavDestination.CrearUsuario.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    CrearUsuarioScreen(
+                        viewModel = utpViewModel,
+                        onUserCreated = {
+                            navController.popBackStack()
+                        },
+                        onCancel = {
+                            navController.popBackStack()
+                        },
+                    )
                 }
             }
             composable(NavDestination.Asignaturas.route) {
