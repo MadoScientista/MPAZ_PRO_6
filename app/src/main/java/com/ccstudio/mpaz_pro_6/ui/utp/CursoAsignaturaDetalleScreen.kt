@@ -104,7 +104,7 @@ fun CursoAsignaturaDetalleScreen(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Curso: ${curso.nombreCompletoConAnnio}",
+                    text = curso.nombreCompletoConAnnio,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -30,14 +30,17 @@ sealed class NavDestination(
     data object ActividadesPendientes : NavDestination("actividades_pendientes", "Actividades pendientes", Icons.Default.Task, isTopLevel = true)
 
     // --- DESTINOS SECUNDARIOS / DETALLE (SUB-DESTINATIONS) ---
-    data object DetalleUnidad : NavDestination("unidad_detalle/{unidadId}", "Detalle de Unidad", isTopLevel = false) {
-        fun createRoute(unidadId: Long) = "unidad_detalle/$unidadId"
+    data object DetalleUnidad : NavDestination("unidad_detalle/{unidadId}?cursoId={cursoId}", "Detalle de Unidad", isTopLevel = false) {
+        fun createRoute(unidadId: Long, cursoId: Long? = null) =
+            if (cursoId != null && cursoId != 0L) "unidad_detalle/$unidadId?cursoId=$cursoId" else "unidad_detalle/$unidadId"
     }
-    data object DetalleContenido : NavDestination("contenido_detalle/{contenidoId}", "Detalle de Contenido", isTopLevel = false) {
-        fun createRoute(contenidoId: Long) = "contenido_detalle/$contenidoId"
+    data object DetalleContenido : NavDestination("contenido_detalle/{contenidoId}?cursoId={cursoId}", "Detalle de Contenido", isTopLevel = false) {
+        fun createRoute(contenidoId: Long, cursoId: Long? = null) =
+            if (cursoId != null && cursoId != 0L) "contenido_detalle/$contenidoId?cursoId=$cursoId" else "contenido_detalle/$contenidoId"
     }
-    data object VistaPreviaActividad : NavDestination("actividad_vistaprevia/{actividadId}", "Vista Previa de Actividad", isTopLevel = false) {
-        fun createRoute(actividadId: Long) = "actividad_vistaprevia/$actividadId"
+    data object VistaPreviaActividad : NavDestination("actividad_vistaprevia/{actividadId}?cursoId={cursoId}", "Vista Previa de Actividad", isTopLevel = false) {
+        fun createRoute(actividadId: Long, cursoId: Long? = null) =
+            if (cursoId != null && cursoId != 0L) "actividad_vistaprevia/$actividadId?cursoId=$cursoId" else "actividad_vistaprevia/$actividadId"
     }
     data object DetalleCurso : NavDestination("curso_detalle/{cursoId}", "Detalle del Curso", isTopLevel = false) {
         fun createRoute(cursoId: Long) = "curso_detalle/$cursoId"

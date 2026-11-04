@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 data class UnitDetailUiState(
     val isLoading: Boolean = true,
     val unidadConDetalles: UnidadConDetalles? = null,
+    val cursoConDetalles: CursoConDetalles? = null,
     val contenidos: List<ContenidoEntity> = emptyList(),
     val pruebaFinal: ActividadConTipo? = null,
     val isAuthorizedSuccess: Boolean = false
@@ -42,12 +43,16 @@ data class UnitDetailUiState(
 data class ContentDetailUiState(
     val isLoading: Boolean = true,
     val contenido: ContenidoEntity? = null,
+    val unidadConDetalles: UnidadConDetalles? = null,
+    val cursoConDetalles: CursoConDetalles? = null,
     val actividades: List<ActividadConTipo> = emptyList()
 )
 
 data class ActivityPreviewUiState(
     val isLoading: Boolean = true,
     val actividadConTipo: ActividadConTipo? = null,
+    val unidadConDetalles: UnidadConDetalles? = null,
+    val cursoConDetalles: CursoConDetalles? = null,
     val preguntas: List<PreguntaConAlternativas> = emptyList(),
     val actividadesCurso: List<ActividadCursoConDetalles> = emptyList(),
     val allCursos: List<CursoConDetalles> = emptyList(),
@@ -176,15 +181,25 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loadUnitDetail(unidadId: Long) {
+    fun loadUnitDetail(unidadId: Long, cursoId: Long? = null) {
         viewModelScope.launch {
             _unitDetailState.value = UnitDetailUiState(isLoading = true)
             val unidad = curriculoDao.getUnidadConDetallesById(unidadId)
             val contenidos = curriculoDao.getContenidosByUnidadId(unidadId)
             val pruebaFinal = curriculoDao.getPruebaFinalConTipoByUnidadId(unidadId)
+
+            val targetCursoId = if (cursoId != null && cursoId != 0L) {
+                cursoId
+            } else if (unidad != null) {
+                docenciaDao.getCursosByAsignaturaId(unidad.unidad.asignaturaId).firstOrNull()?.cursoId
+            } else null
+
+            val cursoConDetalles = targetCursoId?.let { identidadDao.getCursoConDetallesById(it) }
+
             _unitDetailState.value = UnitDetailUiState(
                 isLoading = false,
                 unidadConDetalles = unidad,
+                cursoConDetalles = cursoConDetalles,
                 contenidos = contenidos,
                 pruebaFinal = pruebaFinal,
                 isAuthorizedSuccess = unidad?.unidad?.estadoId == 3L // 3L = AUTORIZADO
@@ -201,20 +216,32 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loadContentDetail(contenidoId: Long) {
+    fun loadContentDetail(contenidoId: Long, cursoId: Long? = null) {
         viewModelScope.launch {
             _contentDetailState.value = ContentDetailUiState(isLoading = true)
             val contenido = curriculoDao.getContenidoById(contenidoId)
+            val unidad = contenido?.let { curriculoDao.getUnidadConDetallesById(it.unidadId) }
             val actividades = curriculoDao.getActividadesConTipoByContenidoId(contenidoId)
+
+            val targetCursoId = if (cursoId != null && cursoId != 0L) {
+                cursoId
+            } else if (unidad != null) {
+                docenciaDao.getCursosByAsignaturaId(unidad.unidad.asignaturaId).firstOrNull()?.cursoId
+            } else null
+
+            val cursoConDetalles = targetCursoId?.let { identidadDao.getCursoConDetallesById(it) }
+
             _contentDetailState.value = ContentDetailUiState(
                 isLoading = false,
                 contenido = contenido,
+                unidadConDetalles = unidad,
+                cursoConDetalles = cursoConDetalles,
                 actividades = actividades
             )
         }
     }
 
-    fun loadActivityPreview(actividadId: Long) {
+    fun loadActivityPreview(actividadId: Long, cursoId: Long? = null) {
         viewModelScope.launch {
             _activityPreviewState.value = ActivityPreviewUiState(isLoading = true)
             val actividad = curriculoDao.getActividadConTipoById(actividadId)
@@ -237,9 +264,24 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
                 actividadesCurso = docenciaDao.getActividadesCursoConDetallesByActividadId(actividadId)
             }
 
+            val contenido = actividad?.actividad?.contenidoId?.let { curriculoDao.getContenidoById(it) }
+            val unidad = contenido?.let { curriculoDao.getUnidadConDetallesById(it.unidadId) }
+
+            val targetCursoId = if (cursoId != null && cursoId != 0L) {
+                cursoId
+            } else if (unidad != null) {
+                docenciaDao.getCursosByAsignaturaId(unidad.unidad.asignaturaId).firstOrNull()?.cursoId
+            } else {
+                actividadesCurso.firstOrNull()?.curso?.curso?.id
+            }
+
+            val cursoConDetalles = targetCursoId?.let { identidadDao.getCursoConDetallesById(it) }
+
             _activityPreviewState.value = ActivityPreviewUiState(
                 isLoading = false,
                 actividadConTipo = actividad,
+                unidadConDetalles = unidad,
+                cursoConDetalles = cursoConDetalles,
                 preguntas = preguntas,
                 actividadesCurso = actividadesCurso,
                 allCursos = allCursos

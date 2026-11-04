@@ -40,14 +40,15 @@ import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 @Composable
 fun ContenidoDetalleScreen(
     contenidoId: Long,
+    cursoId: Long = 0L,
     viewModel: UtpViewModel,
     onActivityClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.contentDetailState.collectAsState()
 
-    LaunchedEffect(contenidoId) {
-        viewModel.loadContentDetail(contenidoId)
+    LaunchedEffect(contenidoId, cursoId) {
+        viewModel.loadContentDetail(contenidoId, cursoId)
     }
 
     if (state.isLoading) {
@@ -71,6 +72,9 @@ fun ContenidoDetalleScreen(
         return
     }
 
+    val unidadConDetalles = state.unidadConDetalles
+    val cursoConDetalles = state.cursoConDetalles
+
     val title = contenido.descripcion.lines()
         .firstOrNull { it.isNotBlank() }
         ?.removePrefix("#")?.removePrefix("#")?.removePrefix("#")?.trim()
@@ -89,14 +93,28 @@ fun ContenidoDetalleScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Título del Contenido",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                if (cursoConDetalles != null) {
+                    Text(
+                        text = cursoConDetalles.nombreCompletoConAnnio,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
+
+                if (unidadConDetalles != null) {
+                    Text(
+                        text = unidadConDetalles.unidad.nombre,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall.copy(

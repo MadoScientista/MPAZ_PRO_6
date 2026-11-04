@@ -58,6 +58,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 @Composable
 fun ActividadVistaPreviaScreen(
     actividadId: Long,
+    cursoId: Long = 0L,
     viewModel: UtpViewModel,
     rol: String = "UTP",
     modifier: Modifier = Modifier
@@ -69,8 +70,8 @@ fun ActividadVistaPreviaScreen(
     var showAddQuestionDialog by remember { mutableStateOf(false) }
     var selectedPreguntaForEdit by remember { mutableStateOf<PreguntaConAlternativas?>(null) }
 
-    LaunchedEffect(actividadId) {
-        viewModel.loadActivityPreview(actividadId)
+    LaunchedEffect(actividadId, cursoId) {
+        viewModel.loadActivityPreview(actividadId, cursoId)
     }
 
     if (state.isLoading) {
@@ -97,6 +98,8 @@ fun ActividadVistaPreviaScreen(
     val actividad = actividadConTipo.actividad
     val tipo = actividadConTipo.tipoActividad
     val estado = actividadConTipo.estado
+    val unidadConDetalles = state.unidadConDetalles
+    val cursoConDetalles = state.cursoConDetalles
 
     Column(
         modifier = modifier
@@ -145,38 +148,65 @@ fun ActividadVistaPreviaScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
+                // 1. Estado y botón de editar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    StatusChip(statusName = estado.nombre)
+                    if (isDocenteOrUtp) {
+                        Button(
+                            onClick = { showConfigDialog = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                            Text("Editar Actividad")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 2. Curso
+                if (cursoConDetalles != null) {
                     Text(
-                        text = tipo.nombre,
+                        text = cursoConDetalles.nombreCompletoConAnnio,
                         style = MaterialTheme.typography.labelLarge.copy(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        StatusChip(statusName = estado.nombre)
-                        if (isDocenteOrUtp) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(
-                                onClick = { showConfigDialog = true }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = null,
-                                    modifier = Modifier.padding(end = 4.dp)
-                                )
-                                Text("Editar Actividad")
-                            }
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                 }
+
+                // 3. Unidad / Contenido
+                if (unidadConDetalles != null) {
+                    Text(
+                        text = unidadConDetalles.unidad.nombre,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
+
+                // 4. Tipo de Actividad
+                Text(
+                    text = tipo.nombre,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // 5. Instrucciones
                 Text(
                     text = "Instrucciones",
                     style = MaterialTheme.typography.labelSmall.copy(

@@ -47,6 +47,7 @@ import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 @Composable
 fun UnidadDetalleScreen(
     unidadId: Long,
+    cursoId: Long = 0L,
     viewModel: UtpViewModel,
     rol: String = "UTP",
     onContentClick: (Long) -> Unit,
@@ -56,8 +57,8 @@ fun UnidadDetalleScreen(
     val state by viewModel.unitDetailState.collectAsState()
     val isUtp = rol.equals("UTP", ignoreCase = true)
 
-    LaunchedEffect(unidadId) {
-        viewModel.loadUnitDetail(unidadId)
+    LaunchedEffect(unidadId, cursoId) {
+        viewModel.loadUnitDetail(unidadId, cursoId)
     }
 
     if (state.isLoading) {
@@ -84,6 +85,7 @@ fun UnidadDetalleScreen(
     val unidad = unidadConDetalles.unidad
     val asignatura = unidadConDetalles.asignatura
     val estado = unidadConDetalles.estado
+    val curso = state.cursoConDetalles
     val isAuthorized = estado.id == 3L || estado.nombre == "AUTORIZADO"
 
     Column(
@@ -105,15 +107,16 @@ fun UnidadDetalleScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = asignatura.nombre,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        text = curso?.nombreCompletoConAnnio ?: asignatura.nombre,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
                     )
                     StatusChip(statusName = estado.nombre)
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = unidad.nombre,

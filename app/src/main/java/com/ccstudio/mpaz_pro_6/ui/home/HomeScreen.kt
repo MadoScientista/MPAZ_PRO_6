@@ -57,6 +57,8 @@ fun HomeScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: NavDestination.Inicio.route
 
+    val utpViewModel: UtpViewModel = viewModel()
+
     val isRouteAllowed = remember(currentRoute, rol) {
         NavDestination.isRouteAllowedForRole(currentRoute, rol)
     }
@@ -87,8 +89,6 @@ fun HomeScreen(
     } else {
         "Acceso Restringido"
     }
-
-    val utpViewModel: UtpViewModel = viewModel()
 
     Scaffold(
         modifier = modifier,
@@ -182,9 +182,13 @@ fun HomeScreen(
             }
             composable(
                 route = NavDestination.DetalleUnidad.route,
-                arguments = listOf(navArgument("unidadId") { type = NavType.LongType }),
+                arguments = listOf(
+                    navArgument("unidadId") { type = NavType.LongType },
+                    navArgument("cursoId") { type = NavType.LongType; defaultValue = 0L },
+                ),
             ) { backStackEntry ->
                 val unidadId = backStackEntry.arguments?.getLong("unidadId") ?: 0L
+                val cursoId = backStackEntry.arguments?.getLong("cursoId") ?: 0L
                 ProtectedScreen(
                     route = NavDestination.DetalleUnidad.route,
                     rol = rol,
@@ -192,22 +196,27 @@ fun HomeScreen(
                 ) {
                     UnidadDetalleScreen(
                         unidadId = unidadId,
+                        cursoId = cursoId,
                         viewModel = utpViewModel,
                         rol = rol,
                         onContentClick = { contentId ->
-                            navController.navigate(NavDestination.DetalleContenido.createRoute(contentId))
+                            navController.navigate(NavDestination.DetalleContenido.createRoute(contentId, cursoId))
                         },
                         onPruebaFinalClick = { actividadId ->
-                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId))
+                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId, cursoId))
                         },
                     )
                 }
             }
             composable(
                 route = NavDestination.DetalleContenido.route,
-                arguments = listOf(navArgument("contenidoId") { type = NavType.LongType }),
+                arguments = listOf(
+                    navArgument("contenidoId") { type = NavType.LongType },
+                    navArgument("cursoId") { type = NavType.LongType; defaultValue = 0L },
+                ),
             ) { backStackEntry ->
                 val contenidoId = backStackEntry.arguments?.getLong("contenidoId") ?: 0L
+                val cursoId = backStackEntry.arguments?.getLong("cursoId") ?: 0L
                 ProtectedScreen(
                     route = NavDestination.DetalleContenido.route,
                     rol = rol,
@@ -215,18 +224,23 @@ fun HomeScreen(
                 ) {
                     ContenidoDetalleScreen(
                         contenidoId = contenidoId,
+                        cursoId = cursoId,
                         viewModel = utpViewModel,
                         onActivityClick = { actividadId ->
-                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId))
+                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId, cursoId))
                         },
                     )
                 }
             }
             composable(
                 route = NavDestination.VistaPreviaActividad.route,
-                arguments = listOf(navArgument("actividadId") { type = NavType.LongType }),
+                arguments = listOf(
+                    navArgument("actividadId") { type = NavType.LongType },
+                    navArgument("cursoId") { type = NavType.LongType; defaultValue = 0L },
+                ),
             ) { backStackEntry ->
                 val actividadId = backStackEntry.arguments?.getLong("actividadId") ?: 0L
+                val cursoId = backStackEntry.arguments?.getLong("cursoId") ?: 0L
                 ProtectedScreen(
                     route = NavDestination.VistaPreviaActividad.route,
                     rol = rol,
@@ -234,6 +248,7 @@ fun HomeScreen(
                 ) {
                     ActividadVistaPreviaScreen(
                         actividadId = actividadId,
+                        cursoId = cursoId,
                         viewModel = utpViewModel,
                         rol = rol,
                     )
@@ -292,7 +307,7 @@ fun HomeScreen(
                         asignaturaId = asignaturaId,
                         viewModel = utpViewModel,
                         onUnidadClick = { unidadId ->
-                            navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId))
+                            navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId, cursoId))
                         },
                     )
                 }
