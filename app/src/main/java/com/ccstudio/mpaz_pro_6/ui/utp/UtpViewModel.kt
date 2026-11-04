@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadConTipo
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaConDocente
+import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 import com.ccstudio.mpaz_pro_6.data.local.dao.CursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnidadConDetalles
@@ -65,6 +66,24 @@ data class AsignaturaDetailUiState(
     val unidades: List<UnidadConDetalles> = emptyList()
 )
 
+data class DocenteWithAssignments(
+    val docente: UsuarioEntity,
+    val asignaturasCurso: List<AsignaturaCursoDetalle> = emptyList()
+)
+
+data class DocentesUiState(
+    val isLoading: Boolean = true,
+    val docentes: List<DocenteWithAssignments> = emptyList(),
+    val searchQuery: String = ""
+)
+
+data class DocenteDetailUiState(
+    val isLoading: Boolean = true,
+    val docente: UsuarioEntity? = null,
+    val asignaturasAsignadas: List<AsignaturaCursoDetalle> = emptyList(),
+    val availableAsignaturasCurso: List<AsignaturaCursoDetalle> = emptyList()
+)
+
 class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = MpazDatabase.getDatabase(application)
@@ -93,9 +112,16 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     private val _asignaturaDetailState = MutableStateFlow(AsignaturaDetailUiState())
     val asignaturaDetailState: StateFlow<AsignaturaDetailUiState> = _asignaturaDetailState.asStateFlow()
 
+    private val _docentesState = MutableStateFlow(DocentesUiState())
+    val docentesState: StateFlow<DocentesUiState> = _docentesState.asStateFlow()
+
+    private val _docenteDetailState = MutableStateFlow(DocenteDetailUiState())
+    val docenteDetailState: StateFlow<DocenteDetailUiState> = _docenteDetailState.asStateFlow()
+
     init {
         loadPendingUnits()
         loadCursos()
+        loadDocentes()
     }
 
     fun loadPendingUnits() {
@@ -320,6 +346,78 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
                 )
             )
             loadAsignaturaDetail(cursoId, asignaturaId)
+        }
+    }
+
+    // --- GESTIÓN DE DOCENTES ---
+
+    fun loadDocentes() {
+        viewModelScope.launch {
+            _docentesState.value = _docentesState.value.copy(isLoading = true)
+            val allDocentes = identidadDao.getAllDocentes()
+            val allAssignments = docenciaDao.getAllAsignaturasCursoDetalles()
+
+            val docenteWithAssignments = allDocentes.map { doc ->
+                val assignments = allAssignments.filter { it.asignaturaCurso.docenteId == doc.id }
+                DocenteWithAssignments(
+                    docente = doc,
+                    asignaturasCurso = assignments
+                )
+            }
+
+            _docentesState.value = _docentesState.value.copy(
+                isLoading = false,
+                docentes = docenteWithAssignments
+            )
+        }
+    }
+
+    fun updateDocentesSearchQuery(query: String) {
+        _docentesState.value = _docentesState.value.copy(searchQuery = query)
+    }
+
+    fun loadDocenteDetail(docenteId: Long) {
+        viewModelScope.launch {
+            _docenteDetailState.value = DocenteDetailUiState(isLoading = true)
+            val docente = identidadDao.getUsuarioById(docenteId)
+            val asignaturasAsignadas = docenciaDao.getAsignaturasCursoByDocenteId(docenteId)
+            val allAssignments = docenciaDao.getAllAsignaturasCursoDetalles()
+
+            val availableAsignaturasCurso = allAssignments.filter {
+                it.asignaturaCurso.docenteId != docenteId
+            }
+
+            _docenteDetailState.value = DocenteDetailUiState(
+                isLoading = false,
+                docente = docente,
+                asignaturasAsignadas = asignaturasAsignadas,
+                availableAsignaturasCurso = availableAsignaturasCurso
+            )
+        }
+    }
+
+    fun assignDocenteToAsignaturaCursoFromDetail(docenteId: Long, cursoId: Long, asignaturaId: Long) {
+        viewModelScope.launch {
+            docenciaDao.updateDocenteInAsignaturaCurso(cursoId, asignaturaId, docenteId)
+            docenciaDao.insertUsuarioCurso(
+                UsuarioCursoEntity(usuarioId = docenteId, cursoId = cursoId)
+            )
+            loadDocenteDetail(docenteId)
+            loadDocentes()
+        }
+    }
+
+    fun unassignDocenteFromAsignaturaCurso(docenteId: Long, cursoId: Long, asignaturaId: Long) {
+        viewModelScope.launch {
+            docenciaDao.updateDocenteInAsignaturaCurso(cursoId, asignaturaId, null)
+
+            val remainingInCurso = docenciaDao.countAsignaturasByDocenteYCurso(docenteId, cursoId)
+            if (remainingInCurso == 0) {
+                docenciaDao.deleteUsuarioCursoByCursoYUsuario(cursoId, docenteId)
+            }
+
+            loadDocenteDetail(docenteId)
+            loadDocentes()
         }
     }
 }

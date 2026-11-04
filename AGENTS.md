@@ -104,7 +104,7 @@ com.ccstudio.mpaz_pro_6/
   - Tras realizar cambios significativos en Room, DTOs o UI, validar la compilación ejecutando:
     `gradle_build("app:compileDebugKotlin")` o `gradle_build("app:assembleDebug")`.
 - **CONSISTENCIA DE CONVENCIONES:**
-  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md`, `specs/4_constantes_y_credenciales.md`, `specs/5_seguridad.md` y `specs/6_navegacion.md`).
+  - Respetar los nombres de clases, entidades y paquetes definidos en la especificación (`specs/1.relaciones_modelo_mpaz.md`, `specs/2_dtos.md`, `specs/3_datos_semilla.md`, `specs/4_constantes_y_credenciales.md`, `specs/5_seguridad.md`, `specs/6_navegacion.md` y `specs/7_administracion_docentes.md`).
 
 ---
 

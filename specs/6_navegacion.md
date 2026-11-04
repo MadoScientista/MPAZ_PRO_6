@@ -78,10 +78,13 @@ sealed class NavDestination(
     data object Informes : NavDestination("informes", "Informes", Icons.Default.Assessment, isTopLevel = true, listOf("DOCENTE"))
     data object ActividadesPendientes : NavDestination("actividades_pendientes", "Actividades pendientes", Icons.Default.Task, isTopLevel = true, listOf("ESTUDIANTE"))
 
-    // --- DESTINOS SECUNDARIOS / DETALLE (EJEMPLOS PARA FUTURA EXPANSIÓN) ---
-    data object DetalleCurso : NavDestination("curso/{cursoId}", "Detalle del Curso", isTopLevel = false, listOf("UTP", "DOCENTE"))
-    data object CrearActividad : NavDestination("actividad/crear/{unidadId}", "Crear Actividad", isTopLevel = false, listOf("DOCENTE"))
-    data object ResponderActividad : NavDestination("actividad/responder/{actividadId}", "Responder Actividad", isTopLevel = false, listOf("ESTUDIANTE"))
+    // --- DESTINOS SECUNDARIOS / DETALLE ---
+    data object DetalleUnidad : NavDestination("unidad_detalle/{unidadId}", "Detalle de Unidad", isTopLevel = false, listOf("UTP", "DOCENTE"))
+    data object DetalleContenido : NavDestination("contenido_detalle/{contenidoId}", "Detalle de Contenido", isTopLevel = false, listOf("UTP", "DOCENTE", "ESTUDIANTE"))
+    data object VistaPreviaActividad : NavDestination("actividad_vistaprevia/{actividadId}", "Vista Previa de Actividad", isTopLevel = false, listOf("UTP", "DOCENTE", "ESTUDIANTE"))
+    data object DetalleCurso : NavDestination("curso_detalle/{cursoId}", "Detalle del Curso", isTopLevel = false, listOf("UTP", "DOCENTE"))
+    data object DetalleAsignaturaCurso : NavDestination("curso_asignatura_detalle/{cursoId}/{asignaturaId}", "Detalle de Asignatura", isTopLevel = false, listOf("UTP", "DOCENTE"))
+    data object DetalleDocente : NavDestination("docente_detalle/{docenteId}", "Detalle de Docente", isTopLevel = false, listOf("UTP"))
 }
 ```
 

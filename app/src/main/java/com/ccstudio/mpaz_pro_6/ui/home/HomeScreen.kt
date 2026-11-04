@@ -35,6 +35,8 @@ import com.ccstudio.mpaz_pro_6.ui.utp.ContenidoDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.CursoAsignaturaDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.CursoDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.CursosListScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.DocenteDetalleScreen
+import com.ccstudio.mpaz_pro_6.ui.utp.DocentesListScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.RevisionesPendientesScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UnidadDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
@@ -75,6 +77,7 @@ fun HomeScreen(
                 currentRoute.startsWith("actividad_vistaprevia/") -> NavDestination.VistaPreviaActividad.title
                 currentRoute.startsWith("curso_detalle/") -> NavDestination.DetalleCurso.title
                 currentRoute.startsWith("curso_asignatura_detalle/") -> NavDestination.DetalleAsignaturaCurso.title
+                currentRoute.startsWith("docente_detalle/") -> NavDestination.DetalleDocente.title
                 else -> "MPAZ PRO"
             }
     } else {
@@ -293,7 +296,28 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.Docentes.title)
+                    DocentesListScreen(
+                        viewModel = utpViewModel,
+                        onDocenteClick = { docenteId ->
+                            navController.navigate(NavDestination.DetalleDocente.createRoute(docenteId))
+                        },
+                    )
+                }
+            }
+            composable(
+                route = NavDestination.DetalleDocente.route,
+                arguments = listOf(navArgument("docenteId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val docenteId = backStackEntry.arguments?.getLong("docenteId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.DetalleDocente.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    DocenteDetalleScreen(
+                        docenteId = docenteId,
+                        viewModel = utpViewModel,
+                    )
                 }
             }
             composable(NavDestination.Usuarios.route) {
