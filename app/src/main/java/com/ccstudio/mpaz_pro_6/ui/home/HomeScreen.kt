@@ -1,5 +1,8 @@
 package com.ccstudio.mpaz_pro_6.ui.home
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -44,6 +47,20 @@ import com.ccstudio.mpaz_pro_6.ui.utp.UnidadDetalleScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UsuariosListScreen
 import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 
+/**
+ * Contenedor principal de la aplicación autenticada.
+ *
+ * Administra la navegación centralizada mediante Jetpack Navigation Compose:
+ * - Renderiza la cabecera dinámica [TopAppBar] según el destino activo.
+ * - Gestiona la visibilidad condicional del menú inferior [NavigationBar] para destinos Top-Level.
+ * - Provee la función `navigateToTopLevel` para garantizar que la navegación entre secciones principales
+ *   preserve y limpie adecuadamente el estado de la pila de navegación (`popUpTo`, `saveState`, `restoreState`).
+ * - Configura animaciones suaves de entrada/salida ([fadeIn], [fadeOut]) para evitar parpadeos con gestos
+ *   o botones de retroceso nativos.
+ *
+ * @param rol Rol del usuario autenticado ("UTP", "DOCENTE", "ESTUDIANTE").
+ * @param onLogoutClick Callback ejecutado al cerrar sesión.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -64,6 +81,20 @@ fun HomeScreen(
     }
 
     val isTopLevelDestination = NavDestination.isTopLevelRoute(currentRoute)
+
+    val navigateToTopLevel: (String) -> Unit = remember(navController, currentRoute) {
+        { targetRoute ->
+            if (currentRoute != targetRoute) {
+                navController.navigate(targetRoute) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        }
+    }
 
     val currentTitle = if (isRouteAllowed) {
         navItems.find { it.route == currentRoute }?.title
@@ -139,15 +170,7 @@ fun HomeScreen(
                             },
                             selected = selected,
                             onClick = {
-                                if (currentRoute != item.route) {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
+                                navigateToTopLevel(item.route)
                             },
                         )
                     }
@@ -159,11 +182,24 @@ fun HomeScreen(
             navController = navController,
             startDestination = NavDestination.Inicio.route,
             modifier = Modifier.padding(innerPadding),
+            enterTransition = { fadeIn(animationSpec = tween(200)) },
+            exitTransition = { fadeOut(animationSpec = tween(200)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+            popExitTransition = { fadeOut(animationSpec = tween(200)) },
         ) {
             composable(NavDestination.Inicio.route) {
                 InicioScreen(
                     rol = rol,
                     onLogoutClick = onLogoutClick,
+                    viewModel = utpViewModel,
+                    onNavigateToRevisiones = { navigateToTopLevel(NavDestination.RevisionesPendientes.route) },
+                    onNavigateToCursos = { navigateToTopLevel(NavDestination.Cursos.route) },
+                    onNavigateToDocentes = { navigateToTopLevel(NavDestination.Docentes.route) },
+                    onNavigateToUsuarios = { navigateToTopLevel(NavDestination.Usuarios.route) },
+                    onNavigateToCrearUsuario = { navController.navigate(NavDestination.CrearUsuario.route) },
+                    onNavigateToDetalleUnidad = { unidadId ->
+                        navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId))
+                    },
                 )
             }
             composable(NavDestination.RevisionesPendientes.route) {

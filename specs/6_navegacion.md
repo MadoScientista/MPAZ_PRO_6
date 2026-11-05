@@ -42,16 +42,40 @@ La visibilidad de la `BottomBar` se determina evaluando si la ruta actual perten
 ```kotlin
 val isTopLevelDestination = navItems.any { it.route == currentRoute }
 
+val navigateToTopLevel: (String) -> Unit = remember(navController, currentRoute) {
+    { targetRoute ->
+        if (currentRoute != targetRoute) {
+            navController.navigate(targetRoute) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+}
+
 Scaffold(
     bottomBar = {
         if (isTopLevelDestination) {
             NavigationBar {
-                // Generación dinámica de ítems según rol
+                // Generación dinámica de ítems según rol mediante navigateToTopLevel
             }
         }
     }
 )
 ```
+
+---
+
+## 3.1 Transiciones y Navegación entre Vistas Top-Level
+
+Toda navegación iniciada desde componentes internos (como tarjetas KPI, botones de acción rápida en el Home o ítems de la `BottomBar`) hacia destinos Top-Level **debe utilizar la función helper `navigateToTopLevel`**. Esto garantiza que:
+1. La pila de retroceso se limpie correctamente hasta la pantalla de inicio (`startDestination`).
+2. El estado de la pantalla destino se conserve (`saveState = true`, `restoreState = true`).
+3. Al presionar la pestaña *Inicio* en la barra inferior o la tecla/gesto nativo de retroceso, el usuario regrese de forma predecible al Home.
+4. El `NavHost` aplique transiciones suavizadas de entrada/salida (`fadeIn` y `fadeOut`) para evitar flickering o animaciones inconsistentes entre la navegación Compose y los gestos del sistema Android.
 
 ---
 

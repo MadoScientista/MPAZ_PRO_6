@@ -166,11 +166,32 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     private val _crearUsuarioState = MutableStateFlow(CrearUsuarioUiState())
     val crearUsuarioState: StateFlow<CrearUsuarioUiState> = _crearUsuarioState.asStateFlow()
 
+    private val _currentUserName = MutableStateFlow<String>("")
+    /**
+     * Nombre del usuario autenticado en la sesión activa (primer nombre o nombre de usuario en su defecto).
+     */
+    val currentUserName: StateFlow<String> = _currentUserName.asStateFlow()
+
     init {
+        loadCurrentUserName()
         loadPendingUnits()
         loadCursos()
         loadDocentes()
         loadUsuarios()
+    }
+
+    /**
+     * Carga el primer nombre (`pnombre`) del usuario en sesión desde la base de datos local.
+     */
+    fun loadCurrentUserName() {
+        viewModelScope.launch {
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            if (session != null) {
+                val usuario = identidadDao.getUsuarioByNombre(session.username)
+                val nombre = usuario?.pnombre?.ifBlank { null } ?: session.username
+                _currentUserName.value = nombre
+            }
+        }
     }
 
     fun loadPendingUnits() {
@@ -207,12 +228,21 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun autorizarUnidad(unidadId: Long) {
+    fun autorizarUnidad(unidadId: Long, cursoId: Long? = null) {
         viewModelScope.launch {
             // 3L = AUTORIZADO
             curriculoDao.updateUnidadEstado(unidadId, 3L)
             loadPendingUnits()
-            loadUnitDetail(unidadId)
+            loadUnitDetail(unidadId, cursoId ?: _unitDetailState.value.cursoConDetalles?.curso?.id)
+        }
+    }
+
+    fun cambiarEstadoUnidadBorrador(unidadId: Long, cursoId: Long? = null) {
+        viewModelScope.launch {
+            // 1L = BORRADOR
+            curriculoDao.updateUnidadEstado(unidadId, 1L)
+            loadPendingUnits()
+            loadUnitDetail(unidadId, cursoId ?: _unitDetailState.value.cursoConDetalles?.curso?.id)
         }
     }
 
@@ -444,14 +474,14 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadCursos() {
         viewModelScope.launch {
-            _cursosState.value = CursosUiState(isLoading = true)
+            _cursosState.value = _cursosState.value.copy(isLoading = true)
             val session = sessionManager.userSessionFlow.firstOrNull()
             val cursos = if (session != null && session.rol.equals("DOCENTE", ignoreCase = true)) {
                 identidadDao.getCursosConDetallesByDocenteId(session.userId)
             } else {
                 identidadDao.getCursosConDetalles()
             }
-            _cursosState.value = CursosUiState(
+            _cursosState.value = _cursosState.value.copy(
                 isLoading = false,
                 cursos = cursos
             )
