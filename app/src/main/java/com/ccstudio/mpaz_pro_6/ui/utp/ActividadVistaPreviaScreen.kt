@@ -64,7 +64,7 @@ fun ActividadVistaPreviaScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.activityPreviewState.collectAsState()
-    val isDocenteOrUtp = rol.equals("DOCENTE", ignoreCase = true) || rol.equals("UTP", ignoreCase = true)
+    val isDocente = rol.equals("DOCENTE", ignoreCase = true)
 
     var showConfigDialog by remember { mutableStateOf(false) }
     var showAddQuestionDialog by remember { mutableStateOf(false) }
@@ -155,7 +155,7 @@ fun ActividadVistaPreviaScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StatusChip(statusName = estado.nombre)
-                    if (isDocenteOrUtp) {
+                    if (isDocente) {
                         Button(
                             onClick = { showConfigDialog = true }
                         ) {
@@ -235,7 +235,7 @@ fun ActividadVistaPreviaScreen(
                 text = "Preguntas (${state.preguntas.size})",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
-            if (isDocenteOrUtp) {
+            if (isDocente) {
                 OutlinedButton(
                     onClick = { showAddQuestionDialog = true }
                 ) {
@@ -269,7 +269,7 @@ fun ActividadVistaPreviaScreen(
                         index = index + 1,
                         preguntaConAlternativas = preguntaConAlternativas,
                         isPreviewMode = true,
-                        onEditClick = if (isDocenteOrUtp) {
+                        onEditClick = if (isDocente) {
                             { selectedPreguntaForEdit = preguntaConAlternativas }
                         } else null
                     )
