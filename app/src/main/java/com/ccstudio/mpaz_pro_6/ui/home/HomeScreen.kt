@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ccstudio.mpaz_pro_6.ui.docente.CrearContenidoScreen
 import com.ccstudio.mpaz_pro_6.ui.docente.DocenteAsignaturasScreen
 import com.ccstudio.mpaz_pro_6.ui.navigation.NavDestination
 import com.ccstudio.mpaz_pro_6.ui.screens.GenericSectionScreen
@@ -430,7 +431,7 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.Crear.title)
+                    CrearContenidoScreen()
                 }
             }
             composable(NavDestination.Informes.route) {

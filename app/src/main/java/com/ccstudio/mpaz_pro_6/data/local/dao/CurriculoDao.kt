@@ -149,6 +149,9 @@ interface CurriculoDao {
     @Query("SELECT * FROM objetivo_aprendizaje_unidad WHERE unidad_id = :unidadId")
     suspend fun getObjetivosByUnidadId(unidadId: Long): List<ObjetivoAprendizajeUnidadEntity>
 
+    @Query("SELECT oa.* FROM objetivo_aprendizaje oa INNER JOIN objetivo_aprendizaje_unidad oau ON oa.objetivo_aprendizaje_id = oau.objetivo_aprendizaje_id WHERE oau.unidad_id = :unidadId")
+    suspend fun getObjetivosAprendizajeByUnidadId(unidadId: Long): List<ObjetivoAprendizajeEntity>
+
     // Contenido
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertContenido(entity: ContenidoEntity): Long
@@ -207,6 +210,10 @@ interface CurriculoDao {
     @Transaction
     @Query("SELECT * FROM actividad WHERE actividad_id = :id")
     suspend fun getActividadConTipoById(id: Long): ActividadConTipo?
+
+    @Transaction
+    @Query("SELECT * FROM actividad WHERE contenido_id IS NOT NULL AND contenido_id > 0")
+    suspend fun getAllActividadesConTipoValidas(): List<ActividadConTipo>
 
     @Transaction
     @Query("SELECT a.* FROM actividad a INNER JOIN contenido c ON a.contenido_id = c.contenido_id WHERE c.unidad_id = :unidadId AND a.tipo_actividad_id = 3 LIMIT 1")
