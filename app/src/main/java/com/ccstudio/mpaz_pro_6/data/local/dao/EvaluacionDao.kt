@@ -37,6 +37,9 @@ interface EvaluacionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRespuesta(entity: RespuestaEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRespuestas(entities: List<RespuestaEntity>): List<Long>
+
     @Delete
     suspend fun deleteRespuesta(entity: RespuestaEntity)
 

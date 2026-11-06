@@ -52,10 +52,12 @@ fun ContenidoDetalleScreen(
     contenidoId: Long,
     cursoId: Long = 0L,
     viewModel: UtpViewModel,
+    rol: String = "UTP",
     onActivityClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.contentDetailState.collectAsState()
+    val isEstudiante = rol.equals("ESTUDIANTE", ignoreCase = true)
 
     LaunchedEffect(contenidoId, cursoId) {
         viewModel.loadContentDetail(contenidoId, cursoId)
@@ -257,6 +259,7 @@ fun ContenidoDetalleScreen(
                     ActivityItemCard(
                         index = index + 1,
                         actividadConTipo = actividadConTipo,
+                        isEstudiante = isEstudiante,
                         onClick = { onActivityClick(actividadConTipo.actividad.id) }
                     )
                 }
@@ -269,6 +272,7 @@ fun ContenidoDetalleScreen(
 private fun ActivityItemCard(
     index: Int,
     actividadConTipo: ActividadConTipo,
+    isEstudiante: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -308,7 +312,9 @@ private fun ActivityItemCard(
                         text = "Actividad $index - ${actividadConTipo.tipoActividad.nombre}",
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                     )
-                    StatusChip(statusName = actividadConTipo.estado.nombre)
+                    if (!isEstudiante) {
+                        StatusChip(statusName = actividadConTipo.estado.nombre)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))

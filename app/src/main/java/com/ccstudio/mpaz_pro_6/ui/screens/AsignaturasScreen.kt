@@ -1,4 +1,4 @@
-package com.ccstudio.mpaz_pro_6.ui.docente
+package com.ccstudio.mpaz_pro_6.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -42,15 +43,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 
 @Composable
-fun DocenteAsignaturasScreen(
+fun AsignaturasScreen(
     onAsignaturaClick: (cursoId: Long, asignaturaId: Long) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DocenteViewModel = viewModel(),
+    viewModel: AsignaturasViewModel = viewModel(),
 ) {
     val state by viewModel.asignaturasState.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadDocenteAsignaturas()
+        viewModel.loadAsignaturas()
     }
 
     val filteredList = remember(state.asignaturas, state.searchQuery) {
@@ -61,9 +62,25 @@ fun DocenteAsignaturasScreen(
             state.asignaturas.filter { item ->
                 item.asignatura.nombre.lowercase().contains(query) ||
                         item.nombreCompletoCurso.lowercase().contains(query) ||
-                        item.nombreCurso.lowercase().contains(query)
+                        item.nombreCurso.lowercase().contains(query) ||
+                        (item.docente != null && "${item.docente.pnombre} ${item.docente.apaterno}".lowercase().contains(query))
             }
         }
+    }
+
+    val rol = state.userRol.uppercase()
+    val subtitleText = when (rol) {
+        "UTP" -> "Todas las asignaturas del colegio (${filteredList.size})"
+        "DOCENTE" -> "Asignaturas a su cargo (${filteredList.size})"
+        "ESTUDIANTE" -> "Asignaturas de tu curso (${filteredList.size})"
+        else -> "Asignaturas (${filteredList.size})"
+    }
+
+    val emptyText = when (rol) {
+        "UTP" -> "No hay asignaturas registradas en el sistema."
+        "DOCENTE" -> "No tiene asignaturas asignadas a su cargo actualmente."
+        "ESTUDIANTE" -> "No tienes asignaturas registradas en tu curso actualmente."
+        else -> "No hay asignaturas disponibles."
     }
 
     Column(
@@ -77,7 +94,7 @@ fun DocenteAsignaturasScreen(
             value = state.searchQuery,
             onValueChange = { viewModel.updateSearchQuery(it) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Buscar asignatura o curso...") },
+            placeholder = { Text("Buscar asignatura, curso o docente...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -97,9 +114,9 @@ fun DocenteAsignaturasScreen(
             singleLine = true,
         )
 
-        // Subtítulo con conteo
+        // Subtítulo según Rol
         Text(
-            text = "Asignaturas a su cargo (${filteredList.size})",
+            text = subtitleText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -127,7 +144,7 @@ fun DocenteAsignaturasScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "No tiene asignaturas asignadas a su cargo actualmente.",
+                        text = emptyText,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -159,8 +176,9 @@ fun DocenteAsignaturasScreen(
                 contentPadding = PaddingValues(bottom = 16.dp),
             ) {
                 items(filteredList) { item ->
-                    DocenteAsignaturaCard(
+                    AsignaturaItemCard(
                         item = item,
+                        showDocenteInfo = rol == "UTP" || rol == "ESTUDIANTE",
                         onClick = {
                             onAsignaturaClick(
                                 item.asignaturaCurso.cursoId,
@@ -175,10 +193,13 @@ fun DocenteAsignaturasScreen(
 }
 
 @Composable
-private fun DocenteAsignaturaCard(
+private fun AsignaturaItemCard(
     item: AsignaturaCursoDetalle,
+    showDocenteInfo: Boolean,
     onClick: () -> Unit,
 ) {
+    val docenteNombre = item.docente?.let { "${it.pnombre} ${it.apaterno}" } ?: "Sin docente asignado"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -232,6 +253,26 @@ private fun DocenteAsignaturaCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+
+                if (showDocenteInfo) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier
+                                .height(16.dp)
+                                .width(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Docente: $docenteNombre",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 

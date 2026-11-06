@@ -49,14 +49,16 @@ fun CursoAsignaturaDetalleScreen(
     cursoId: Long,
     asignaturaId: Long,
     viewModel: UtpViewModel,
+    rol: String = "UTP",
     onUnidadClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.asignaturaDetailState.collectAsState()
     var showAddUnidadDialog by remember { mutableStateOf(false) }
+    val isEstudiante = rol.equals("ESTUDIANTE", ignoreCase = true)
 
-    LaunchedEffect(cursoId, asignaturaId) {
-        viewModel.loadAsignaturaDetail(cursoId, asignaturaId)
+    LaunchedEffect(cursoId, asignaturaId, rol) {
+        viewModel.loadAsignaturaDetail(cursoId, asignaturaId, isEstudiante = isEstudiante)
     }
 
     if (state.isLoading) {
@@ -124,10 +126,12 @@ fun CursoAsignaturaDetalleScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Button(onClick = { showAddUnidadDialog = true }) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Agregar Unidad")
+            if (!isEstudiante) {
+                Button(onClick = { showAddUnidadDialog = true }) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Agregar Unidad")
+                }
             }
         }
 
@@ -140,7 +144,7 @@ fun CursoAsignaturaDetalleScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No hay unidades creadas para esta asignatura.",
+                    text = if (isEstudiante) "No hay unidades autorizadas para esta asignatura." else "No hay unidades creadas para esta asignatura.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -153,6 +157,7 @@ fun CursoAsignaturaDetalleScreen(
                 items(state.unidades) { unidadConDetalles ->
                     UnidadItemCard(
                         unidadConDetalles = unidadConDetalles,
+                        isEstudiante = isEstudiante,
                         onClick = { onUnidadClick(unidadConDetalles.unidad.id) }
                     )
                 }
@@ -175,6 +180,7 @@ fun CursoAsignaturaDetalleScreen(
 @Composable
 private fun UnidadItemCard(
     unidadConDetalles: UnidadConDetalles,
+    isEstudiante: Boolean,
     onClick: () -> Unit
 ) {
     Card(
@@ -204,8 +210,10 @@ private fun UnidadItemCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                StatusChip(statusName = unidadConDetalles.estado.nombre)
+                if (!isEstudiante) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    StatusChip(statusName = unidadConDetalles.estado.nombre)
+                }
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

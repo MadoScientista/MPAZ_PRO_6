@@ -42,6 +42,16 @@ sealed class NavDestination(
         fun createRoute(actividadId: Long, cursoId: Long? = null) =
             if (cursoId != null && cursoId != 0L) "actividad_vistaprevia/$actividadId?cursoId=$cursoId" else "actividad_vistaprevia/$actividadId"
     }
+    data object ResolverActividad : NavDestination("actividad_resolver/{actividadId}?cursoId={cursoId}&intentoId={intentoId}", "Resolver Actividad", isTopLevel = false) {
+        fun createRoute(actividadId: Long, cursoId: Long? = null, intentoId: Long? = null): String {
+            val sb = StringBuilder("actividad_resolver/$actividadId")
+            val params = mutableListOf<String>()
+            if (cursoId != null && cursoId != 0L) params.add("cursoId=$cursoId")
+            if (intentoId != null && intentoId != 0L) params.add("intentoId=$intentoId")
+            if (params.isNotEmpty()) sb.append("?").append(params.joinToString("&"))
+            return sb.toString()
+        }
+    }
     data object DetalleCurso : NavDestination("curso_detalle/{cursoId}", "Detalle del Curso", isTopLevel = false) {
         fun createRoute(cursoId: Long) = "curso_detalle/$cursoId"
     }
@@ -99,8 +109,11 @@ sealed class NavDestination(
                             route.startsWith("actividad_vistaprevia/") ||
                             route.startsWith("curso_detalle/") ||
                             route.startsWith("curso_asignatura_detalle/")
-                "ESTUDIANTE" -> route.startsWith("contenido_detalle/") ||
-                                route.startsWith("actividad_vistaprevia/")
+                "ESTUDIANTE" -> route.startsWith("unidad_detalle/") ||
+                                route.startsWith("contenido_detalle/") ||
+                                route.startsWith("actividad_vistaprevia/") ||
+                                route.startsWith("actividad_resolver/") ||
+                                route.startsWith("curso_asignatura_detalle/")
                 else -> false
             }
         }

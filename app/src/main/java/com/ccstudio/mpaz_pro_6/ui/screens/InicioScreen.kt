@@ -125,10 +125,52 @@ fun InicioScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (rol.equals("UTP", ignoreCase = true)) "Coordinación Técnico Pedagógica" else "Rol actual: $rol",
+                    text = if (rol.equals("UTP", ignoreCase = true)) {
+                        "Coordinación Técnico Pedagógica"
+                    } else if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                        "Portal del Estudiante"
+                    } else {
+                        "Rol actual: $rol"
+                    },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
+                )
+            }
+        }
+
+        // --- 2. VISTA Y DASHBOARD PARA ESTUDIANTE ---
+        if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+            Text(
+                text = "Accesos Rápidos",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                KpiCard(
+                    count = "Mis Asignaturas",
+                    subtitle = "Acceder a asignaturas y unidades",
+                    icon = Icons.Default.Book,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = onNavigateToCursos,
+                    modifier = Modifier.weight(1f)
+                )
+
+                KpiCard(
+                    count = "Actividades",
+                    subtitle = "Resolver tareas y pruebas",
+                    icon = Icons.AutoMirrored.Filled.FactCheck,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    onClick = onNavigateToRevisiones,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }

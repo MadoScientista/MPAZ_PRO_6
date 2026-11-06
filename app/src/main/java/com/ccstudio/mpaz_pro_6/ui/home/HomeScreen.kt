@@ -30,8 +30,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ccstudio.mpaz_pro_6.ui.docente.CrearContenidoScreen
-import com.ccstudio.mpaz_pro_6.ui.docente.DocenteAsignaturasScreen
+import com.ccstudio.mpaz_pro_6.ui.estudiante.EstudianteActividadesScreen
+import com.ccstudio.mpaz_pro_6.ui.estudiante.EstudianteResolverActividadScreen
 import com.ccstudio.mpaz_pro_6.ui.navigation.NavDestination
+import com.ccstudio.mpaz_pro_6.ui.screens.AsignaturasScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.GenericSectionScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.InicioScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.RestrictedAccessScreen
@@ -112,6 +114,7 @@ fun HomeScreen(
                 currentRoute.startsWith("unidad_detalle/") -> NavDestination.DetalleUnidad.title
                 currentRoute.startsWith("contenido_detalle/") -> NavDestination.DetalleContenido.title
                 currentRoute.startsWith("actividad_vistaprevia/") -> NavDestination.VistaPreviaActividad.title
+                currentRoute.startsWith("actividad_resolver/") -> NavDestination.ResolverActividad.title
                 currentRoute.startsWith("curso_detalle/") -> NavDestination.DetalleCurso.title
                 currentRoute.startsWith("curso_asignatura_detalle/") -> NavDestination.DetalleAsignaturaCurso.title
                 currentRoute.startsWith("docente_detalle/") -> NavDestination.DetalleDocente.title
@@ -193,8 +196,20 @@ fun HomeScreen(
                     rol = rol,
                     onLogoutClick = onLogoutClick,
                     viewModel = utpViewModel,
-                    onNavigateToRevisiones = { navigateToTopLevel(NavDestination.RevisionesPendientes.route) },
-                    onNavigateToCursos = { navigateToTopLevel(NavDestination.Cursos.route) },
+                    onNavigateToRevisiones = {
+                        if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                            navigateToTopLevel(NavDestination.ActividadesPendientes.route)
+                        } else {
+                            navigateToTopLevel(NavDestination.RevisionesPendientes.route)
+                        }
+                    },
+                    onNavigateToCursos = {
+                        if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                            navigateToTopLevel(NavDestination.Asignaturas.route)
+                        } else {
+                            navigateToTopLevel(NavDestination.Cursos.route)
+                        }
+                    },
                     onNavigateToDocentes = { navigateToTopLevel(NavDestination.Docentes.route) },
                     onNavigateToUsuarios = { navigateToTopLevel(NavDestination.Usuarios.route) },
                     onNavigateToCrearUsuario = { navController.navigate(NavDestination.CrearUsuario.route) },
@@ -240,7 +255,11 @@ fun HomeScreen(
                             navController.navigate(NavDestination.DetalleContenido.createRoute(contentId, cursoId))
                         },
                         onPruebaFinalClick = { actividadId ->
-                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId, cursoId))
+                            if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                                navController.navigate(NavDestination.ResolverActividad.createRoute(actividadId, cursoId))
+                            } else {
+                                navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId, cursoId))
+                            }
                         },
                     )
                 }
@@ -263,8 +282,13 @@ fun HomeScreen(
                         contenidoId = contenidoId,
                         cursoId = cursoId,
                         viewModel = utpViewModel,
+                        rol = rol,
                         onActivityClick = { actividadId ->
-                            navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId, cursoId))
+                            if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                                navController.navigate(NavDestination.ResolverActividad.createRoute(actividadId, cursoId))
+                            } else {
+                                navController.navigate(NavDestination.VistaPreviaActividad.createRoute(actividadId, cursoId))
+                            }
                         },
                     )
                 }
@@ -343,6 +367,7 @@ fun HomeScreen(
                         cursoId = cursoId,
                         asignaturaId = asignaturaId,
                         viewModel = utpViewModel,
+                        rol = rol,
                         onUnidadClick = { unidadId ->
                             navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId, cursoId))
                         },
@@ -416,7 +441,7 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    DocenteAsignaturasScreen(
+                    AsignaturasScreen(
                         onAsignaturaClick = { cursoId, asignaturaId ->
                             navController.navigate(
                                 NavDestination.DetalleAsignaturaCurso.createRoute(cursoId, asignaturaId),
@@ -449,7 +474,49 @@ fun HomeScreen(
                     rol = rol,
                     onGoHome = { navController.navigate(NavDestination.Inicio.route) },
                 ) {
-                    GenericSectionScreen(title = NavDestination.ActividadesPendientes.title)
+                    if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                        EstudianteActividadesScreen(
+                            onIniciarIntento = { actId, cId, intentoId ->
+                                navController.navigate(
+                                    NavDestination.ResolverActividad.createRoute(actId, cId, intentoId)
+                                )
+                            }
+                        )
+                    } else {
+                        GenericSectionScreen(title = NavDestination.ActividadesPendientes.title)
+                    }
+                }
+            }
+            composable(
+                route = NavDestination.ResolverActividad.route,
+                arguments = listOf(
+                    navArgument("actividadId") { type = NavType.LongType },
+                    navArgument("cursoId") { type = NavType.LongType; defaultValue = 0L },
+                    navArgument("intentoId") { type = NavType.LongType; defaultValue = 0L },
+                ),
+            ) { backStackEntry ->
+                val actividadId = backStackEntry.arguments?.getLong("actividadId") ?: 0L
+                val cursoId = backStackEntry.arguments?.getLong("cursoId") ?: 0L
+                val intentoId = backStackEntry.arguments?.getLong("intentoId") ?: 0L
+                ProtectedScreen(
+                    route = NavDestination.ResolverActividad.route,
+                    rol = rol,
+                    onGoHome = { navController.navigate(NavDestination.Inicio.route) },
+                ) {
+                    EstudianteResolverActividadScreen(
+                        actividadId = actividadId,
+                        cursoId = cursoId,
+                        intentoId = intentoId,
+                        onVolverAUnidad = { unidadId, cId ->
+                            if (unidadId > 0L) {
+                                navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId, cId)) {
+                                    popUpTo(NavDestination.DetalleUnidad.route) { inclusive = false }
+                                }
+                            } else {
+                                navController.popBackStack()
+                            }
+                        },
+                    )
                 }
             }
         }

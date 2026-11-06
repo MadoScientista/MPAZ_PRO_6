@@ -143,6 +143,40 @@ interface DocenciaDao {
     """)
     suspend fun getAllAsignaturasCursoDetalles(): List<AsignaturaCursoDetalle>
 
+    @Query("""
+        SELECT 
+            ac.id, ac.curso_id, ac.asignatura_id, ac.docente_id,
+            a.asignatura_id AS asig_asignatura_id,
+            a.nombre AS asig_nombre,
+            a.nivel_id AS asig_nivel_id,
+            c.curso_id AS curso_curso_id,
+            c.annio AS curso_annio,
+            c.nivel_id AS curso_nivel_id,
+            c.seccion_id AS curso_seccion_id,
+            n.nivel_id AS niv_nivel_id,
+            n.nombre AS niv_nombre,
+            s.seccion_id AS sec_seccion_id,
+            s.letra AS sec_letra,
+            u.usuario_id AS doc_usuario_id,
+            u.nombre_usuario AS doc_nombre_usuario,
+            u.password_hash AS doc_password_hash,
+            u.pnombre AS doc_pnombre,
+            u.snombre AS doc_snombre,
+            u.apaterno AS doc_apaterno,
+            u.amaterno AS doc_amaterno,
+            u.rol_id AS doc_rol_id,
+            u.activo AS doc_activo
+        FROM usuario_curso uc
+        INNER JOIN asignatura_curso ac ON uc.curso_id = ac.curso_id
+        INNER JOIN asignatura a ON ac.asignatura_id = a.asignatura_id
+        INNER JOIN curso c ON ac.curso_id = c.curso_id
+        INNER JOIN nivel n ON c.nivel_id = n.nivel_id
+        INNER JOIN seccion s ON c.seccion_id = s.seccion_id
+        LEFT JOIN usuario u ON ac.docente_id = u.usuario_id
+        WHERE uc.usuario_id = :estudianteId
+    """)
+    suspend fun getAsignaturasCursoByEstudianteId(estudianteId: Long): List<AsignaturaCursoDetalle>
+
     @Query("SELECT COUNT(*) FROM asignatura_curso WHERE docente_id = :docenteId AND curso_id = :cursoId")
     suspend fun countAsignaturasByDocenteYCurso(docenteId: Long, cursoId: Long): Int
 
@@ -196,4 +230,13 @@ interface DocenciaDao {
     @androidx.room.Transaction
     @Query("SELECT * FROM actividad_curso WHERE actividad_id = :actividadId")
     suspend fun getActividadesCursoConDetallesByActividadId(actividadId: Long): List<ActividadCursoConDetalles>
+
+    @androidx.room.Transaction
+    @Query("""
+        SELECT ac.* 
+        FROM actividad_curso ac
+        INNER JOIN usuario_curso uc ON ac.curso_id = uc.curso_id
+        WHERE uc.usuario_id = :estudianteId AND ac.visible = 1 AND ac.habilitada = 1
+    """)
+    suspend fun getActividadesCursoConDetallesByEstudianteId(estudianteId: Long): List<ActividadCursoConDetalles>
 }

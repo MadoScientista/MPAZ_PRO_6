@@ -623,12 +623,15 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- DETALLE ASIGNATURA EN CURSO ---
 
-    fun loadAsignaturaDetail(cursoId: Long, asignaturaId: Long) {
+    fun loadAsignaturaDetail(cursoId: Long, asignaturaId: Long, isEstudiante: Boolean = false) {
         viewModelScope.launch {
             _asignaturaDetailState.value = AsignaturaDetailUiState(isLoading = true)
             val asignatura = curriculoDao.getAsignaturaById(asignaturaId)
             val cursoConDetalles = identidadDao.getCursoConDetallesById(cursoId)
-            val unidades = curriculoDao.getUnidadesConDetallesByAsignaturaId(asignaturaId)
+            var unidades = curriculoDao.getUnidadesConDetallesByAsignaturaId(asignaturaId)
+            if (isEstudiante) {
+                unidades = unidades.filter { it.estado.id == 3L || it.estado.nombre.equals("AUTORIZADO", ignoreCase = true) }
+            }
             _asignaturaDetailState.value = AsignaturaDetailUiState(
                 isLoading = false,
                 asignatura = asignatura,

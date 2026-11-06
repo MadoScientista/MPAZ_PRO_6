@@ -98,6 +98,23 @@ fun UnidadDetalleScreen(
     val estado = unidadConDetalles.estado
     val curso = state.cursoConDetalles
     val isAuthorized = estado.id == 3L || estado.nombre == "AUTORIZADO"
+    val isEstudiante = rol.equals("ESTUDIANTE", ignoreCase = true)
+
+    if (isEstudiante && !isAuthorized) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Esta unidad no se encuentra disponible actualmente.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        return
+    }
 
     Column(
         modifier = modifier
@@ -124,7 +141,9 @@ fun UnidadDetalleScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
                     )
-                    StatusChip(statusName = estado.nombre)
+                    if (!isEstudiante) {
+                        StatusChip(statusName = estado.nombre)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -315,7 +334,7 @@ fun UnidadDetalleScreen(
                     }
                 }
             }
-        } else {
+        } else if (!isEstudiante) {
             if (isAuthorized) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
