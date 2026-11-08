@@ -19,9 +19,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.School
@@ -38,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,22 +54,24 @@ import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 /**
  * Pantalla principal de inicio (Dashboard).
  *
- * Para el rol UTP, despliega un centro de control completo que incluye:
- * - Saludo personalizado con el primer nombre del usuario en sesión (`¡Hola, [Nombre]!`).
- * - Tarjetas resumen de métricas clave (KPIs: Revisiones pendientes, Cursos activos, Docentes y Usuarios totales).
- * - Acciones rápidas con navegación directa a flujos principales de gestión.
- * - Vista previa de las unidades con revisión pendiente más recientes.
- * - Botón de cierre de sesión.
+ * Ofrece una interfaz personalizada según el rol del usuario autenticado:
+ * - UTP: Centro de control completo con KPIs del sistema, accesos rápidos y lista de revisiones pendientes.
+ * - DOCENTE: Centro de gestión pedagógica con resumen de asignaturas, accesos para creación de contenido, informes y vista previa de asignaturas a cargo.
+ * - ESTUDIANTE: Portal del estudiante con acceso directo a sus asignaturas y actividades pendientes.
  *
  * @param rol Rol del usuario autenticado ("UTP", "DOCENTE", "ESTUDIANTE").
  * @param onLogoutClick Callback para cerrar la sesión activa.
- * @param viewModel ViewModel de UTP para obtener estadísticas y nombre del usuario.
- * @param onNavigateToRevisiones Callback para navegar a la sección de Revisiones Pendientes.
+ * @param viewModel ViewModel principal para obtener estadísticas, asignaturas del docente y nombre del usuario.
+ * @param onNavigateToRevisiones Callback para navegar a Revisiones Pendientes / Actividades.
  * @param onNavigateToCursos Callback para navegar a la lista de Cursos.
  * @param onNavigateToDocentes Callback para navegar a la lista de Docentes.
  * @param onNavigateToUsuarios Callback para navegar a la lista de Usuarios.
  * @param onNavigateToCrearUsuario Callback para navegar a la pantalla de Creación de Usuario.
- * @param onNavigateToDetalleUnidad Callback para navegar directamente al detalle de una unidad dada su ID.
+ * @param onNavigateToDetalleUnidad Callback para navegar directamente al detalle de una unidad.
+ * @param onNavigateToAsignaturas Callback para navegar a la sección de Asignaturas.
+ * @param onNavigateToCrear Callback para navegar a la sección de Crear Contenido.
+ * @param onNavigateToInformes Callback para navegar a la sección de Informes Pedagógicos.
+ * @param onNavigateToAsignaturaCurso Callback para navegar al detalle de una Asignatura en un Curso específico.
  */
 @Composable
 fun InicioScreen(
@@ -79,14 +85,19 @@ fun InicioScreen(
     onNavigateToUsuarios: () -> Unit = {},
     onNavigateToCrearUsuario: () -> Unit = {},
     onNavigateToDetalleUnidad: (Long) -> Unit = {},
+    onNavigateToAsignaturas: () -> Unit = {},
+    onNavigateToCrear: () -> Unit = {},
+    onNavigateToInformes: () -> Unit = {},
+    onNavigateToAsignaturaCurso: (Long, Long) -> Unit = { _, _ -> },
 ) {
     val scrollState = rememberScrollState()
 
-    val currentName by viewModel?.currentUserName?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
-    val pendingUnits by viewModel?.pendingUnits?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(emptyList()) }
-    val cursosState by viewModel?.cursosState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.ccstudio.mpaz_pro_6.ui.utp.CursosUiState()) }
-    val docentesState by viewModel?.docentesState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.ccstudio.mpaz_pro_6.ui.utp.DocentesUiState()) }
-    val usuariosState by viewModel?.usuariosState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.ccstudio.mpaz_pro_6.ui.utp.UsuariosUiState()) }
+    val currentName by viewModel?.currentUserName?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf("") }
+    val pendingUnits by viewModel?.pendingUnits?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(emptyList()) }
+    val cursosState by viewModel?.cursosState?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(com.ccstudio.mpaz_pro_6.ui.utp.CursosUiState()) }
+    val docentesState by viewModel?.docentesState?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(com.ccstudio.mpaz_pro_6.ui.utp.DocentesUiState()) }
+    val usuariosState by viewModel?.usuariosState?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(com.ccstudio.mpaz_pro_6.ui.utp.UsuariosUiState()) }
+    val docenteAsignaturas by viewModel?.docenteAsignaturas?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(emptyList()) }
 
     LaunchedEffect(Unit) {
         viewModel?.loadCurrentUserName()
@@ -94,6 +105,7 @@ fun InicioScreen(
         viewModel?.loadCursos()
         viewModel?.loadDocentes()
         viewModel?.loadUsuarios()
+        viewModel?.loadDocenteAsignaturas()
     }
 
     val displayName = currentName.ifBlank { rol }
@@ -127,6 +139,8 @@ fun InicioScreen(
                 Text(
                     text = if (rol.equals("UTP", ignoreCase = true)) {
                         "Coordinación Técnico Pedagógica"
+                    } else if (rol.equals("DOCENTE", ignoreCase = true)) {
+                        "Portal Docente - Gestión Pedagógica"
                     } else if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
                         "Portal del Estudiante"
                     } else {
@@ -159,7 +173,7 @@ fun InicioScreen(
                     icon = Icons.Default.Book,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    onClick = onNavigateToCursos,
+                    onClick = onNavigateToAsignaturas,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -175,7 +189,222 @@ fun InicioScreen(
             }
         }
 
-        // --- 2. TARJETAS DE MÉTRICAS (DASHBOARD KPIs PARA UTP) ---
+        // --- 3. VISTA Y DASHBOARD PARA DOCENTE ---
+        if (rol.equals("DOCENTE", ignoreCase = true)) {
+            val cursosAsignadosCount = remember(docenteAsignaturas) {
+                docenteAsignaturas.map { it.curso.id }.distinct().size
+            }
+
+            Text(
+                text = "Resumen Pedagógico",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    KpiCard(
+                        count = "${docenteAsignaturas.size}",
+                        subtitle = "Mis asignaturas",
+                        icon = Icons.Default.Book,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        onClick = onNavigateToAsignaturas,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    KpiCard(
+                        count = "Nuevo",
+                        subtitle = "Crear contenido",
+                        icon = Icons.Default.AddCircle,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        onClick = onNavigateToCrear,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    KpiCard(
+                        count = "Reportes",
+                        subtitle = "Informes pedagógicos",
+                        icon = Icons.Default.Assessment,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        onClick = onNavigateToInformes,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    KpiCard(
+                        count = "$cursosAsignadosCount",
+                        subtitle = "Cursos a cargo",
+                        icon = Icons.Default.School,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = onNavigateToCursos,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // ACCIONES RÁPIDAS PARA DOCENTE
+            Text(
+                text = "Acciones Rápidas",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                QuickActionButton(
+                    icon = Icons.Default.AddCircle,
+                    label = "Crear contenido",
+                    onClick = onNavigateToCrear
+                )
+                QuickActionButton(
+                    icon = Icons.Default.Book,
+                    label = "Mis asignaturas",
+                    onClick = onNavigateToAsignaturas
+                )
+                QuickActionButton(
+                    icon = Icons.Default.Assessment,
+                    label = "Informes pedagógicos",
+                    onClick = onNavigateToInformes
+                )
+                QuickActionButton(
+                    icon = Icons.Default.School,
+                    label = "Ver cursos",
+                    onClick = onNavigateToCursos
+                )
+            }
+
+            // MIS ASIGNATURAS A CARGO (VISTA PREVIA)
+            Text(
+                text = "Mis Asignaturas a Cargo",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+
+            if (docenteAsignaturas.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .padding(end = 12.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Sin asignaturas asignadas",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Text(
+                                text = "No tiene asignaturas o cursos vinculados actualmente.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    docenteAsignaturas.forEach { item ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onNavigateToAsignaturaCurso(item.curso.id, item.asignatura.id)
+                                },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = MaterialTheme.shapes.small,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Book,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(8.dp)
+                                    )
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.asignatura.nombre,
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = item.nombreCompletoCurso,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = MaterialTheme.shapes.extraSmall
+                                ) {
+                                    Text(
+                                        text = item.nombreCurso,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = "Ver Asignatura",
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 4. TARJETAS DE MÉTRICAS (DASHBOARD KPIs PARA UTP) ---
         if (rol.equals("UTP", ignoreCase = true)) {
             Text(
                 text = "Resumen del Sistema",
@@ -238,7 +467,7 @@ fun InicioScreen(
                 }
             }
 
-            // --- 3. ACCIONES RÁPIDAS ---
+            // ACCIONES RÁPIDAS PARA UTP
             Text(
                 text = "Acciones Rápidas",
                 style = MaterialTheme.typography.titleMedium.copy(
@@ -274,7 +503,7 @@ fun InicioScreen(
                 )
             }
 
-            // --- 4. REVISIONES PENDIENTES URGENTES (VISTA PREVIA) ---
+            // REVISIONES PENDIENTES URGENTES (VISTA PREVIA)
             Text(
                 text = "Revisiones Pendientes",
                 style = MaterialTheme.typography.titleMedium.copy(

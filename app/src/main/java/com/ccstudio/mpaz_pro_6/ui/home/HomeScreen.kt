@@ -217,6 +217,14 @@ fun HomeScreen(
                     onNavigateToDetalleUnidad = { unidadId ->
                         navController.navigate(NavDestination.DetalleUnidad.createRoute(unidadId))
                     },
+                    onNavigateToAsignaturas = { navigateToTopLevel(NavDestination.Asignaturas.route) },
+                    onNavigateToCrear = { navigateToTopLevel(NavDestination.Crear.route) },
+                    onNavigateToInformes = { navigateToTopLevel(NavDestination.Informes.route) },
+                    onNavigateToAsignaturaCurso = { cursoId, asignaturaId ->
+                        navController.navigate(
+                            NavDestination.DetalleAsignaturaCurso.createRoute(cursoId, asignaturaId)
+                        )
+                    },
                 )
             }
             composable(NavDestination.RevisionesPendientes.route) {

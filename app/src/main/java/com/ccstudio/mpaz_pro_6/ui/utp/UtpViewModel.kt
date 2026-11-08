@@ -166,6 +166,12 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     private val _crearUsuarioState = MutableStateFlow(CrearUsuarioUiState())
     val crearUsuarioState: StateFlow<CrearUsuarioUiState> = _crearUsuarioState.asStateFlow()
 
+    private val _docenteAsignaturas = MutableStateFlow<List<AsignaturaCursoDetalle>>(emptyList())
+    /**
+     * Lista de asignaturas y cursos asignados al docente autenticado en sesión.
+     */
+    val docenteAsignaturas: StateFlow<List<AsignaturaCursoDetalle>> = _docenteAsignaturas.asStateFlow()
+
     private val _currentUserName = MutableStateFlow<String>("")
     /**
      * Nombre del usuario autenticado en la sesión activa (primer nombre o nombre de usuario en su defecto).
@@ -178,6 +184,28 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         loadCursos()
         loadDocentes()
         loadUsuarios()
+        loadDocenteAsignaturas()
+    }
+
+    /**
+     * Carga las asignaturas asignadas al docente (o todas las asignaturas para UTP) según el usuario en sesión.
+     */
+    fun loadDocenteAsignaturas() {
+        viewModelScope.launch {
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            val userId = session?.userId
+            val rol = session?.rol ?: ""
+            if (userId != null) {
+                val asignaturas = if (rol.equals("DOCENTE", ignoreCase = true)) {
+                    docenciaDao.getAsignaturasCursoByDocenteId(userId)
+                } else if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                    docenciaDao.getAsignaturasCursoByEstudianteId(userId)
+                } else {
+                    docenciaDao.getAllAsignaturasCursoDetalles()
+                }
+                _docenteAsignaturas.value = asignaturas
+            }
+        }
     }
 
     /**
