@@ -104,6 +104,37 @@ val MIGRATION_3_5 = object : Migration(3, 5) {
     }
 }
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE informe_pedagogico ADD COLUMN fecha_corte TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE informe_pedagogico ADD COLUMN origen TEXT NOT NULL DEFAULT 'MANUAL'")
+    }
+}
+
+val MIGRATION_1_6 = object : Migration(1, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_2_6 = object : Migration(2, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_3_6 = object : Migration(3, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_4_6 = object : Migration(4, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
 fun seedInitialData(db: SupportSQLiteDatabase) {
     // 1. Roles
     db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (1, 'UTP')")
@@ -961,7 +992,7 @@ Pasto → Saltamontes → Rana → Serpiente
         InformePedagogicoEntity::class,
         DetalleInformePedagogicoEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -990,7 +1021,8 @@ abstract class MpazDatabase : RoomDatabase() {
                 )
                 .addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_1_3, MIGRATION_3_4, MIGRATION_1_4, MIGRATION_2_4,
-                    MIGRATION_4_5, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5
+                    MIGRATION_4_5, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5,
+                    MIGRATION_5_6, MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6
                 )
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {

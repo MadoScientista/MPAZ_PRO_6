@@ -263,10 +263,15 @@ con los endpoints explícitos descritos en §9.
 
 - `InformePedagogicoRequest` recibe `usuarioId`, `unidadId`, `fecha` y
   `descripcion`. El servicio valida que el usuario tenga rol `ESTUDIANTE`.
-- `InformePedagogicoUpdateRequest` no incluye `unidadId`: la unidad del informe
-  no se puede cambiar.
+- `InformePedagogicoResponse` expone `usuario`, `fecha`, `descripcion`,
+  `unidad`, `fechaCorte` y `origen`. `fechaCorte` es el corte técnico del
+  snapshot y `origen` distingue `AUTOMATICO` de `MANUAL` (ver
+  `specs/4_informe_pedagogico_preliminar.md`).
+- `InformePedagogicoUpdateRequest` no incluye `unidadId` ni `fechaCorte` ni
+  `origen`: la unidad y el corte técnico no se pueden cambiar.
 - `DetalleInformePedagogicoUpdateRequest` solo permite `correctas` e
-  `incorrectas`; el informe y el OA no se reasignan.
+  `incorrectas`; el informe y el OA no se reasignan. Los conteos de un informe
+  `AUTOMATICO` representan un snapshot y no deberían recalcularse.
 
 ## 5. Resúmenes anidados
 
@@ -447,6 +452,26 @@ Convenciones:
   `path` y, en validación, `fields`). Ver §7.
 - Documentación interactiva: `/swagger-ui.html` y `/v3/api-docs`.
 
+### 9.1. Flujo de informe preliminar
+
+| Método | Ruta | Uso |
+|---|---|---|
+| `GET` | `/api/informes-pedagogicos/preliminar?usuarioId&unidadId[&fechaCorte]` | Consolidado efímero por estudiante y unidad. Devuelve el `fechaCorte` usado. |
+| `POST` | `/api/informes-pedagogicos/desde-resultados` | Recalcula con el `fechaCorte` recibido y persiste cabecera + detalles (`201`). |
+
+DTOs del flujo:
+
+| DTO | Campos |
+|---|---|
+| `GenerarInformeRequest` | `usuarioId`, `unidadId`, `fecha`, `descripcion`, `fechaCorte` |
+| `InformePreliminarResponse` | `usuario`, `unidad`, `fechaCorte`, `actividades`, `detalles`, `totalCorrectas`, `totalIncorrectas` |
+| `ActividadEvaluadaResumen` | `actividadCursoId`, `actividadId`, `instrucciones`, `intentoId`, `fechaFin` |
+| `DetallePreliminarResponse` | `objetivoAprendizaje`, `correctas`, `incorrectas`, `total`, `porcentaje` |
+| `InformePedagogicoDetalladoResponse` | `informe` (`InformePedagogicoResponse`), `detalles` |
+
+El detalle de reglas, algoritmo y verificación está en
+`specs/4_informe_pedagogico_preliminar.md`.
+
 ## 10. Pendientes
 
 - Autenticación y autorización por rol; mover el hashing al servicio o a un
@@ -454,4 +479,4 @@ Convenciones:
 - Reglas de negocio transversales de §7 que aún no tienen endpoint propio.
 - Tests de integración con Testcontainers/PostgreSQL para validar controladores,
   DTOs, mappers y reglas de negocio.
-- Datos seed (`V4__seed_*.sql`).
+- Datos seed (`V6__seed_*.sql`).

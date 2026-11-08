@@ -41,7 +41,11 @@ data class InformePedagogicoEntity(
     @ColumnInfo(name = "fecha")
     val fecha: String,
     @ColumnInfo(name = "descripcion")
-    val descripcion: String? = null
+    val descripcion: String? = null,
+    @ColumnInfo(name = "fecha_corte")
+    val fechaCorte: String = "",
+    @ColumnInfo(name = "origen")
+    val origen: String = "MANUAL"
 )
 
 @Entity(
