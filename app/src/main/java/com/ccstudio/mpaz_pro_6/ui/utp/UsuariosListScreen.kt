@@ -50,7 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.UsuarioConRol
 import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
-import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
@@ -60,6 +59,7 @@ fun UsuariosListScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.usuariosState.collectAsState()
+    val appColors = LocalAppColors.current
 
     LaunchedEffect(Unit) {
         viewModel.loadUsuarios()
@@ -204,8 +204,8 @@ fun UsuariosListScreen(
             onClick = onCreateUserClick,
             icon = { Icon(Icons.Default.PersonAdd, contentDescription = "Crear usuario") },
             text = { Text("Nuevo Usuario") },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = appColors.fabContainer,
+            contentColor = appColors.fabContent,
             elevation = FloatingActionButtonDefaults.elevation(
                 defaultElevation = 0.dp,
                 pressedElevation = 0.dp,
@@ -228,17 +228,17 @@ private fun UsuarioCardItem(
     val rol = usuarioConRol.rol
     val appColors = LocalAppColors.current
 
-    val (roleBgColor, roleTextColor) = when (rol.nombre.uppercase()) {
-        "UTP" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-        "DOCENTE" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-        "ESTUDIANTE" -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+    val roleTextColor = when (rol.nombre.uppercase()) {
+        "UTP" -> MaterialTheme.colorScheme.onPrimaryContainer
+        "DOCENTE" -> appColors.success.content
+        "ESTUDIANTE" -> appColors.warning.content
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -249,7 +249,7 @@ private fun UsuarioCardItem(
         ) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
-                color = roleBgColor,
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.padding(end = 16.dp)
             ) {
                 Icon(
@@ -269,7 +269,7 @@ private fun UsuarioCardItem(
                     text = usuario.nombreCompleto,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))
@@ -277,7 +277,7 @@ private fun UsuarioCardItem(
                 Text(
                     text = "@${usuario.nombreUsuario}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -288,8 +288,8 @@ private fun UsuarioCardItem(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = roleTextColor
                     ) {
                         Text(
                             text = rol.nombre,
@@ -298,10 +298,6 @@ private fun UsuarioCardItem(
                             fontWeight = FontWeight.SemiBold
                         )
                     }
-
-                    StatusChip(
-                        statusName = if (usuario.activo) "ACTIVO" else "INACTIVO"
-                    )
                 }
             }
 

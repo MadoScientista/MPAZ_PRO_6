@@ -16,7 +16,7 @@ import androidx.core.view.WindowCompat
 /**
  * Esquema claro de MPAZ.
  *
- * Lienzo gris (`#F0F0F0`) con superficies y cards blancas: la separación de las
+ * Lienzo gris muy claro (`#F7F7F7`) con superficies y cards blancas: la separación de las
  * cards viene del tono, no de sombras (la app no usa elevación). Los containers
  * de estado usan una escala de azul para que los chips sigan siendo legibles:
  * `primaryContainer` (publicado), `secondaryContainer` (autorizado y selección)
@@ -25,8 +25,8 @@ import androidx.core.view.WindowCompat
 private val LightColors = lightColorScheme(
     primary = BlueLight,
     onPrimary = White,
-    primaryContainer = BlueLight,
-    onPrimaryContainer = White,
+    primaryContainer = BlueSoft,
+    onPrimaryContainer = BlueStrong,
     secondary = BlueLight,
     onSecondary = White,
     secondaryContainer = BlueMid,
@@ -64,24 +64,22 @@ private val LightColors = lightColorScheme(
 /**
  * Esquema oscuro de MPAZ.
  *
- * El fondo es un azul casi negro (`#0F151D`) y las superficies — cards, barras y
- * menús — un navy más claro (`#212D3B`), derivados ambos del tono de la marca.
- * Así las cards se separan del fondo sin sombras. La escala de azul de los
- * containers se mantiene con tintes oscuros y texto claro: `primaryContainer` es
- * el azul profundo de publicado, mientras que `primary` sigue siendo el acento
- * brillante de botones, spinner y bordes de selección.
+ * Inspirado en el modo oscuro de Instagram: fondo negro suave (`#0A0A0A`),
+ * superficies `#121212`, elevadas `#262626` y texto blanco. El acento sigue
+ * siendo el azul de marca: `#0062CC` para botones rellenos con texto blanco y
+ * `#4C9AFF` para enlaces e iconos sobre negro. Sin morado/púrpura.
  */
 private val DarkColors = darkColorScheme(
-    primary = BlueDark,
-    onPrimary = Black,
+    primary = BlueLight,
+    onPrimary = White,
     primaryContainer = BlueContainerDark,
     onPrimaryContainer = BlueOn,
-    secondary = BlueDark,
-    onSecondary = Black,
+    secondary = BlueAccentDark,
+    onSecondary = BlueInkDark,
     secondaryContainer = BlueStrong,
     onSecondaryContainer = BlueOn,
     tertiary = BlueDark,
-    onTertiary = Black,
+    onTertiary = BlueInkDark,
     tertiaryContainer = BlueSoftDark,
     onTertiaryContainer = BlueOn,
     background = CanvasDark,
@@ -93,7 +91,7 @@ private val DarkColors = darkColorScheme(
     surfaceTint = Color.Transparent,
     inverseSurface = White,
     inverseOnSurface = Black,
-    inversePrimary = BlueDark,
+    inversePrimary = BlueAccentDark,
     error = ErrorDark,
     onError = Black,
     errorContainer = ErrorContainerDark,
@@ -107,7 +105,7 @@ private val DarkColors = darkColorScheme(
     surfaceContainerLow = SurfaceLowDark,
     surfaceContainer = SurfaceDark,
     surfaceContainerHigh = SurfaceHighDark,
-    surfaceContainerHighest = SurfaceDark
+    surfaceContainerHighest = SurfaceBrightDark
 )
 
 /**

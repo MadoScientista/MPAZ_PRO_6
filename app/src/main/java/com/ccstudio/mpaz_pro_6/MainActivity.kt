@@ -98,8 +98,7 @@ class MainActivity : ComponentActivity() {
                         SideEffect {
                             val window = (view.context as Activity).window
                             WindowCompat.getInsetsController(window, view)
-                                .isAppearanceLightStatusBars =
-                                currentRol == null && !isDarkTheme
+                                .isAppearanceLightStatusBars = !isDarkTheme
                         }
                     }
                     Crossfade(

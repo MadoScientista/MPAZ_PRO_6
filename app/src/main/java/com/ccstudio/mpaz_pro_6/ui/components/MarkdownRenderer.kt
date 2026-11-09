@@ -48,7 +48,7 @@ fun MarkdownRenderer(
                         text = parseInlineMarkdown(line.removePrefix("# ").trim()),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
                     )
@@ -92,7 +92,7 @@ fun MarkdownRenderer(
                                     .width(4.dp)
                                     .fillMaxHeight()
                                     .background(
-                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.outline,
                                         shape = RoundedCornerShape(2.dp)
                                     )
                             )
@@ -117,7 +117,7 @@ fun MarkdownRenderer(
                             text = "•",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
                             modifier = Modifier.padding(end = 8.dp)
                         )
@@ -140,7 +140,7 @@ fun MarkdownRenderer(
                             text = number,
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
                             modifier = Modifier.padding(end = 8.dp)
                         )

@@ -106,7 +106,7 @@ fun ContenidoDetalleScreen(
                         Text(
                             text = cursoConDetalles.nombreCompletoConAnnio,
                             style = MaterialTheme.typography.labelLarge.copy(
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
                         )

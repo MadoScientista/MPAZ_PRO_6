@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
 fun DocenteDetalleScreen(
@@ -60,6 +61,7 @@ fun DocenteDetalleScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.docenteDetailState.collectAsState()
+    val appColors = LocalAppColors.current
 
     var showAssignDialog by remember { mutableStateOf(false) }
     var itemToUnassign by remember { mutableStateOf<AsignaturaCursoDetalle?>(null) }
@@ -146,7 +148,7 @@ fun DocenteDetalleScreen(
                             Text(
                                 text = "Usuario: @${docente.nombreUsuario}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))
@@ -266,6 +268,8 @@ fun DocenteDetalleScreen(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
+                containerColor = appColors.fabContainer,
+                contentColor = appColors.fabContent,
                 elevation = FloatingActionButtonDefaults.elevation(
                     defaultElevation = 0.dp,
                     pressedElevation = 0.dp,

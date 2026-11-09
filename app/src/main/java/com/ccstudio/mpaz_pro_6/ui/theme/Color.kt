@@ -16,24 +16,24 @@ import androidx.compose.ui.graphics.Color
 // Neutros del modo claro.
 val Black = Color(0xFF000000)
 val White = Color(0xFFFFFFFF)
-val CanvasLight = Color(0xFFF0F0F0)
-val InkLight = Color(0xFF0B0B0C)
+val CanvasLight = Color(0xFFF7F7F7)
+val InkLight = Color(0xFF353535)
 val InkMutedLight = Color(0xFF4D4D4F)
 val NeutralLight = Color(0xFFE9E9EB)
 val BorderLight = Color(0xFF6B6B70)
 val BorderSoftLight = Color(0xFFC7C7CC)
 
-// Neutros del modo oscuro: fondo azul muy profundo y superficies navy.
-val CanvasDark = Color(0xFF0F151D)
-val SurfaceDark = Color(0xFF212D3B)
-val SurfaceLowDark = Color(0xFF1A242F)
-val SurfaceHighDark = Color(0xFF253243)
-val SurfaceBrightDark = Color(0xFF314359)
-val NeutralDark = Color(0xFF29384C)
-val InkDark = Color(0xFFF2F2F2)
-val InkMutedDark = Color(0xFFA1A1A6)
-val BorderDark = Color(0xFF8E8E93)
-val BorderSoftDark = Color(0xFF323C49)
+// Neutros del modo oscuro: negro suave y superficies grises al estilo Instagram.
+val CanvasDark = Color(0xFF0A0A0A)
+val SurfaceDark = Color(0xFF121212)
+val SurfaceLowDark = Color(0xFF0A0A0A)
+val SurfaceHighDark = Color(0xFF1A1A1A)
+val SurfaceBrightDark = Color(0xFF262626)
+val NeutralDark = Color(0xFF1A1A1A)
+val InkDark = Color(0xFFFFFFFF)
+val InkMutedDark = Color(0xFFA8A8A8)
+val BorderDark = Color(0xFF363636)
+val BorderSoftDark = Color(0xFF262626)
 
 // Azul de marca: el claro es más oscuro para cumplir contraste como texto.
 val BlueLight = Color(0xFF0062CC)
@@ -44,14 +44,22 @@ val BlueMid = Color(0xFFB3D7FF)
 val BlueSoft = Color(0xFFD6E9FF)
 val BlueOn = Color(0xFFD6E9FF)
 val BlueSoftDark = Color(0xFF0B2A4A)
+val BlueAccentDark = Color(0xFF4C9AFF)
+val BlueInkDark = Color(0xFF001B3D)
 
 // Error: tonos propios para no mezclar con el rojo del baseline de Material.
 val ErrorLight = Color(0xFFB3261E)
 val ErrorContainerLight = Color(0xFFFFDAD6)
 val OnErrorContainerLight = Color(0xFF410E0B)
-val ErrorDark = Color(0xFFFF8A80)
-val ErrorContainerDark = Color(0xFF5C0F0B)
+val ErrorDark = Color(0xFFED4956)
+val ErrorContainerDark = Color(0xFF5C0A12)
 val OnErrorContainerDark = Color(0xFFFFDAD6)
+
+// Pares para acciones de estado (botones de borrador/autorizar).
+val DestructiveButtonContainer = Color(0xFF3F1C1E)
+val OnDestructiveButton = Color(0xFFB3484A)
+val SuccessButtonContainer = Color(0xFF1C3F2E)
+val OnSuccessButton = Color(0xFF49B680)
 
 // Estados semánticos del modo claro (contenedor pastel + texto oscuro).
 val SuccessContainerLight = Color(0xFFD7F3E3)
@@ -66,8 +74,8 @@ val SuccessContainerDark = Color(0xFF12432F)
 val OnSuccessContainerDark = Color(0xFFB8F0D1)
 val WarningContainerDark = Color(0xFF4A3A00)
 val OnWarningContainerDark = Color(0xFFFFE09B)
-val AccentContainerDark = Color(0xFF3A2A5C)
-val OnAccentContainerDark = Color(0xFFEADDFF)
+val AccentContainerDark = Color(0xFF123A66)
+val OnAccentContainerDark = Color(0xFFD6E9FF)
 
 // Colores representativos de las materias (solo para el punto del nombre).
 // El orden es el de `subjectColorIndex`: rojo, azul, verde, ámbar, violeta,

@@ -107,7 +107,7 @@ fun DocenteInformesScreen(
             text = "Informes Pedagógicos",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = "Gestión y emisión de consolidados de rendimiento por unidad y objetivo de aprendizaje.",
@@ -249,7 +249,7 @@ fun DocenteInformesScreen(
                                     text = oaDetalle.objetivo.codigo,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = oaDetalle.objetivo.descripcion,
@@ -353,7 +353,7 @@ fun InformesEmitidosView(
                                 Text(
                                     text = "${item.unidad.nombre} • ${item.asignatura.nombre}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             StatusChip(
@@ -472,7 +472,7 @@ fun GenerarInformeView(
                         text = "1. Selección de Parámetros",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -562,14 +562,14 @@ fun GenerarInformeView(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "2. Consolidado Preliminar Evaluado",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -617,7 +617,7 @@ fun GenerarInformeView(
                     text = "3. Desglose por Objetivos de Aprendizaje",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -631,7 +631,7 @@ fun GenerarInformeView(
                             text = detalle.objetivoAprendizaje.codigo,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = detalle.objetivoAprendizaje.descripcion,
@@ -675,7 +675,7 @@ fun GenerarInformeView(
                             text = "4. Emisión de Informe Snapshot",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 

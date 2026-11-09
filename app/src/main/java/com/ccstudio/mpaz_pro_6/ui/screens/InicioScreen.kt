@@ -159,8 +159,9 @@ fun InicioScreen(
                     count = "Mis Asignaturas",
                     subtitle = "Acceder a asignaturas y unidades",
                     icon = Icons.Default.Book,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    iconTint = MaterialTheme.colorScheme.primary,
                     onClick = onNavigateToAsignaturas,
                     modifier = Modifier.weight(1f)
                 )
@@ -169,8 +170,9 @@ fun InicioScreen(
                     count = "Actividades",
                     subtitle = "Resolver tareas y pruebas",
                     icon = Icons.AutoMirrored.Filled.FactCheck,
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    iconTint = MaterialTheme.colorScheme.primary,
                     onClick = onNavigateToRevisiones,
                     modifier = Modifier.weight(1f)
                 )
@@ -200,8 +202,9 @@ fun InicioScreen(
                         count = "${docenteAsignaturas.size}",
                         subtitle = "Mis asignaturas",
                         icon = Icons.Default.Book,
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToAsignaturas,
                         modifier = Modifier.weight(1f)
                     )
@@ -210,8 +213,9 @@ fun InicioScreen(
                         count = "Nuevo",
                         subtitle = "Crear contenido",
                         icon = Icons.Default.AddCircle,
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToCrear,
                         modifier = Modifier.weight(1f)
                     )
@@ -225,8 +229,9 @@ fun InicioScreen(
                         count = "Reportes",
                         subtitle = "Informes pedagógicos",
                         icon = Icons.Default.Assessment,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToInformes,
                         modifier = Modifier.weight(1f)
                     )
@@ -236,7 +241,8 @@ fun InicioScreen(
                         subtitle = "Cursos a cargo",
                         icon = Icons.Default.School,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToCursos,
                         modifier = Modifier.weight(1f)
                     )
@@ -411,8 +417,9 @@ fun InicioScreen(
                         count = "${pendingUnits.size}",
                         subtitle = "Por revisar",
                         icon = Icons.AutoMirrored.Filled.FactCheck,
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         badgeText = if (pendingUnits.isNotEmpty()) "${pendingUnits.size} PENDIENTE${if (pendingUnits.size > 1) "S" else ""}" else null,
                         onClick = onNavigateToRevisiones,
                         modifier = Modifier.weight(1f)
@@ -422,8 +429,9 @@ fun InicioScreen(
                         count = "${cursosState.cursos.size}",
                         subtitle = "Cursos activos",
                         icon = Icons.Default.School,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToCursos,
                         modifier = Modifier.weight(1f)
                     )
@@ -438,7 +446,8 @@ fun InicioScreen(
                         subtitle = "Profesores",
                         icon = Icons.Default.Badge,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToDocentes,
                         modifier = Modifier.weight(1f)
                     )
@@ -448,7 +457,8 @@ fun InicioScreen(
                         subtitle = "Usuarios totales",
                         icon = Icons.Default.People,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToUsuarios,
                         modifier = Modifier.weight(1f)
                     )
@@ -595,6 +605,7 @@ private fun KpiCard(
     icon: ImageVector,
     containerColor: Color,
     contentColor: Color,
+    iconTint: Color = contentColor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     badgeText: String? = null
@@ -616,7 +627,7 @@ private fun KpiCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = contentColor
+                    tint = iconTint
                 )
                 if (badgeText != null) {
                     Surface(

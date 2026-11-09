@@ -107,7 +107,7 @@ fun EstudianteResolverActividadScreen(
         // Cabecera Principal de la Actividad
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
@@ -119,7 +119,7 @@ fun EstudianteResolverActividadScreen(
                         text = "${state.asignaturaNombre} • ${state.unidadNombre}",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         modifier = Modifier.weight(1f),
                         maxLines = 2,
@@ -149,7 +149,7 @@ fun EstudianteResolverActividadScreen(
                     text = state.tipoActividad?.nombre ?: "Actividad",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 )
 
@@ -158,7 +158,7 @@ fun EstudianteResolverActividadScreen(
                     Text(
                         text = actividad.instrucciones,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
@@ -188,7 +188,7 @@ fun EstudianteResolverActividadScreen(
                     Text(
                         text = "Confirmación de Inicio",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     // Mostrar los resultados del último intento si existe (Paso 7)
@@ -335,7 +335,7 @@ fun EstudianteResolverActividadScreen(
                         Text(
                             text = "Pregunta ${index + 1}",
                             style = MaterialTheme.typography.labelLarge.copy(
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
                         )
@@ -545,7 +545,7 @@ fun EstudianteResolverActividadScreen(
                             Text(
                                 text = "Pregunta ${index + 1}",
                                 style = MaterialTheme.typography.labelLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.Bold
                                 )
                             )

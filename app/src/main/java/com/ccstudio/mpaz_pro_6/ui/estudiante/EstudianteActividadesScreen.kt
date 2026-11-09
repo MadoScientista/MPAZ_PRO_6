@@ -295,7 +295,7 @@ fun ActividadCardEstudiante(
                     Text(
                         text = "${asignatura?.nombre ?: "Asignatura"} • ${curso.nombreCompletoConAnnio}",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Bold
                         )
                     )

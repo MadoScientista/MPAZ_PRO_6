@@ -17,15 +17,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadConTipo
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ContenidoEntity
+import com.ccstudio.mpaz_pro_6.ui.components.AppPillButton
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
@@ -126,7 +123,7 @@ fun UnidadDetalleScreen(
         // 1. Título de la Unidad y Header
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
@@ -138,7 +135,7 @@ fun UnidadDetalleScreen(
                         text = curso?.nombreCompletoConAnnio ?: asignatura.nombre,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                     if (!isEstudiante) {
@@ -152,7 +149,7 @@ fun UnidadDetalleScreen(
                     text = unidad.nombre,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 )
             }
@@ -265,75 +262,39 @@ fun UnidadDetalleScreen(
                         }
                     }
 
-                    Button(
+                    AppPillButton(
+                        text = "Cambiar a Borrador",
                         onClick = { showBorradorConfirmDialog = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 52.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "Cambiar a Borrador",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                    }
+                        containerColor = appColors.destructiveButton.container,
+                        contentColor = appColors.destructiveButton.content
+                    )
                 } else {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Button(
+                        AppPillButton(
+                            text = "A Borrador",
                             onClick = { showBorradorConfirmDialog = true },
                             modifier = Modifier
                                 .weight(1f)
                                 .heightIn(min = 52.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 6.dp)
-                            )
-                            Text(
-                                text = "A Borrador",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                            )
-                        }
+                            containerColor = appColors.destructiveButton.container,
+                            contentColor = appColors.destructiveButton.content
+                        )
 
-                        Button(
+                        AppPillButton(
+                            text = "Autorizar",
                             onClick = { showAutorizarConfirmDialog = true },
                             modifier = Modifier
                                 .weight(1f)
                                 .heightIn(min = 52.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = appColors.success.container,
-                                contentColor = appColors.success.content
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AssignmentTurnedIn,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 6.dp)
-                            )
-                            Text(
-                                text = "Autorizar",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                            )
-                        }
+                            containerColor = appColors.successButton.container,
+                            contentColor = appColors.successButton.content
+                        )
                     }
                 }
             }
@@ -417,18 +378,15 @@ fun UnidadDetalleScreen(
                 )
             },
             confirmButton = {
-                Button(
+                AppPillButton(
+                    text = "Autorizar",
                     onClick = {
                         showAutorizarConfirmDialog = false
                         viewModel.autorizarUnidad(unidadId, cursoId)
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = appColors.success.container,
-                        contentColor = appColors.success.content
-                    )
-                ) {
-                    Text("Autorizar")
-                }
+                    containerColor = appColors.successButton.container,
+                    contentColor = appColors.successButton.content
+                )
             },
             dismissButton = {
                 TextButton(onClick = { showAutorizarConfirmDialog = false }) {
@@ -461,18 +419,15 @@ fun UnidadDetalleScreen(
                 )
             },
             confirmButton = {
-                Button(
+                AppPillButton(
+                    text = "Cambiar a Borrador",
                     onClick = {
                         showBorradorConfirmDialog = false
                         viewModel.cambiarEstadoUnidadBorrador(unidadId, cursoId)
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Text("Cambiar a Borrador")
-                }
+                    containerColor = appColors.destructiveButton.container,
+                    contentColor = appColors.destructiveButton.content
+                )
             },
             dismissButton = {
                 TextButton(onClick = { showBorradorConfirmDialog = false }) {

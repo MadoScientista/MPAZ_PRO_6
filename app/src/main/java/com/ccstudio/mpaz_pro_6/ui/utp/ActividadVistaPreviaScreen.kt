@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadCursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
 import com.ccstudio.mpaz_pro_6.ui.components.AppDatePickerDialog
+import com.ccstudio.mpaz_pro_6.ui.components.AppPillButton
 import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
 import com.ccstudio.mpaz_pro_6.ui.components.AppTimePickerDialog
 import com.ccstudio.mpaz_pro_6.ui.components.QuestionCard
@@ -122,7 +123,7 @@ fun ActividadVistaPreviaScreen(
         // Banner de Vista Previa
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
             shape = RoundedCornerShape(12.dp)
         ) {
             Row(
@@ -132,7 +133,7 @@ fun ActividadVistaPreviaScreen(
                 Icon(
                     imageVector = Icons.Default.Visibility,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(end = 10.dp)
                 )
                 Column(modifier = Modifier.weight(1f)) {
@@ -140,13 +141,13 @@ fun ActividadVistaPreviaScreen(
                         text = "Vista Previa de la Actividad (Modo $rol)",
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     )
                     Text(
                         text = "Se muestran las alternativas correctas destacadas para revisión pedagógica.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
@@ -838,18 +839,13 @@ private fun EditarPreguntaDialog(
                 HorizontalDivider()
 
                 // Eliminar Pregunta
-                TextButton(
+                AppPillButton(
+                    text = "Eliminar Pregunta",
                     onClick = { showConfirmDeletePregunta = true },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
-                    Text("Eliminar Pregunta", color = MaterialTheme.colorScheme.error)
-                }
+                    modifier = Modifier.align(Alignment.End),
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
         },
         confirmButton = {
@@ -921,17 +917,15 @@ private fun EditarPreguntaDialog(
             title = { Text("Confirmar Eliminación") },
             text = { Text("¿Estás seguro de que deseas eliminar esta pregunta y sus alternativas?") },
             confirmButton = {
-                Button(
+                AppPillButton(
+                    text = "Eliminar",
                     onClick = {
                         showConfirmDeletePregunta = false
                         onDeletePregunta()
                     },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Eliminar")
-                }
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmDeletePregunta = false }) {

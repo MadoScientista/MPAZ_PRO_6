@@ -26,6 +26,10 @@ data class AppColors(
     val info: SemanticColor,
     val accent: SemanticColor,
     val neutral: SemanticColor,
+    val destructiveButton: SemanticColor,
+    val successButton: SemanticColor,
+    val fabContainer: Color,
+    val fabContent: Color,
     val subjectAccents: List<Color>
 )
 
@@ -55,6 +59,16 @@ val LightAppColors = AppColors(
         container = NeutralLight,
         content = InkMutedLight
     ),
+    destructiveButton = SemanticColor(
+        container = ErrorContainerLight,
+        content = OnErrorContainerLight
+    ),
+    successButton = SemanticColor(
+        container = SuccessContainerLight,
+        content = OnSuccessContainerLight
+    ),
+    fabContainer = BlueLight,
+    fabContent = White,
     subjectAccents = listOf(
         SubjectRedLight,
         SubjectBlueLight,
@@ -93,6 +107,16 @@ val DarkAppColors = AppColors(
         container = NeutralDark,
         content = InkMutedDark
     ),
+    destructiveButton = SemanticColor(
+        container = DestructiveButtonContainer,
+        content = OnDestructiveButton
+    ),
+    successButton = SemanticColor(
+        container = SuccessButtonContainer,
+        content = OnSuccessButton
+    ),
+    fabContainer = White,
+    fabContent = Black,
     subjectAccents = listOf(
         SubjectRedDark,
         SubjectBlueDark,

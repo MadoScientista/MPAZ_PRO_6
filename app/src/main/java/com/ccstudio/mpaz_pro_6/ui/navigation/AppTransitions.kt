@@ -6,7 +6,6 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -22,12 +21,6 @@ private const val TRANSITION_FADE_IN_MS = 292
 
 /** Escala inicial de la pestaña entrante en el patrón "fade through". */
 private const val TAB_START_SCALE = 0.92f
-
-/** Escala inicial de un detalle al entrar (shared axis Z hacia adelante). */
-private const val DETAIL_ENTER_SCALE = 0.8f
-
-/** Escala final del listado al salir hacia un detalle (shared axis Z). */
-private const val DETAIL_EXIT_SCALE = 1.1f
 
 /** Easing "emphasized decelerate" de Material 3, para lo que entra. */
 private val EmphasizedEnter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
@@ -56,7 +49,7 @@ internal fun tabEnter(): EnterTransition =
 internal fun tabExit(): ExitTransition =
     fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit))
 
-/** Entrada de un detalle: shared axis Z, la pantalla crece desde 0.8. */
+/** Entrada de un detalle: fade-through, sin escala. */
 internal fun detailEnter(): EnterTransition =
     fadeIn(
         tween(
@@ -64,20 +57,13 @@ internal fun detailEnter(): EnterTransition =
             delayMillis = TRANSITION_FADE_OUT_MS,
             easing = EmphasizedEnter
         )
-    ) + scaleIn(
-        tween(TRANSITION_MS, easing = EmphasizedEnter),
-        initialScale = DETAIL_ENTER_SCALE
     )
 
-/** Salida del listado al abrir un detalle: se aleja hasta 1.1. */
+/** Salida del listado al abrir un detalle: solo fade. */
 internal fun detailExit(): ExitTransition =
-    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit)) +
-        scaleOut(
-            tween(TRANSITION_MS, easing = EmphasizedExit),
-            targetScale = DETAIL_EXIT_SCALE
-        )
+    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit))
 
-/** Vuelta desde un detalle: la pantalla anterior reaparece desde 1.1. */
+/** Vuelta desde un detalle: fade-through, sin escala. */
 internal fun detailPopEnter(): EnterTransition =
     fadeIn(
         tween(
@@ -85,18 +71,11 @@ internal fun detailPopEnter(): EnterTransition =
             delayMillis = TRANSITION_FADE_OUT_MS,
             easing = EmphasizedEnter
         )
-    ) + scaleIn(
-        tween(TRANSITION_MS, easing = EmphasizedEnter),
-        initialScale = DETAIL_EXIT_SCALE
     )
 
-/** Vuelta desde un detalle: la pantalla actual se aleja hasta 0.8. */
+/** Vuelta desde un detalle: solo fade. */
 internal fun detailPopExit(): ExitTransition =
-    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit)) +
-        scaleOut(
-            tween(TRANSITION_MS, easing = EmphasizedExit),
-            targetScale = DETAIL_ENTER_SCALE
-        )
+    fadeOut(tween(TRANSITION_FADE_OUT_MS, easing = EmphasizedExit))
 
 /** Transición fade-through reutilizable para contenido interno (tabs, modos). */
 internal fun fadeThroughContent(): ContentTransform =

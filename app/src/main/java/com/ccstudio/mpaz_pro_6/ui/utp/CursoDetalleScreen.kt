@@ -62,6 +62,7 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
 import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
 import com.ccstudio.mpaz_pro_6.ui.navigation.fadeThroughContent
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +75,7 @@ fun CursoDetalleScreen(
 ) {
     val state by viewModel.cursoDetailState.collectAsState()
     val isUtp = rol.equals("UTP", ignoreCase = true)
+    val appColors = LocalAppColors.current
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     var showAddAsignaturaDialog by remember { mutableStateOf(false) }
@@ -198,6 +200,8 @@ fun CursoDetalleScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp),
+                    containerColor = appColors.fabContainer,
+                    contentColor = appColors.fabContent,
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = 0.dp,
                         pressedElevation = 0.dp,
@@ -347,7 +351,7 @@ private fun AsignaturasTabContent(
                                 Text(
                                     text = if (docente != null) "Docente a cargo: ${docente.nombreCompleto}" else "Sin docente asignado",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = if (docente != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                    color = if (docente != null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error
                                 )
                             }
                             if (isUtp) {
@@ -503,7 +507,7 @@ private fun UserCardItem(
                 Text(
                     text = "Usuario: @${usuario.nombreUsuario}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             if (showRemove) {
