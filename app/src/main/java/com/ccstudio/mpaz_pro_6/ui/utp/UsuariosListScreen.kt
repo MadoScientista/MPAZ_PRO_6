@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Clear
@@ -27,27 +29,29 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.UsuarioConRol
+import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
 fun UsuariosListScreen(
@@ -84,22 +88,13 @@ fun UsuariosListScreen(
         matchesQuery && matchesRole
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onCreateUserClick,
-                icon = { Icon(Icons.Default.PersonAdd, contentDescription = "Crear usuario") },
-                text = { Text("Nuevo Usuario") },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        }
-    ) { paddingValues ->
+    val availableRoles = remember(state.usuarios) {
+        state.usuarios.map { it.rol }.distinctBy { it.id }.sortedBy { it.id }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
             // Buscador por texto
             OutlinedTextField(
@@ -142,39 +137,21 @@ fun UsuariosListScreen(
                         label = { Text("Todos") }
                     )
                 }
-                item {
+                items(availableRoles, key = { it.id }) { rol ->
                     FilterChip(
-                        selected = state.selectedRolFilter == 1L,
+                        selected = state.selectedRolFilter == rol.id,
                         onClick = {
-                            viewModel.updateUsuariosRolFilter(if (state.selectedRolFilter == 1L) null else 1L)
+                            viewModel.updateUsuariosRolFilter(
+                                if (state.selectedRolFilter == rol.id) null else rol.id
+                            )
                         },
-                        label = { Text("UTP") },
+                        label = { Text(roleFilterLabel(rol.nombre)) },
                         leadingIcon = {
-                            Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.height(16.dp))
-                        }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = state.selectedRolFilter == 2L,
-                        onClick = {
-                            viewModel.updateUsuariosRolFilter(if (state.selectedRolFilter == 2L) null else 2L)
-                        },
-                        label = { Text("Docentes") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Badge, contentDescription = null, modifier = Modifier.height(16.dp))
-                        }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = state.selectedRolFilter == 3L,
-                        onClick = {
-                            viewModel.updateUsuariosRolFilter(if (state.selectedRolFilter == 3L) null else 3L)
-                        },
-                        label = { Text("Estudiantes") },
-                        leadingIcon = {
-                            Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.height(16.dp))
+                            Icon(
+                                imageVector = roleIcon(rol.nombre),
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
                         }
                     )
                 }
@@ -203,7 +180,8 @@ fun UsuariosListScreen(
                             "No se encontraron usuarios con los criterios de búsqueda."
                         },
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                 }
             } else {
@@ -221,6 +199,23 @@ fun UsuariosListScreen(
                 }
             }
         }
+
+        ExtendedFloatingActionButton(
+            onClick = onCreateUserClick,
+            icon = { Icon(Icons.Default.PersonAdd, contentDescription = "Crear usuario") },
+            text = { Text("Nuevo Usuario") },
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        )
     }
 }
 
@@ -231,6 +226,7 @@ private fun UsuarioCardItem(
 ) {
     val usuario = usuarioConRol.usuario
     val rol = usuarioConRol.rol
+    val appColors = LocalAppColors.current
 
     val (roleBgColor, roleTextColor) = when (rol.nombre.uppercase()) {
         "UTP" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
@@ -243,8 +239,7 @@ private fun UsuarioCardItem(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -291,16 +286,18 @@ private fun UsuarioCardItem(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SuggestionChip(
-                        onClick = { },
-                        label = {
-                            Text(
-                                text = rol.nombre,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Text(
+                            text = rol.nombre,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
 
                     StatusChip(
                         statusName = if (usuario.activo) "ACTIVO" else "INACTIVO"
@@ -314,17 +311,25 @@ private fun UsuarioCardItem(
                 Text(
                     text = if (usuario.activo) "Activo" else "Inactivo",
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (usuario.activo) Color(0xFF2E7D32) else Color.Gray
+                    color = if (usuario.activo) appColors.success.content else appColors.neutral.content
                 )
-                Switch(
+                AppSwitch(
                     checked = usuario.activo,
-                    onCheckedChange = { onToggleActive() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.primary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    onCheckedChange = { onToggleActive() }
                 )
             }
         }
     }
+}
+
+private fun roleFilterLabel(roleName: String): String = when (roleName.uppercase()) {
+    "DOCENTE" -> "Docentes"
+    "ESTUDIANTE" -> "Estudiantes"
+    else -> roleName
+}
+
+private fun roleIcon(roleName: String): ImageVector = when (roleName.uppercase()) {
+    "UTP" -> Icons.Default.Security
+    "DOCENTE" -> Icons.Default.Badge
+    else -> Icons.Default.School
 }

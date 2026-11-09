@@ -1,6 +1,6 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
@@ -32,6 +33,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,10 +55,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.AsignaturaEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
+import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
+import com.ccstudio.mpaz_pro_6.ui.navigation.fadeThroughContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,35 +151,69 @@ fun CursoDetalleScreen(
 
         // Contenido según pestaña activa
         Box(modifier = Modifier.weight(1f)) {
-            when (selectedTabIndex) {
-                0 -> AsignaturasTabContent(
-                    asignaturasConDocente = state.asignaturasConDocente,
-                    isUtp = isUtp,
-                    onAsignaturaClick = onAsignaturaClick,
-                    onRemoveAsignatura = { asignaturaId ->
-                        viewModel.removeAsignaturaFromCurso(cursoId, asignaturaId)
+            AnimatedContent(
+                targetState = selectedTabIndex,
+                transitionSpec = { fadeThroughContent() },
+                modifier = Modifier.fillMaxSize(),
+                label = "cursoTabs"
+            ) { tab ->
+                when (tab) {
+                    0 -> AsignaturasTabContent(
+                        asignaturasConDocente = state.asignaturasConDocente,
+                        isUtp = isUtp,
+                        onAsignaturaClick = onAsignaturaClick,
+                        onRemoveAsignatura = { asignaturaId ->
+                            viewModel.removeAsignaturaFromCurso(cursoId, asignaturaId)
+                        },
+                        onAssignDocenteClick = { asignaturaId ->
+                            assigningDocenteForAsignaturaId = asignaturaId
+                        }
+                    )
+                    1 -> DocentesTabContent(
+                        docentes = state.docentes,
+                        isUtp = isUtp,
+                        onRemoveDocente = { docenteId ->
+                            viewModel.removeDocenteFromCurso(cursoId, docenteId)
+                        }
+                    )
+                    2 -> EstudiantesTabContent(
+                        estudiantes = state.estudiantes,
+                        isUtp = isUtp,
+                        onRemoveEstudiante = { estudianteId ->
+                            viewModel.removeEstudianteFromCurso(cursoId, estudianteId)
+                        }
+                    )
+                }
+            }
+
+            if (isUtp) {
+                FloatingActionButton(
+                    onClick = {
+                        when (selectedTabIndex) {
+                            0 -> showAddAsignaturaDialog = true
+                            1 -> showAddDocenteDialog = true
+                            2 -> showAddEstudianteDialog = true
+                        }
                     },
-                    onAssignDocenteClick = { asignaturaId ->
-                        assigningDocenteForAsignaturaId = asignaturaId
-                    },
-                    onOpenAddDialog = { showAddAsignaturaDialog = true }
-                )
-                1 -> DocentesTabContent(
-                    docentes = state.docentes,
-                    isUtp = isUtp,
-                    onRemoveDocente = { docenteId ->
-                        viewModel.removeDocenteFromCurso(cursoId, docenteId)
-                    },
-                    onOpenAddDialog = { showAddDocenteDialog = true }
-                )
-                2 -> EstudiantesTabContent(
-                    estudiantes = state.estudiantes,
-                    isUtp = isUtp,
-                    onRemoveEstudiante = { estudianteId ->
-                        viewModel.removeEstudianteFromCurso(cursoId, estudianteId)
-                    },
-                    onOpenAddDialog = { showAddEstudianteDialog = true }
-                )
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        focusedElevation = 0.dp,
+                        hoveredElevation = 0.dp
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = when (selectedTabIndex) {
+                            0 -> "Agregar asignatura"
+                            1 -> "Agregar docente"
+                            else -> "Agregar estudiante"
+                        }
+                    )
+                }
             }
         }
     }
@@ -247,30 +287,15 @@ private fun AsignaturasTabContent(
     isUtp: Boolean = true,
     onAsignaturaClick: (Long) -> Unit,
     onRemoveAsignatura: (Long) -> Unit,
-    onAssignDocenteClick: (Long) -> Unit,
-    onOpenAddDialog: () -> Unit
+    onAssignDocenteClick: (Long) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Asignaturas impartidas",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            if (isUtp) {
-                Button(onClick = onOpenAddDialog) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Agregar Asignatura")
-                }
-            }
-        }
+        Text(
+            text = "Asignaturas impartidas",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
 
         if (asignaturasConDocente.isEmpty()) {
             Box(
@@ -287,20 +312,18 @@ private fun AsignaturasTabContent(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(asignaturasConDocente) { item ->
                     val asignatura = item.asignatura
                     val docente = item.docente
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onAsignaturaClick(asignatura.id) },
+                        onClick = { onAsignaturaClick(asignatura.id) },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -315,10 +338,11 @@ private fun AsignaturasTabContent(
                                 modifier = Modifier.padding(end = 12.dp)
                             )
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = asignatura.nombre,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold
+                                SubjectLabel(
+                                    subjectName = asignatura.nombre,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    textColor = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2
                                 )
                                 Text(
                                     text = if (docente != null) "Docente a cargo: ${docente.nombreCompleto}" else "Sin docente asignado",
@@ -359,30 +383,15 @@ private fun AsignaturasTabContent(
 private fun DocentesTabContent(
     docentes: List<UsuarioEntity>,
     isUtp: Boolean = true,
-    onRemoveDocente: (Long) -> Unit,
-    onOpenAddDialog: () -> Unit
+    onRemoveDocente: (Long) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Docente(s) del Curso",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            if (isUtp) {
-                Button(onClick = onOpenAddDialog) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (docentes.isEmpty()) "Asignar Docente" else "Gestionar / Cambiar")
-                }
-            }
-        }
+        Text(
+            text = "Docente(s) del Curso",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
 
         if (docentes.isEmpty()) {
             Box(
@@ -399,7 +408,7 @@ private fun DocentesTabContent(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(docentes) { docente ->
@@ -419,30 +428,15 @@ private fun DocentesTabContent(
 private fun EstudiantesTabContent(
     estudiantes: List<UsuarioEntity>,
     isUtp: Boolean = true,
-    onRemoveEstudiante: (Long) -> Unit,
-    onOpenAddDialog: () -> Unit
+    onRemoveEstudiante: (Long) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Estudiantes Matriculados",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            if (isUtp) {
-                Button(onClick = onOpenAddDialog) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Agregar Estudiante")
-                }
-            }
-        }
+        Text(
+            text = "Estudiantes Matriculados",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
 
         if (estudiantes.isEmpty()) {
             Box(
@@ -459,7 +453,7 @@ private fun EstudiantesTabContent(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(estudiantes) { estudiante ->
@@ -487,7 +481,6 @@ private fun UserCardItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -510,7 +503,7 @@ private fun UserCardItem(
                 Text(
                     text = "Usuario: @${usuario.nombreUsuario}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             if (showRemove) {
@@ -547,15 +540,19 @@ private fun AddAsignaturaDialog(
         title = { Text("Agregar Asignatura al Curso") },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.selectable(
+                        selected = mode == 0,
+                        onClick = { mode = 0 },
+                        role = Role.RadioButton
+                    )
+                ) {
                     RadioButton(
                         selected = mode == 0,
-                        onClick = { mode = 0 }
+                        onClick = null
                     )
-                    Text(
-                        text = "Seleccionar de catálogo",
-                        modifier = Modifier.clickable { mode = 0 }
-                    )
+                    Text(text = "Seleccionar de catálogo")
                 }
 
                 if (mode == 0) {
@@ -605,15 +602,19 @@ private fun AddAsignaturaDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.selectable(
+                        selected = mode == 1,
+                        onClick = { mode = 1 },
+                        role = Role.RadioButton
+                    )
+                ) {
                     RadioButton(
                         selected = mode == 1,
-                        onClick = { mode = 1 }
+                        onClick = null
                     )
-                    Text(
-                        text = "Crear nueva asignatura",
-                        modifier = Modifier.clickable { mode = 1 }
-                    )
+                    Text(text = "Crear nueva asignatura")
                 }
 
                 if (mode == 1) {

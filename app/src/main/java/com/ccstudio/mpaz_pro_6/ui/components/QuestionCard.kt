@@ -26,8 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
 fun QuestionCard(
@@ -39,10 +39,10 @@ fun QuestionCard(
 ) {
     val pregunta = preguntaConAlternativas.pregunta
     val alternativas = preguntaConAlternativas.alternativas
+    val appColors = LocalAppColors.current
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -69,12 +69,11 @@ fun QuestionCard(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = pregunta.enunciado,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = 22.sp
+                    fontWeight = FontWeight.Medium
                 )
             )
 
@@ -89,19 +88,19 @@ fun QuestionCard(
                 val defaultOnSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
 
                 val containerColor = if (isCorrect) {
-                    Color(0xFFE8F5E9) // Soft Green background
+                    appColors.success.container
                 } else {
                     defaultSurfaceVariant
                 }
 
                 val borderColor = if (isCorrect) {
-                    Color(0xFF2E7D32) // Dark Green border
+                    appColors.success.content
                 } else {
                     Color.Transparent
                 }
 
                 val textColor = if (isCorrect) {
-                    Color(0xFF1B5E20)
+                    appColors.success.content
                 } else {
                     defaultOnSurfaceVariant
                 }
@@ -124,14 +123,14 @@ fun QuestionCard(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = if (isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.outlineVariant
+                            color = if (isCorrect) appColors.success.content else MaterialTheme.colorScheme.outlineVariant
                         ) {
                             Text(
                                 text = optionLetter,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isCorrect) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (isCorrect) appColors.success.container else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             )
                         }
@@ -152,7 +151,7 @@ fun QuestionCard(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Alternativa correcta",
-                                tint = Color(0xFF2E7D32)
+                                tint = appColors.success.content
                             )
                         } else {
                             Spacer(modifier = Modifier.width(8.dp))

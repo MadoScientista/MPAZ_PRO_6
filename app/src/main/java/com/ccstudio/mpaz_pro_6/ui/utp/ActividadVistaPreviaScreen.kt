@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,18 +11,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,7 +36,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,13 +49,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadCursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
+import com.ccstudio.mpaz_pro_6.ui.components.AppDatePickerDialog
+import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
+import com.ccstudio.mpaz_pro_6.ui.components.AppTimePickerDialog
 import com.ccstudio.mpaz_pro_6.ui.components.QuestionCard
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.util.formatFecha
+import com.ccstudio.mpaz_pro_6.ui.util.formatFechaHoraInput
+import com.ccstudio.mpaz_pro_6.ui.util.parseFechaHora
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Composable
 fun ActividadVistaPreviaScreen(
@@ -135,7 +146,7 @@ fun ActividadVistaPreviaScreen(
                     Text(
                         text = "Se muestran las alternativas correctas destacadas para revisión pedagógica.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                         )
                     )
                 }
@@ -210,7 +221,7 @@ fun ActividadVistaPreviaScreen(
                 Text(
                     text = "Instrucciones",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -396,7 +407,7 @@ private fun EditarConfiguracionActividadDialog(
                     Text(
                         text = "No se encontraron asignaciones de curso para esta actividad.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
                     actividadesCurso.forEach { item ->
@@ -448,6 +459,68 @@ private fun CursoConfigCardItem(
     var maxIntentosStr by remember(ac) { mutableStateOf(ac.maxIntentos?.toString() ?: "") }
     var fechaInicio by remember(ac) { mutableStateOf(ac.fechaInicio ?: "") }
     var fechaFin by remember(ac) { mutableStateOf(ac.fechaFin ?: "") }
+    var showFechaInicioDatePicker by remember { mutableStateOf(false) }
+    var showFechaInicioTimePicker by remember { mutableStateOf(false) }
+    var showFechaFinDatePicker by remember { mutableStateOf(false) }
+    var showFechaFinTimePicker by remember { mutableStateOf(false) }
+
+    fun updateFechas(nuevoInicio: String = fechaInicio, nuevoFin: String = fechaFin) {
+        fechaInicio = nuevoInicio
+        fechaFin = nuevoFin
+        onSave(visible, habilitada, maxIntentosStr.toIntOrNull(), nuevoInicio, nuevoFin)
+    }
+
+    if (showFechaInicioDatePicker) {
+        AppDatePickerDialog(
+            initialDate = parseFechaHora(fechaInicio)?.toLocalDate(),
+            onDateSelected = { date ->
+                val current = parseFechaHora(fechaInicio) ?: LocalDateTime.now()
+                updateFechas(
+                    nuevoInicio = formatFechaHoraInput(LocalDateTime.of(date, current.toLocalTime()))
+                )
+            },
+            onDismiss = { showFechaInicioDatePicker = false }
+        )
+    }
+
+    if (showFechaInicioTimePicker) {
+        AppTimePickerDialog(
+            initialTime = parseFechaHora(fechaInicio)?.toLocalTime() ?: LocalTime.now(),
+            onTimeSelected = { time ->
+                val current = parseFechaHora(fechaInicio) ?: LocalDateTime.now()
+                updateFechas(
+                    nuevoInicio = formatFechaHoraInput(LocalDateTime.of(current.toLocalDate(), time))
+                )
+            },
+            onDismiss = { showFechaInicioTimePicker = false }
+        )
+    }
+
+    if (showFechaFinDatePicker) {
+        AppDatePickerDialog(
+            initialDate = parseFechaHora(fechaFin)?.toLocalDate(),
+            onDateSelected = { date ->
+                val current = parseFechaHora(fechaFin) ?: LocalDateTime.now()
+                updateFechas(
+                    nuevoFin = formatFechaHoraInput(LocalDateTime.of(date, current.toLocalTime()))
+                )
+            },
+            onDismiss = { showFechaFinDatePicker = false }
+        )
+    }
+
+    if (showFechaFinTimePicker) {
+        AppTimePickerDialog(
+            initialTime = parseFechaHora(fechaFin)?.toLocalTime() ?: LocalTime.now(),
+            onTimeSelected = { time ->
+                val current = parseFechaHora(fechaFin) ?: LocalDateTime.now()
+                updateFechas(
+                    nuevoFin = formatFechaHoraInput(LocalDateTime.of(current.toLocalDate(), time))
+                )
+            },
+            onDismiss = { showFechaFinTimePicker = false }
+        )
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -473,9 +546,9 @@ private fun CursoConfigCardItem(
             ) {
                 Column {
                     Text("Visibilidad", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium))
-                    Text("Permite a los estudiantes ver la actividad", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                    Text("Permite a los estudiantes ver la actividad", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(
+                AppSwitch(
                     checked = visible,
                     onCheckedChange = {
                         visible = it
@@ -492,9 +565,9 @@ private fun CursoConfigCardItem(
             ) {
                 Column {
                     Text("Estado Habilitado", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium))
-                    Text("Permite responder los intentos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                    Text("Permite responder los intentos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(
+                AppSwitch(
                     checked = habilitada,
                     onCheckedChange = {
                         habilitada = it
@@ -520,27 +593,53 @@ private fun CursoConfigCardItem(
             // Fecha Inicio
             OutlinedTextField(
                 value = fechaInicio,
-                onValueChange = {
-                    fechaInicio = it
-                    onSave(visible, habilitada, maxIntentosStr.toIntOrNull(), it, fechaFin)
-                },
+                onValueChange = { updateFechas(nuevoInicio = it) },
                 label = { Text("Fecha de Inicio") },
                 placeholder = { Text("YYYY-MM-DD HH:mm") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                trailingIcon = {
+                    Row {
+                        IconButton(onClick = { showFechaInicioDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = "Seleccionar fecha de inicio"
+                            )
+                        }
+                        IconButton(onClick = { showFechaInicioTimePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = "Seleccionar hora de inicio"
+                            )
+                        }
+                    }
+                }
             )
 
             // Fecha Fin
             OutlinedTextField(
                 value = fechaFin,
-                onValueChange = {
-                    fechaFin = it
-                    onSave(visible, habilitada, maxIntentosStr.toIntOrNull(), fechaInicio, it)
-                },
+                onValueChange = { updateFechas(nuevoFin = it) },
                 label = { Text("Fecha de Fin") },
                 placeholder = { Text("YYYY-MM-DD HH:mm") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                trailingIcon = {
+                    Row {
+                        IconButton(onClick = { showFechaFinDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = "Seleccionar fecha de fin"
+                            )
+                        }
+                        IconButton(onClick = { showFechaFinTimePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = "Seleccionar hora de fin"
+                            )
+                        }
+                    }
+                }
             )
         }
     }
@@ -776,12 +875,22 @@ private fun EditarPreguntaDialog(
                         label = { Text("Texto de la Alternativa") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(
-                            selected = esCorrecta,
-                            onClick = { esCorrecta = !esCorrecta }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(
+                                value = esCorrecta,
+                                onValueChange = { esCorrecta = it },
+                                role = Role.Checkbox
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = esCorrecta,
+                            onCheckedChange = null
                         )
-                        Text("Marcar como alternativa correcta", modifier = Modifier.clickable { esCorrecta = !esCorrecta })
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Marcar como alternativa correcta")
                     }
                 }
             },

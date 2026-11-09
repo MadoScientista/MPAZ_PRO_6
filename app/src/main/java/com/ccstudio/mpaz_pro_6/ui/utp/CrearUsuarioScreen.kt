@@ -30,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +45,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
 
 @Composable
 fun CrearUsuarioScreen(
@@ -268,7 +268,7 @@ fun CrearUsuarioScreen(
                         text = "Usuario Activo",
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    Switch(
+                    AppSwitch(
                         checked = state.activo,
                         onCheckedChange = { viewModel.updateCrearUsuarioActivo(it) }
                     )

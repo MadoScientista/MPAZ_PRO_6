@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -32,7 +32,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,12 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadConTipo
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.ContenidoEntity
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
 fun UnidadDetalleScreen(
@@ -64,6 +63,7 @@ fun UnidadDetalleScreen(
 ) {
     val state by viewModel.unitDetailState.collectAsState()
     val isUtp = rol.equals("UTP", ignoreCase = true)
+    val appColors = LocalAppColors.current
 
     var showAutorizarConfirmDialog by remember { mutableStateOf(false) }
     var showBorradorConfirmDialog by remember { mutableStateOf(false) }
@@ -138,7 +138,7 @@ fun UnidadDetalleScreen(
                         text = curso?.nombreCompletoConAnnio ?: asignatura.nombre,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                         )
                     )
                     if (!isEstudiante) {
@@ -241,7 +241,7 @@ fun UnidadDetalleScreen(
                 if (isAuthorized) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = Color(0xFFE8F5E9),
+                        color = appColors.success.container,
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
@@ -252,26 +252,27 @@ fun UnidadDetalleScreen(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF2E7D32),
+                                tint = appColors.success.content,
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Text(
                                 text = "Unidad Autorizada",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2E7D32)
+                                    color = appColors.success.content
                                 )
                             )
                         }
                     }
 
-                    OutlinedButton(
+                    Button(
                         onClick = { showBorradorConfirmDialog = true },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            .heightIn(min = 52.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -290,13 +291,14 @@ fun UnidadDetalleScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OutlinedButton(
+                        Button(
                             onClick = { showBorradorConfirmDialog = true },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(52.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
+                                .heightIn(min = 52.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -315,9 +317,10 @@ fun UnidadDetalleScreen(
                             onClick = { showAutorizarConfirmDialog = true },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(52.dp),
+                                .heightIn(min = 52.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF2E7D32)
+                                containerColor = appColors.success.container,
+                                contentColor = appColors.success.content
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -338,7 +341,7 @@ fun UnidadDetalleScreen(
             if (isAuthorized) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFFE8F5E9),
+                    color = appColors.success.container,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
@@ -349,14 +352,14 @@ fun UnidadDetalleScreen(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Color(0xFF2E7D32),
+                            tint = appColors.success.content,
                             modifier = Modifier.padding(end = 8.dp)
                         )
                         Text(
                             text = "Unidad Autorizada",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2E7D32)
+                                color = appColors.success.content
                             )
                         )
                     }
@@ -398,7 +401,7 @@ fun UnidadDetalleScreen(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = Color(0xFF2E7D32)
+                    tint = appColors.success.content
                 )
             },
             title = {
@@ -419,7 +422,10 @@ fun UnidadDetalleScreen(
                         showAutorizarConfirmDialog = false
                         viewModel.autorizarUnidad(unidadId, cursoId)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = appColors.success.container,
+                        contentColor = appColors.success.content
+                    )
                 ) {
                     Text("Autorizar")
                 }
@@ -460,7 +466,10 @@ fun UnidadDetalleScreen(
                         showBorradorConfirmDialog = false
                         viewModel.cambiarEstadoUnidadBorrador(unidadId, cursoId)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
                 ) {
                     Text("Cambiar a Borrador")
                 }
@@ -487,10 +496,8 @@ private fun ContenidoItemCard(
         ?: "Contenido $index"
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
@@ -541,10 +548,8 @@ private fun PruebaFinalCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
     ) {
         Row(

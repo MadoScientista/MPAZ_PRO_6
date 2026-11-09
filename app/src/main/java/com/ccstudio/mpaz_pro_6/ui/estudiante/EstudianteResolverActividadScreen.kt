@@ -1,7 +1,7 @@
 package com.ccstudio.mpaz_pro_6.ui.estudiante
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -46,10 +48,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ccstudio.mpaz_pro_6.ui.navigation.fadeThroughContent
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
 fun EstudianteResolverActividadScreen(
@@ -61,6 +66,7 @@ fun EstudianteResolverActividadScreen(
     viewModel: EstudianteViewModel = viewModel()
 ) {
     val state by viewModel.resolverState.collectAsState()
+    val appColors = LocalAppColors.current
 
     var showTerminarConfirmDialog by remember { mutableStateOf(false) }
 
@@ -113,9 +119,14 @@ fun EstudianteResolverActividadScreen(
                         text = "${state.asignaturaNombre} • ${state.unidadNombre}",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-                        )
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
+                        ),
+                        modifier = Modifier.weight(1f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Surface(
                         shape = RoundedCornerShape(20.dp),
@@ -154,8 +165,14 @@ fun EstudianteResolverActividadScreen(
             }
         }
 
+        // --- MODOS DE LA ACTIVIDAD ---
+        AnimatedContent(
+            targetState = state.estado,
+            transitionSpec = { fadeThroughContent() },
+            label = "resolverMode"
+        ) { estado ->
         // --- MODO: CONFIRMACION (Pasos 1, 2 y 7) ---
-        if (state.estado == EstadoResolverActividad.CONFIRMACION) {
+        if (estado == EstadoResolverActividad.CONFIRMACION) {
             val ultimo = state.ultimoIntentoResumen
             val siguienteNum = state.totalIntentosRealizados + 1
             val maxStr = state.maxIntentos?.let { "de $it" } ?: "(Sin límite)"
@@ -163,7 +180,6 @@ fun EstudianteResolverActividadScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -179,7 +195,7 @@ fun EstudianteResolverActividadScreen(
                     if (ultimo != null) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = if (ultimo.porcentajeLogro >= 60) Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
+                            color = if (ultimo.porcentajeLogro >= 60) appColors.success.container else appColors.warning.container,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
@@ -187,7 +203,7 @@ fun EstudianteResolverActividadScreen(
                                     text = "Resultado del Intento #${ultimo.numeroIntento}:",
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = if (ultimo.porcentajeLogro >= 60) Color(0xFF2E7D32) else Color(0xFFE65100)
+                                        color = if (ultimo.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                                     )
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -195,13 +211,13 @@ fun EstudianteResolverActividadScreen(
                                     text = "${ultimo.porcentajeLogro}% de Logro",
                                     style = MaterialTheme.typography.headlineSmall.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = if (ultimo.porcentajeLogro >= 60) Color(0xFF1B5E20) else Color(0xFFBF360C)
+                                        color = if (ultimo.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                                     )
                                 )
                                 Text(
                                     text = "${ultimo.cantidadCorrectas} respuestas correctas y ${ultimo.cantidadIncorrectas} incorrectas de ${ultimo.totalPreguntas}",
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = if (ultimo.porcentajeLogro >= 60) Color(0xFF2E7D32) else Color(0xFFE65100)
+                                        color = if (ultimo.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                                     )
                                 )
                             }
@@ -220,7 +236,7 @@ fun EstudianteResolverActividadScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
+                                .heightIn(min = 50.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -242,7 +258,7 @@ fun EstudianteResolverActividadScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(50.dp),
+                                    .heightIn(min = 50.dp),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
                                 Text(
@@ -267,7 +283,7 @@ fun EstudianteResolverActividadScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(50.dp),
+                                    .heightIn(min = 50.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
@@ -283,7 +299,7 @@ fun EstudianteResolverActividadScreen(
                         onClick = { onVolverAUnidad(state.unidadId, state.cursoId) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
+                            .heightIn(min = 50.dp),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Icon(
@@ -301,7 +317,7 @@ fun EstudianteResolverActividadScreen(
         }
 
         // --- MODO: RESOLVIENDO (Pasos 3 y 4) ---
-        if (state.estado == EstadoResolverActividad.RESOLVIENDO) {
+        if (estado == EstadoResolverActividad.RESOLVIENDO) {
             Text(
                 text = "Preguntas de la Actividad (${preguntas.size})",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
@@ -313,7 +329,6 @@ fun EstudianteResolverActividadScreen(
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -330,8 +345,7 @@ fun EstudianteResolverActividadScreen(
                         Text(
                             text = preguntaConAlt.pregunta.enunciado,
                             style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.Medium,
-                                lineHeight = 22.sp
+                                fontWeight = FontWeight.Medium
                             )
                         )
 
@@ -345,9 +359,13 @@ fun EstudianteResolverActividadScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .clickable {
-                                        viewModel.seleccionarAlternativa(preguntaId, alternativa.id)
-                                    }
+                                    .selectable(
+                                        selected = isSelected,
+                                        onClick = {
+                                            viewModel.seleccionarAlternativa(preguntaId, alternativa.id)
+                                        },
+                                        role = Role.RadioButton
+                                    )
                                     .border(
                                         width = if (isSelected) 2.dp else 1.dp,
                                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
@@ -362,9 +380,7 @@ fun EstudianteResolverActividadScreen(
                                 ) {
                                     RadioButton(
                                         selected = isSelected,
-                                        onClick = {
-                                            viewModel.seleccionarAlternativa(preguntaId, alternativa.id)
-                                        }
+                                        onClick = null
                                     )
 
                                     Surface(
@@ -407,7 +423,7 @@ fun EstudianteResolverActividadScreen(
                 onClick = { showTerminarConfirmDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .heightIn(min = 52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -424,14 +440,13 @@ fun EstudianteResolverActividadScreen(
         }
 
         // --- MODO: RESULTADO (Pasos 5 y 6) ---
-        if (state.estado == EstadoResolverActividad.RESULTADO) {
+        if (estado == EstadoResolverActividad.RESULTADO) {
             // Tarjeta Resumen de Resultados
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (state.porcentajeLogro >= 60) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
+                    containerColor = if (state.porcentajeLogro >= 60) appColors.success.container else appColors.warning.container
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -441,7 +456,7 @@ fun EstudianteResolverActividadScreen(
                         text = "Resultado del Intento ${state.numeroIntento}",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (state.porcentajeLogro >= 60) Color(0xFF2E7D32) else Color(0xFFE65100)
+                            color = if (state.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                         )
                     )
 
@@ -451,7 +466,7 @@ fun EstudianteResolverActividadScreen(
                         text = "${state.porcentajeLogro}% de Logro",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (state.porcentajeLogro >= 60) Color(0xFF1B5E20) else Color(0xFFBF360C)
+                            color = if (state.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                         )
                     )
 
@@ -468,12 +483,12 @@ fun EstudianteResolverActividadScreen(
                                 text = "${state.cantidadCorrectas}",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2E7D32)
+                                    color = appColors.success.content
                                 )
                             )
                             Text(
                                 text = "Correctas",
-                                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF2E7D32))
+                                style = MaterialTheme.typography.bodySmall.copy(color = appColors.success.content)
                             )
                         }
 
@@ -482,12 +497,12 @@ fun EstudianteResolverActividadScreen(
                                 text = "${state.cantidadIncorrectas}",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFC62828)
+                                    color = appColors.danger.content
                                 )
                             )
                             Text(
                                 text = "Incorrectas",
-                                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFC62828))
+                                style = MaterialTheme.typography.bodySmall.copy(color = appColors.danger.content)
                             )
                         }
 
@@ -501,7 +516,7 @@ fun EstudianteResolverActividadScreen(
                             )
                             Text(
                                 text = "Total",
-                                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.outline)
+                                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                             )
                         }
                     }
@@ -519,7 +534,6 @@ fun EstudianteResolverActividadScreen(
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -539,7 +553,7 @@ fun EstudianteResolverActividadScreen(
                             if (resDetalle.esCorrecta) {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFFE8F5E9)
+                                    color = appColors.success.container
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -548,13 +562,13 @@ fun EstudianteResolverActividadScreen(
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = Color(0xFF2E7D32),
+                                            tint = appColors.success.content,
                                             modifier = Modifier.padding(end = 4.dp)
                                         )
                                         Text(
                                             text = "Correcta",
                                             style = MaterialTheme.typography.labelSmall.copy(
-                                                color = Color(0xFF2E7D32),
+                                                color = appColors.success.content,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         )
@@ -563,7 +577,7 @@ fun EstudianteResolverActividadScreen(
                             } else {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFFFFEBEE)
+                                    color = appColors.danger.container
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -572,13 +586,13 @@ fun EstudianteResolverActividadScreen(
                                         Icon(
                                             imageVector = Icons.Default.Cancel,
                                             contentDescription = null,
-                                            tint = Color(0xFFC62828),
+                                            tint = appColors.danger.content,
                                             modifier = Modifier.padding(end = 4.dp)
                                         )
                                         Text(
                                             text = "Incorrecta",
                                             style = MaterialTheme.typography.labelSmall.copy(
-                                                color = Color(0xFFC62828),
+                                                color = appColors.danger.content,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         )
@@ -592,8 +606,7 @@ fun EstudianteResolverActividadScreen(
                         Text(
                             text = pConAlt.pregunta.enunciado,
                             style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.Medium,
-                                lineHeight = 22.sp
+                                fontWeight = FontWeight.Medium
                             )
                         )
 
@@ -606,20 +619,20 @@ fun EstudianteResolverActividadScreen(
                             val isStudentWrongSelection = isStudentSelected && !isCorrectAnswer
 
                             val containerColor = when {
-                                isCorrectAnswer -> Color(0xFFE8F5E9)
-                                isStudentWrongSelection -> Color(0xFFFFEBEE)
+                                isCorrectAnswer -> appColors.success.container
+                                isStudentWrongSelection -> appColors.danger.container
                                 else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                             }
 
                             val borderColor = when {
-                                isCorrectAnswer -> Color(0xFF2E7D32)
-                                isStudentWrongSelection -> Color(0xFFC62828)
+                                isCorrectAnswer -> appColors.success.content
+                                isStudentWrongSelection -> appColors.danger.content
                                 else -> Color.Transparent
                             }
 
                             val textColor = when {
-                                isCorrectAnswer -> Color(0xFF1B5E20)
-                                isStudentWrongSelection -> Color(0xFFB71C1C)
+                                isCorrectAnswer -> appColors.success.content
+                                isStudentWrongSelection -> appColors.danger.content
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
 
@@ -642,8 +655,8 @@ fun EstudianteResolverActividadScreen(
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
                                         color = when {
-                                            isCorrectAnswer -> Color(0xFF2E7D32)
-                                            isStudentWrongSelection -> Color(0xFFC62828)
+                                            isCorrectAnswer -> appColors.success.content
+                                            isStudentWrongSelection -> appColors.danger.content
                                             else -> MaterialTheme.colorScheme.outlineVariant
                                         }
                                     ) {
@@ -652,7 +665,11 @@ fun EstudianteResolverActividadScreen(
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (isCorrectAnswer || isStudentWrongSelection) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = when {
+                                                    isCorrectAnswer -> appColors.success.container
+                                                    isStudentWrongSelection -> appColors.danger.container
+                                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                                }
                                             )
                                         )
                                     }
@@ -673,14 +690,14 @@ fun EstudianteResolverActividadScreen(
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = "Correcta",
-                                            tint = Color(0xFF2E7D32)
+                                            tint = appColors.success.content
                                         )
                                     } else if (isStudentWrongSelection) {
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Icon(
                                             imageVector = Icons.Default.Cancel,
                                             contentDescription = "Incorrecta elegida",
-                                            tint = Color(0xFFC62828)
+                                            tint = appColors.danger.content
                                         )
                                     }
                                 }
@@ -699,7 +716,7 @@ fun EstudianteResolverActividadScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .heightIn(min = 52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -713,6 +730,7 @@ fun EstudianteResolverActividadScreen(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
+        }
         }
     }
 

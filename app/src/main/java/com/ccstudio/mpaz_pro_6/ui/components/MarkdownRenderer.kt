@@ -3,8 +3,10 @@ package com.ccstudio.mpaz_pro_6.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,7 +25,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun MarkdownRenderer(
@@ -81,11 +82,15 @@ fun MarkdownRenderer(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Row(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .height(IntrinsicSize.Min)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .width(4.dp)
-                                    .height(24.dp)
+                                    .fillMaxHeight()
                                     .background(
                                         MaterialTheme.colorScheme.primary,
                                         shape = RoundedCornerShape(2.dp)
@@ -156,7 +161,6 @@ fun MarkdownRenderer(
                     Text(
                         text = parseInlineMarkdown(line),
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.padding(vertical = 3.dp)

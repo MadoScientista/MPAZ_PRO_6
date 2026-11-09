@@ -13,7 +13,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.MPAZ_PRO_6">
+            android:theme="@style/Theme.MPAZ_PRO_6"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
