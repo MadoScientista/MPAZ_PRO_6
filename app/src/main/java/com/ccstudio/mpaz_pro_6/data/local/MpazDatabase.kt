@@ -135,6 +135,42 @@ val MIGRATION_4_6 = object : Migration(4, 6) {
     }
 }
 
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedMathData(db)
+    }
+}
+
+val MIGRATION_1_7 = object : Migration(1, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_2_7 = object : Migration(2, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_3_7 = object : Migration(3, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_4_7 = object : Migration(4, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
+val MIGRATION_5_7 = object : Migration(5, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedInitialData(db)
+    }
+}
+
 fun seedInitialData(db: SupportSQLiteDatabase) {
     // 1. Roles
     db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (1, 'UTP')")
@@ -951,6 +987,339 @@ Pasto → Saltamontes → Rana → Serpiente
         val preguntaId = ((i - 1) / 4) + 1
         db.execSQL("INSERT OR IGNORE INTO alternativa_pregunta (id, pregunta_id, alternativa_id) VALUES ($i, $preguntaId, $i)")
     }
+
+    seedMathData(db)
+}
+
+fun seedMathData(db: SupportSQLiteDatabase) {
+    // 1. Actualizar estado de la Unidad de Matemática a PUBLICADO (4)
+    db.execSQL("UPDATE unidad SET estado_id = 4 WHERE unidad_id = 2")
+
+    // 2. Contenido de Matemática (ID = 5)
+    val c5Markdown = """
+# Factores, múltiplos y números primos
+
+## ¿Cómo se relacionan los números entre sí?
+
+En matemática, los números tienen propiedades que nos permiten establecer relaciones entre ellos. Por ejemplo, podemos descubrir cuándo un número puede dividirse exactamente por otro, cuáles son sus múltiplos y cómo se pueden descomponer en factores.
+
+Estas relaciones son muy útiles para resolver problemas cotidianos, como organizar objetos en grupos iguales, distribuir materiales o calcular cuándo coinciden determinados acontecimientos.
+
+En este contenido aprenderemos a reconocer múltiplos, identificar factores y distinguir entre números primos y compuestos.
+
+## 1. ¿Qué son los múltiplos?
+
+Los múltiplos de un número se obtienen al multiplicarlo por los números naturales.
+
+Por ejemplo, para encontrar los múltiplos de 4, multiplicamos:
+
+- 4 × 1 = 4
+- 4 × 2 = 8
+- 4 × 3 = 12
+- 4 × 4 = 16
+- 4 × 5 = 20
+
+Por lo tanto, algunos múltiplos de 4 son:
+
+**4, 8, 12, 16, 20, 24, 28, 32...**
+
+Los múltiplos continúan indefinidamente, por lo que cada número natural tiene infinitos múltiplos.
+
+### ¿Cómo podemos reconocer un múltiplo?
+
+Un número es múltiplo de otro cuando se obtiene mediante una multiplicación por un número natural.
+
+Por ejemplo:
+
+- 30 es múltiplo de 5 porque 5 × 6 = 30.
+- 42 es múltiplo de 7 porque 7 × 6 = 42.
+- 25 es múltiplo de 4 porque no existe un número natural que multiplicado por 4 dé exactamente 25: en realidad, 25 no es múltiplo de 4.
+
+## 2. ¿Qué son los factores o divisores?
+
+Los factores de un número son aquellos números naturales que permiten dividirlo exactamente, es decir, sin dejar resto.
+
+Por ejemplo, analicemos el número 12.
+
+Podemos dividirlo exactamente por:
+
+- 1, porque 12 ÷ 1 = 12.
+- 2, porque 12 ÷ 2 = 6.
+- 3, porque 12 ÷ 3 = 4.
+- 4, porque 12 ÷ 4 = 3.
+- 6, porque 12 ÷ 6 = 2.
+- 12, porque 12 ÷ 12 = 1.
+
+Por lo tanto, los factores de 12 son:
+
+**1, 2, 3, 4, 6 y 12.**
+
+### Relación entre factores y múltiplos
+
+Los factores y los múltiplos están directamente relacionados.
+
+Si 3 es factor de 18, significa que 18 es múltiplo de 3.
+
+Podemos comprobarlo mediante la multiplicación:
+
+3 × 6 = 18
+
+Esta relación nos permite reconocer fácilmente cuándo un número es divisor o múltiplo de otro.
+
+## 3. Números primos y compuestos
+
+Los números naturales mayores que 1 pueden clasificarse, según su cantidad de divisores, en números primos y compuestos.
+
+### Números primos
+
+Un número primo es aquel que tiene exactamente dos divisores: el número 1 y él mismo.
+
+Por ejemplo:
+
+- 2 tiene como divisores al 1 y al 2.
+- 3 tiene como divisores al 1 y al 3.
+- 5 tiene como divisores al 1 y al 5.
+- 7 tiene como divisores al 1 y al 7.
+
+Por esta razón, 2, 3, 5 y 7 son números primos.
+
+El número 2 tiene una característica especial: es el único número primo par.
+
+### Números compuestos
+
+Un número compuesto tiene más de dos divisores.
+
+Por ejemplo, el número 12 tiene seis divisores: 1, 2, 3, 4, 6 y 12.
+
+Otros ejemplos de números compuestos son 4, 6, 8, 9, 10 y 15.
+
+**Importante:** el número 1 no es primo ni compuesto, porque tiene un solo divisor.
+
+## 4. ¿Cómo podemos descomponer un número en factores primos?
+
+Todo número compuesto puede expresarse como una multiplicación de números primos.
+
+Este procedimiento se conoce como descomposición en factores primos.
+
+Por ejemplo, descompongamos el número 24:
+
+Primero, podemos dividirlo por 2:
+
+24 ÷ 2 = 12
+
+Luego continuamos dividiendo:
+
+12 ÷ 2 = 6
+
+6 ÷ 2 = 3
+
+Finalmente, 3 es un número primo.
+
+Por lo tanto:
+
+24 = 2 × 2 × 2 × 3
+
+Esta representación permite identificar los factores primos que componen un número.
+
+## 5. ¿Para qué sirven los múltiplos y factores en la vida cotidiana?
+
+Estas propiedades matemáticas nos permiten resolver situaciones relacionadas con la organización y distribución.
+
+**Ejemplo 1: Organización de materiales**
+
+Una profesora tiene 24 lápices y quiere distribuirlos en grupos con la misma cantidad de lápices, sin que sobre ninguno.
+
+Puede formar grupos de:
+
+- 2 grupos de 12 lápices.
+- 3 grupos de 8 lápices.
+- 4 grupos de 6 lápices.
+- 6 grupos de 4 lápices.
+- 8 grupos de 3 lápices.
+- 12 grupos de 2 lápices.
+
+En este caso, utilizamos los factores de 24 para encontrar distintas formas de distribuir los lápices.
+
+**Ejemplo 2: Coincidencia de acontecimientos**
+
+Una luz se enciende cada 4 segundos y otra cada 6 segundos. Si ambas se encienden al mismo tiempo, podemos utilizar los múltiplos de ambos números para descubrir cuándo volverán a coincidir.
+
+Múltiplos de 4: 4, 8, 12, 16, 20, 24...
+
+Múltiplos de 6: 6, 12, 18, 24, 30...
+
+El primer múltiplo común es 12.
+
+Por lo tanto, ambas luces volverán a encenderse simultáneamente después de 12 segundos.
+
+## Para recordar
+
+- Los múltiplos se obtienen mediante la multiplicación de un número por números naturales.
+- Los factores o divisores permiten dividir un número exactamente.
+- Los números primos tienen exactamente dos divisores.
+- Los números compuestos tienen más de dos divisores.
+- El número 1 no es primo ni compuesto.
+
+**Comprender estas relaciones nos permite reconocer propiedades de los números y utilizarlas para resolver diferentes situaciones matemáticas.**
+""".trimIndent().replace("'", "''")
+
+    db.execSQL("INSERT OR IGNORE INTO contenido (contenido_id, descripcion, unidad_id, estado_id) VALUES (5, '$c5Markdown', 2, 4)")
+
+    // 3. ObjetivoAprendizajeContenido
+    db.execSQL("INSERT OR IGNORE INTO objetivo_aprendizaje_contenido (id, contenido_id, objetivo_aprendizaje_id, unidad_id) VALUES (9, 5, 29, 2)")
+
+    // 4. Actividades (5: Actividad 1, 6: Actividad 2, 7: Prueba Final)
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (5, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 5, 1, 4)")
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (6, 'Lee atentamente cada pregunta y selecciona la alternativa correcta. Solo una alternativa es válida.', 5, 1, 4)")
+    val instPF = "Lee cuidadosamente cada pregunta y selecciona la alternativa correcta. Cada pregunta tiene cuatro alternativas y solo una respuesta válida. Cada respuesta correcta equivale a un punto."
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (7, '$instPF', 5, 3, 4)")
+
+    // 5. ActividadCurso
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (9, 5, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (10, 5, 2, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (11, 6, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (12, 6, 2, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (13, 7, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (14, 7, 2, 1, 1, 3)")
+
+    // 6. Preguntas (13..28)
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (13, '¿Cuál de los siguientes números es múltiplo de 7?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (14, '¿Cuál de las siguientes alternativas contiene todos los divisores del número 18?', NULL)")
+    val p15 = "Una profesora tiene 36 cuadernos y quiere distribuirlos en grupos con la misma cantidad de cuadernos, sin que sobre ninguno. ¿Cuál de las siguientes cantidades de grupos es posible?".replace("'", "''")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (15, '$p15', NULL)")
+
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (16, '¿Cuál de los siguientes números es primo?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (17, '¿Por qué el número 15 se clasifica como compuesto?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (18, '¿Cuál es la descomposición correcta del número 30 en factores primos?', NULL)")
+
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (19, '¿Cuál de los siguientes números es múltiplo de 9?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (20, '¿Cuál de las siguientes alternativas presenta los primeros cinco múltiplos positivos de 6?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (21, '¿Cuál de los siguientes números es divisor de 48?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (22, '¿Cuál es el conjunto completo de divisores del número 20?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (23, '¿Cuál de los siguientes números es primo?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (24, '¿Por qué el número 1 no se considera primo ni compuesto?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (25, '¿Cuál es la descomposición correcta del número 36 en factores primos?', NULL)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (26, '¿Cuál es la descomposición en factores primos del número 50?', NULL)")
+    val p27 = "En una escuela hay 24 estudiantes que deben organizarse en equipos con igual cantidad de integrantes, sin que sobre ninguno. ¿Cuál de las siguientes cantidades de integrantes por equipo permite realizar esta distribución?".replace("'", "''")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (27, '$p27', NULL)")
+    val p28 = "Dos autobuses salen de un terminal al mismo tiempo. Uno sale cada 8 minutos y el otro cada 12 minutos. ¿Después de cuántos minutos volverán a salir simultáneamente?".replace("'", "''")
+    db.execSQL("INSERT OR IGNORE INTO pregunta (pregunta_id, enunciado, recurso_id) VALUES (28, '$p28', NULL)")
+
+    // 7. PreguntaActividad (13..28)
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (13, 5, 13)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (14, 5, 14)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (15, 5, 15)")
+
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (16, 6, 16)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (17, 6, 17)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (18, 6, 18)")
+
+    for (pId in 19..28) {
+        db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES ($pId, 7, $pId)")
+    }
+
+    // 8. Alternativas (49..112)
+    // Pregunta 13
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (49, '32', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (50, '42', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (51, '45', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (52, '50', 0, NULL)")
+
+    // Pregunta 14
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (53, '1, 2, 3, 6, 9 y 18.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (54, '1, 2, 4, 6, 9 y 18.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (55, '1, 3, 5, 6, 9 y 18.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (56, '2, 3, 6, 9 y 18.', 0, NULL)")
+
+    // Pregunta 15
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (57, '5 grupos.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (58, '7 grupos.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (59, '8 grupos.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (60, '9 grupos.', 1, NULL)")
+
+    // Pregunta 16
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (61, '21', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (62, '27', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (63, '29', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (64, '33', 0, NULL)")
+
+    // Pregunta 17
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (65, 'Porque es divisible solamente por 1 y por 15.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (66, 'Porque tiene más de dos divisores: 1, 3, 5 y 15.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (67, 'Porque es un número impar.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (68, 'Porque no puede dividirse exactamente por ningún número.', 0, NULL)")
+
+    // Pregunta 18
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (69, '2 × 3 × 5.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (70, '2 × 2 × 5.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (71, '3 × 5 × 5.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (72, '2 × 3 × 3.', 0, NULL)")
+
+    // Pregunta 19
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (73, '45', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (74, '52', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (75, '64', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (76, '70', 0, NULL)")
+
+    // Pregunta 20
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (77, '6, 12, 18, 24, 30.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (78, '6, 10, 14, 18, 22.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (79, '1, 6, 12, 18, 24.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (80, '6, 12, 16, 24, 36.', 0, NULL)")
+
+    // Pregunta 21
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (81, '5', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (82, '7', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (83, '8', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (84, '10', 0, NULL)")
+
+    // Pregunta 22
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (85, '1, 2, 4, 5, 10 y 20.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (86, '1, 2, 3, 4, 5 y 20.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (87, '2, 4, 5, 10 y 20.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (88, '1, 2, 4, 6, 10 y 20.', 0, NULL)")
+
+    // Pregunta 23
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (89, '35', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (90, '39', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (91, '41', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (92, '49', 0, NULL)")
+
+    // Pregunta 24
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (93, 'Porque es un número impar.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (94, 'Porque solamente tiene un divisor positivo.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (95, 'Porque no puede dividirse por sí mismo.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (96, 'Porque es múltiplo de todos los números.', 0, NULL)")
+
+    // Pregunta 25
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (97, '2 × 2 × 3 × 3.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (98, '2 × 3 × 6.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (99, '3 × 3 × 4.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (100, '2 × 2 × 2 × 3.', 0, NULL)")
+
+    // Pregunta 26
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (101, '2 × 5 × 5.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (102, '2 × 2 × 5.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (103, '5 × 5 × 5.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (104, '2 × 25 × 5.', 0, NULL)")
+
+    // Pregunta 27
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (105, '5 estudiantes.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (106, '7 estudiantes.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (107, '8 estudiantes.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (108, '10 estudiantes.', 0, NULL)")
+
+    // Pregunta 28
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (109, '16 minutos.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (110, '20 minutos.', 0, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (111, '24 minutos.', 1, NULL)")
+    db.execSQL("INSERT OR IGNORE INTO alternativa (alternativa_id, enunciado, correcta, recurso_id) VALUES (112, '32 minutos.', 0, NULL)")
+
+    // 9. AlternativaPregunta (49..112)
+    for (i in 49..112) {
+        val preguntaId = ((i - 49) / 4) + 13
+        db.execSQL("INSERT OR IGNORE INTO alternativa_pregunta (id, pregunta_id, alternativa_id) VALUES ($i, $preguntaId, $i)")
+    }
 }
 
 @Database(
@@ -992,7 +1361,7 @@ Pasto → Saltamontes → Rana → Serpiente
         InformePedagogicoEntity::class,
         DetalleInformePedagogicoEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -1022,7 +1391,8 @@ abstract class MpazDatabase : RoomDatabase() {
                 .addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_1_3, MIGRATION_3_4, MIGRATION_1_4, MIGRATION_2_4,
                     MIGRATION_4_5, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5,
-                    MIGRATION_5_6, MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6
+                    MIGRATION_5_6, MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6,
+                    MIGRATION_6_7, MIGRATION_1_7, MIGRATION_2_7, MIGRATION_3_7, MIGRATION_4_7, MIGRATION_5_7
                 )
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
