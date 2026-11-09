@@ -52,14 +52,14 @@ Al insertar nuevos registros mediante SQL en `MpazDatabase.kt`, utiliza la cláu
 | Tabla | Rangos Actuales Ocupados | Siguiente ID Disponible |
 |---|---|---|
 | `unidad` | 1 - 4 | 5 |
-| `contenido` | 1 - 5 | 6 |
-| `objetivo_aprendizaje_contenido` | 1 - 9 | 10 |
-| `actividad` | 1 - 7 | 8 |
-| `actividad_curso` | 1 - 14 | 15 |
-| `pregunta` | 1 - 28 | 29 |
-| `pregunta_actividad` | 1 - 28 | 29 |
-| `alternativa` | 1 - 112 | 113 |
-| `alternativa_pregunta` | 1 - 112 | 113 |
+| `contenido` | 1 - 6 | 7 |
+| `objetivo_aprendizaje_contenido` | 1 - 10 | 11 |
+| `actividad` | 1 - 10 | 11 |
+| `actividad_curso` | 1 - 20 | 21 |
+| `pregunta` | 1 - 48 | 49 |
+| `pregunta_actividad` | 1 - 48 | 49 |
+| `alternativa` | 1 - 192 | 193 |
+| `alternativa_pregunta` | 1 - 192 | 193 |
 
 ---
 
