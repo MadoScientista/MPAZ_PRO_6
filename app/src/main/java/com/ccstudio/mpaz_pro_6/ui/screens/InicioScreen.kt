@@ -632,13 +632,13 @@ private fun KpiCard(
                 if (badgeText != null) {
                     Surface(
                         color = MaterialTheme.colorScheme.error,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = badgeText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onError,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
                 }

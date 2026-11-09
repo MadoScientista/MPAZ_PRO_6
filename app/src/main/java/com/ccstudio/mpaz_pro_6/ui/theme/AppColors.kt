@@ -115,8 +115,8 @@ val DarkAppColors = AppColors(
         container = SuccessButtonContainer,
         content = OnSuccessButton
     ),
-    fabContainer = White,
-    fabContent = Black,
+    fabContainer = BlueLight,
+    fabContent = White,
     subjectAccents = listOf(
         SubjectRedDark,
         SubjectBlueDark,
