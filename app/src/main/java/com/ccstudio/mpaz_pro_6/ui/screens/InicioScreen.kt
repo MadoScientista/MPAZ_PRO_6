@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
 import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
@@ -167,8 +168,8 @@ fun InicioScreen(
                 )
 
                 KpiCard(
-                    count = "Actividades",
-                    subtitle = "Resolver tareas y pruebas",
+                    count = "Mis Actividades",
+                    subtitle = "Resolver tareas y pruebas pendientes",
                     icon = Icons.AutoMirrored.Filled.FactCheck,
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface,
@@ -192,7 +193,6 @@ fun InicioScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             )
-
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
