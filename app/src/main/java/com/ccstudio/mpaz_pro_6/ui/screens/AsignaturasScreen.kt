@@ -94,7 +94,7 @@ fun AsignaturasScreen(
             value = state.searchQuery,
             onValueChange = { viewModel.updateSearchQuery(it) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Buscar asignatura, curso o docente...") },
+            placeholder = { Text("Buscar asignatura...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -106,12 +106,13 @@ fun AsignaturasScreen(
                     IconButton(onClick = { viewModel.updateSearchQuery("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Limpiar",
+                            contentDescription = "Limpiar búsqueda",
                         )
                     }
                 }
             },
             singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium,
         )
 
         // Subtítulo según Rol
