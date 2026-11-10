@@ -204,7 +204,7 @@ interface CurriculoDao {
     suspend fun getAllActividades(): List<ActividadEntity>
 
     @Transaction
-    @Query("SELECT * FROM actividad WHERE contenido_id = :contenidoId")
+    @Query("SELECT * FROM actividad WHERE contenido_id = :contenidoId AND tipo_actividad_id != 3")
     suspend fun getActividadesConTipoByContenidoId(contenidoId: Long): List<ActividadConTipo>
 
     @Transaction

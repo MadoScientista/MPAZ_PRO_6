@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadConTipo
 import com.ccstudio.mpaz_pro_6.ui.components.MarkdownRenderer
@@ -105,7 +106,7 @@ fun ContenidoDetalleScreen(
                         Text(
                             text = cursoConDetalles.nombreCompletoConAnnio,
                             style = MaterialTheme.typography.labelLarge.copy(
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
                         )
@@ -136,7 +137,6 @@ fun ContenidoDetalleScreen(
         // 2. Renderizado del Markdown (Colapsable con vista previa de 1-2 párrafos)
         Card(
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             colors = CardDefaults.cardColors(containerColor = surfaceColor)
         ) {
             Column(
@@ -277,10 +277,8 @@ private fun ActivityItemCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
@@ -310,7 +308,10 @@ private fun ActivityItemCard(
                 ) {
                     Text(
                         text = "Actividad $index - ${actividadConTipo.tipoActividad.nombre}",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (!isEstudiante) {
                         StatusChip(statusName = actividadConTipo.estado.nombre)

@@ -2,9 +2,9 @@ package com.ccstudio.mpaz_pro_6.ui.docente
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +26,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
@@ -41,9 +40,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -73,6 +74,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.TipoActividadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
 import com.ccstudio.mpaz_pro_6.ui.components.MarkdownRenderer
+import com.ccstudio.mpaz_pro_6.ui.navigation.fadeThroughContent
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -153,26 +155,27 @@ fun CrearContenidoScreen(
 
                 var unidadMenuExpanded by remember { mutableStateOf(false) }
 
-                Box(modifier = Modifier.fillMaxWidth()) {
+                ExposedDropdownMenuBox(
+                    expanded = unidadMenuExpanded,
+                    onExpandedChange = { unidadMenuExpanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     OutlinedTextField(
                         value = state.unidadSeleccionada?.nombre ?: "Seleccionar unidad...",
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { unidadMenuExpanded = true },
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                         trailingIcon = {
-                            IconButton(onClick = { unidadMenuExpanded = true }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Desplegar")
-                            }
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = unidadMenuExpanded)
                         },
                         label = { Text("Unidad Académica") },
                     )
 
-                    DropdownMenu(
+                    ExposedDropdownMenu(
                         expanded = unidadMenuExpanded,
                         onDismissRequest = { unidadMenuExpanded = false },
-                        modifier = Modifier.fillMaxWidth(0.9f),
                     ) {
                         if (state.unidadesDisponibles.isEmpty()) {
                             DropdownMenuItem(
@@ -205,7 +208,7 @@ fun CrearContenidoScreen(
                         Text(
                             text = "No hay OAs vinculados a esta unidad.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
                         FlowRow(
@@ -239,6 +242,7 @@ fun CrearContenidoScreen(
                         text = "3. Descripción del Contenido (Markdown)",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
                     )
 
                     Row {
@@ -255,29 +259,35 @@ fun CrearContenidoScreen(
                     }
                 }
 
-                if (state.isPreviewMode) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    ) {
-                        Box(modifier = Modifier.padding(16.dp)) {
-                            if (state.descripcionMarkdown.isBlank()) {
-                                Text("Vista previa vacía", fontStyle = FontStyle.Italic)
-                            } else {
-                                MarkdownRenderer(markdownText = state.descripcionMarkdown)
+                AnimatedContent(
+                    targetState = state.isPreviewMode,
+                    transitionSpec = { fadeThroughContent() },
+                    label = "markdownPreview"
+                ) { isPreview ->
+                    if (isPreview) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        ) {
+                            Box(modifier = Modifier.padding(16.dp)) {
+                                if (state.descripcionMarkdown.isBlank()) {
+                                    Text("Vista previa vacía", fontStyle = FontStyle.Italic)
+                                } else {
+                                    MarkdownRenderer(markdownText = state.descripcionMarkdown)
+                                }
                             }
                         }
+                    } else {
+                        OutlinedTextField(
+                            value = state.descripcionMarkdown,
+                            onValueChange = { viewModel.updateDescripcionMarkdown(it) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 160.dp),
+                            placeholder = { Text("Escribe la descripción del contenido aquí (Soporta sintaxis Markdown)...") },
+                            label = { Text("Contenido Markdown") },
+                        )
                     }
-                } else {
-                    OutlinedTextField(
-                        value = state.descripcionMarkdown,
-                        onValueChange = { viewModel.updateDescripcionMarkdown(it) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 160.dp),
-                        placeholder = { Text("Escribe la descripción del contenido aquí (Soporta sintaxis Markdown)...") },
-                        label = { Text("Contenido Markdown") },
-                    )
                 }
 
                 HorizontalDivider()
@@ -343,7 +353,6 @@ fun CrearContenidoScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -390,7 +399,7 @@ fun CrearContenidoScreen(
                     onClick = { showConfirmCrearDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .heightIn(min = 50.dp),
                     enabled = !state.isLoading && state.unidadSeleccionada != null && state.descripcionMarkdown.isNotBlank(),
                 ) {
                     if (state.isLoading) {
@@ -412,7 +421,7 @@ fun CrearContenidoScreen(
                     onClick = { showConfirmLimpiarDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .heightIn(min = 50.dp),
                     enabled = !state.isLoading && (state.unidadSeleccionada != null || state.descripcionMarkdown.isNotBlank() || state.actividadesAsociadas.isNotEmpty() || state.objetivosSeleccionadosIds.isNotEmpty()),
                 ) {
                     Text(
@@ -537,9 +546,8 @@ private fun AsociarActividadDialog(
                 ) {
                     items(actividadesExistentes) { item ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelectActividad(item) },
+                            onClick = { onSelectActividad(item) },
+                            modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             ),
@@ -570,7 +578,7 @@ private fun AsociarActividadDialog(
                                     Text(
                                         text = "${item.totalPreguntas} preguntas",
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.outline,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
 
@@ -594,7 +602,7 @@ private fun AsociarActividadDialog(
                                     text = extractoPregunta,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontStyle = if (item.primerEnunciado == null) FontStyle.Italic else FontStyle.Normal,
-                                    color = if (item.primerEnunciado == null) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 2,
                                 )
                             }
@@ -612,6 +620,7 @@ private fun AsociarActividadDialog(
 }
 
 // Diálogo Formulario para Crear una Nueva Actividad
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CrearNuevaActividadDialog(
     tiposActividad: List<TipoActividadEntity>,
@@ -638,22 +647,24 @@ private fun CrearNuevaActividadDialog(
             ) {
                 // Selector de Tipo de Actividad
                 Text("Tipo de Actividad", style = MaterialTheme.typography.labelLarge)
-                Box(modifier = Modifier.fillMaxWidth()) {
+                ExposedDropdownMenuBox(
+                    expanded = tipoMenuExpanded,
+                    onExpandedChange = { tipoMenuExpanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     OutlinedTextField(
                         value = tipoSeleccionado.nombre,
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { tipoMenuExpanded = true },
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                         trailingIcon = {
-                            IconButton(onClick = { tipoMenuExpanded = true }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = tipoMenuExpanded)
                         },
                     )
 
-                    DropdownMenu(
+                    ExposedDropdownMenu(
                         expanded = tipoMenuExpanded,
                         onDismissRequest = { tipoMenuExpanded = false },
                     ) {

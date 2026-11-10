@@ -21,6 +21,7 @@ data class LoginUiState(
     val loggedInUserId: Long? = null,
     val loggedInUsername: String? = null,
     val resetMessage: String? = null,
+    val isSessionLoaded: Boolean = false,
 )
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
@@ -40,6 +41,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         loggedInRol = session?.rol,
                         loggedInUserId = session?.userId,
                         loggedInUsername = session?.username,
+                        isSessionLoaded = true,
                     )
                 }
             }
@@ -129,7 +131,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             sessionManager.clearSession()
             _uiState.update {
-                LoginUiState()
+                LoginUiState(isSessionLoaded = true)
             }
         }
     }

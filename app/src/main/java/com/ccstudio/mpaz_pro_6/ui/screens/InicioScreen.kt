@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -14,10 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Assessment
@@ -28,8 +27,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -47,8 +44,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
 import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 
 /**
@@ -60,7 +60,6 @@ import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
  * - ESTUDIANTE: Portal del estudiante con acceso directo a sus asignaturas y actividades pendientes.
  *
  * @param rol Rol del usuario autenticado ("UTP", "DOCENTE", "ESTUDIANTE").
- * @param onLogoutClick Callback para cerrar la sesión activa.
  * @param viewModel ViewModel principal para obtener estadísticas, asignaturas del docente y nombre del usuario.
  * @param onNavigateToRevisiones Callback para navegar a Revisiones Pendientes / Actividades.
  * @param onNavigateToCursos Callback para navegar a la lista de Cursos.
@@ -76,7 +75,6 @@ import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
 @Composable
 fun InicioScreen(
     rol: String,
-    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: UtpViewModel? = null,
     onNavigateToRevisiones: () -> Unit = {},
@@ -118,39 +116,30 @@ fun InicioScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         // --- 1. HEADER CON SALUDO PERSONALIZADO ---
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Text(
-                    text = "¡Hola, $displayName!",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+            Text(
+                text = "¡Hola, $displayName!",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = if (rol.equals("UTP", ignoreCase = true)) {
-                        "Coordinación Técnico Pedagógica"
-                    } else if (rol.equals("DOCENTE", ignoreCase = true)) {
-                        "Portal Docente - Gestión Pedagógica"
-                    } else if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
-                        "Portal del Estudiante"
-                    } else {
-                        "Rol actual: $rol"
-                    },
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
+            )
+            Text(
+                text = if (rol.equals("UTP", ignoreCase = true)) {
+                    "Coordinación Técnico Pedagógica"
+                } else if (rol.equals("DOCENTE", ignoreCase = true)) {
+                    "Portal Docente - Gestión Pedagógica"
+                } else if (rol.equals("ESTUDIANTE", ignoreCase = true)) {
+                    "Portal del Estudiante"
+                } else {
+                    "Rol actual: $rol"
+                },
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
+            )
         }
 
         // --- 2. VISTA Y DASHBOARD PARA ESTUDIANTE ---
@@ -171,18 +160,20 @@ fun InicioScreen(
                     count = "Mis Asignaturas",
                     subtitle = "Acceder a asignaturas y unidades",
                     icon = Icons.Default.Book,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    iconTint = MaterialTheme.colorScheme.primary,
                     onClick = onNavigateToAsignaturas,
                     modifier = Modifier.weight(1f)
                 )
 
                 KpiCard(
-                    count = "Actividades",
-                    subtitle = "Resolver tareas y pruebas",
+                    count = "Mis Actividades",
+                    subtitle = "Resolver tareas y pruebas pendientes",
                     icon = Icons.AutoMirrored.Filled.FactCheck,
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    iconTint = MaterialTheme.colorScheme.primary,
                     onClick = onNavigateToRevisiones,
                     modifier = Modifier.weight(1f)
                 )
@@ -202,7 +193,6 @@ fun InicioScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             )
-
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -212,8 +202,9 @@ fun InicioScreen(
                         count = "${docenteAsignaturas.size}",
                         subtitle = "Mis asignaturas",
                         icon = Icons.Default.Book,
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToAsignaturas,
                         modifier = Modifier.weight(1f)
                     )
@@ -222,8 +213,9 @@ fun InicioScreen(
                         count = "Nuevo",
                         subtitle = "Crear contenido",
                         icon = Icons.Default.AddCircle,
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToCrear,
                         modifier = Modifier.weight(1f)
                     )
@@ -237,8 +229,9 @@ fun InicioScreen(
                         count = "Reportes",
                         subtitle = "Informes pedagógicos",
                         icon = Icons.Default.Assessment,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToInformes,
                         modifier = Modifier.weight(1f)
                     )
@@ -248,7 +241,8 @@ fun InicioScreen(
                         subtitle = "Cursos a cargo",
                         icon = Icons.Default.School,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToCursos,
                         modifier = Modifier.weight(1f)
                     )
@@ -336,15 +330,13 @@ fun InicioScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     docenteAsignaturas.forEach { item ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onNavigateToAsignaturaCurso(item.curso.id, item.asignatura.id)
-                                },
+                            onClick = {
+                                onNavigateToAsignaturaCurso(item.curso.id, item.asignatura.id)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -366,9 +358,11 @@ fun InicioScreen(
                                 }
 
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = item.asignatura.nombre,
-                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                    SubjectLabel(
+                                        subjectName = item.asignatura.nombre,
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                        textColor = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 2
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
@@ -380,7 +374,7 @@ fun InicioScreen(
 
                                 Surface(
                                     color = MaterialTheme.colorScheme.secondaryContainer,
-                                    shape = MaterialTheme.shapes.extraSmall
+                                    shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
                                         text = item.nombreCurso,
@@ -423,8 +417,9 @@ fun InicioScreen(
                         count = "${pendingUnits.size}",
                         subtitle = "Por revisar",
                         icon = Icons.AutoMirrored.Filled.FactCheck,
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         badgeText = if (pendingUnits.isNotEmpty()) "${pendingUnits.size} PENDIENTE${if (pendingUnits.size > 1) "S" else ""}" else null,
                         onClick = onNavigateToRevisiones,
                         modifier = Modifier.weight(1f)
@@ -434,8 +429,9 @@ fun InicioScreen(
                         count = "${cursosState.cursos.size}",
                         subtitle = "Cursos activos",
                         icon = Icons.Default.School,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToCursos,
                         modifier = Modifier.weight(1f)
                     )
@@ -450,7 +446,8 @@ fun InicioScreen(
                         subtitle = "Profesores",
                         icon = Icons.Default.Badge,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToDocentes,
                         modifier = Modifier.weight(1f)
                     )
@@ -460,7 +457,8 @@ fun InicioScreen(
                         subtitle = "Usuarios totales",
                         icon = Icons.Default.People,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onNavigateToUsuarios,
                         modifier = Modifier.weight(1f)
                     )
@@ -548,13 +546,11 @@ fun InicioScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     pendingUnits.take(3).forEach { item ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToDetalleUnidad(item.unidad.id) },
+                            onClick = { onNavigateToDetalleUnidad(item.unidad.id) },
+                            modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -575,10 +571,10 @@ fun InicioScreen(
                                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = item.asignatura.nombre,
+                                    SubjectLabel(
+                                        subjectName = item.asignatura.nombre,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        textColor = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
 
@@ -599,23 +595,6 @@ fun InicioScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        // --- 5. BOTÓN CERRAR SESIÓN ---
-        Button(
-            onClick = onLogoutClick,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                contentDescription = "Cerrar sesión"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Cerrar Sesión")
-        }
     }
 }
 
@@ -626,16 +605,15 @@ private fun KpiCard(
     icon: ImageVector,
     containerColor: Color,
     contentColor: Color,
+    iconTint: Color = contentColor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     badgeText: String? = null
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -649,18 +627,18 @@ private fun KpiCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = contentColor
+                    tint = iconTint
                 )
                 if (badgeText != null) {
                     Surface(
                         color = MaterialTheme.colorScheme.error,
-                        shape = MaterialTheme.shapes.extraSmall
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = badgeText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onError,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
                 }
@@ -668,13 +646,15 @@ private fun KpiCard(
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = count,
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = contentColor
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = contentColor,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.8f)
+                color = contentColor.copy(alpha = 0.9f)
             )
         }
     }

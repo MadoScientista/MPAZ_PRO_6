@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnidadConDetalles
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
 
 @Composable
 fun CursoAsignaturaDetalleScreen(
@@ -98,10 +98,10 @@ fun CursoAsignaturaDetalleScreen(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text(
-                        text = asignatura.nombre,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                    SubjectLabel(
+                        subjectName = asignatura.nombre,
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        maxLines = 2
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -184,13 +184,11 @@ private fun UnidadItemCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        )
     ) {
         Row(
             modifier = Modifier

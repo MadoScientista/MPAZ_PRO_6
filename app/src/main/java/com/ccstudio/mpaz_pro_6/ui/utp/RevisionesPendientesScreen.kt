@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.UnidadConDetalles
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
 
 @Composable
 fun RevisionesPendientesScreen(
@@ -115,10 +115,8 @@ private fun PendingUnitCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
@@ -140,11 +138,10 @@ private fun PendingUnitCard(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = unidadConDetalles.asignatura.nombre,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                SubjectLabel(
+                    subjectName = unidadConDetalles.asignatura.nombre,
+                    style = MaterialTheme.typography.bodySmall,
+                    textColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 StatusChip(statusName = unidadConDetalles.estado.nombre)

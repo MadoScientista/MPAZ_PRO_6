@@ -1,0 +1,1968 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 8,
+    "identityHash": "9fc9341830f3e5141922d57b2d5a6d8c",
+    "entities": [
+      {
+        "tableName": "rol",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rol_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "rol_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rol_id"
+          ]
+        }
+      },
+      {
+        "tableName": "nivel",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nivel_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "nivel_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "nivel_id"
+          ]
+        }
+      },
+      {
+        "tableName": "seccion",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`seccion_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `letra` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "seccion_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "letra",
+            "columnName": "letra",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "seccion_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_seccion_letra",
+            "unique": true,
+            "columnNames": [
+              "letra"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_seccion_letra` ON `${TABLE_NAME}` (`letra`)"
+          }
+        ]
+      },
+      {
+        "tableName": "curso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`curso_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `annio` INTEGER NOT NULL, `nivel_id` INTEGER NOT NULL, `seccion_id` INTEGER NOT NULL, FOREIGN KEY(`nivel_id`) REFERENCES `nivel`(`nivel_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`seccion_id`) REFERENCES `seccion`(`seccion_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "curso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "annio",
+            "columnName": "annio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nivelId",
+            "columnName": "nivel_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seccionId",
+            "columnName": "seccion_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "curso_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_curso_annio_nivel_id_seccion_id",
+            "unique": true,
+            "columnNames": [
+              "annio",
+              "nivel_id",
+              "seccion_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_curso_annio_nivel_id_seccion_id` ON `${TABLE_NAME}` (`annio`, `nivel_id`, `seccion_id`)"
+          },
+          {
+            "name": "index_curso_nivel_id",
+            "unique": false,
+            "columnNames": [
+              "nivel_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_curso_nivel_id` ON `${TABLE_NAME}` (`nivel_id`)"
+          },
+          {
+            "name": "index_curso_seccion_id",
+            "unique": false,
+            "columnNames": [
+              "seccion_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_curso_seccion_id` ON `${TABLE_NAME}` (`seccion_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "nivel",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "nivel_id"
+            ],
+            "referencedColumns": [
+              "nivel_id"
+            ]
+          },
+          {
+            "table": "seccion",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "seccion_id"
+            ],
+            "referencedColumns": [
+              "seccion_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "usuario",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`usuario_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre_usuario` TEXT NOT NULL, `password_hash` TEXT NOT NULL, `pnombre` TEXT NOT NULL, `snombre` TEXT, `apaterno` TEXT NOT NULL, `amaterno` TEXT, `rol_id` INTEGER NOT NULL, `activo` INTEGER NOT NULL, FOREIGN KEY(`rol_id`) REFERENCES `rol`(`rol_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "usuario_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreUsuario",
+            "columnName": "nombre_usuario",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "passwordHash",
+            "columnName": "password_hash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pnombre",
+            "columnName": "pnombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "snombre",
+            "columnName": "snombre",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "apaterno",
+            "columnName": "apaterno",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amaterno",
+            "columnName": "amaterno",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rolId",
+            "columnName": "rol_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "usuario_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_usuario_nombre_usuario",
+            "unique": true,
+            "columnNames": [
+              "nombre_usuario"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_usuario_nombre_usuario` ON `${TABLE_NAME}` (`nombre_usuario`)"
+          },
+          {
+            "name": "index_usuario_rol_id",
+            "unique": false,
+            "columnNames": [
+              "rol_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_usuario_rol_id` ON `${TABLE_NAME}` (`rol_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rol",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "rol_id"
+            ],
+            "referencedColumns": [
+              "rol_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "asignatura",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`asignatura_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `nivel_id` INTEGER NOT NULL, FOREIGN KEY(`nivel_id`) REFERENCES `nivel`(`nivel_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "asignatura_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nivelId",
+            "columnName": "nivel_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "asignatura_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_asignatura_nivel_id",
+            "unique": false,
+            "columnNames": [
+              "nivel_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_asignatura_nivel_id` ON `${TABLE_NAME}` (`nivel_id`)"
+          },
+          {
+            "name": "index_asignatura_nivel_id_nombre",
+            "unique": true,
+            "columnNames": [
+              "nivel_id",
+              "nombre"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_asignatura_nivel_id_nombre` ON `${TABLE_NAME}` (`nivel_id`, `nombre`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "nivel",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "nivel_id"
+            ],
+            "referencedColumns": [
+              "nivel_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "estado_autorizacion",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`estado_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "estado_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "estado_id"
+          ]
+        }
+      },
+      {
+        "tableName": "tipo_actividad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tipo_actividad_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "tipo_actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "tipo_actividad_id"
+          ]
+        }
+      },
+      {
+        "tableName": "tipo_recurso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tipo_recurso_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "tipo_recurso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "tipo_recurso_id"
+          ]
+        }
+      },
+      {
+        "tableName": "unidad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`unidad_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `asignatura_id` INTEGER NOT NULL, `estado_id` INTEGER NOT NULL, FOREIGN KEY(`asignatura_id`) REFERENCES `asignatura`(`asignatura_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`estado_id`) REFERENCES `estado_autorizacion`(`estado_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "unidad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "asignaturaId",
+            "columnName": "asignatura_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estadoId",
+            "columnName": "estado_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "unidad_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_unidad_asignatura_id",
+            "unique": false,
+            "columnNames": [
+              "asignatura_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_unidad_asignatura_id` ON `${TABLE_NAME}` (`asignatura_id`)"
+          },
+          {
+            "name": "index_unidad_estado_id",
+            "unique": false,
+            "columnNames": [
+              "estado_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_unidad_estado_id` ON `${TABLE_NAME}` (`estado_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "asignatura",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "asignatura_id"
+            ],
+            "referencedColumns": [
+              "asignatura_id"
+            ]
+          },
+          {
+            "table": "estado_autorizacion",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "estado_id"
+            ],
+            "referencedColumns": [
+              "estado_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "objetivo_aprendizaje",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`objetivo_aprendizaje_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `codigo` TEXT NOT NULL, `descripcion` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "objetivo_aprendizaje_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigo",
+            "columnName": "codigo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "objetivo_aprendizaje_id"
+          ]
+        }
+      },
+      {
+        "tableName": "objetivo_aprendizaje_unidad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `objetivo_aprendizaje_id` INTEGER NOT NULL, `unidad_id` INTEGER NOT NULL, FOREIGN KEY(`objetivo_aprendizaje_id`) REFERENCES `objetivo_aprendizaje`(`objetivo_aprendizaje_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`unidad_id`) REFERENCES `unidad`(`unidad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "objetivoAprendizajeId",
+            "columnName": "objetivo_aprendizaje_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unidadId",
+            "columnName": "unidad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_objetivo_aprendizaje_unidad_objetivo_aprendizaje_id_unidad_id",
+            "unique": true,
+            "columnNames": [
+              "objetivo_aprendizaje_id",
+              "unidad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_unidad_objetivo_aprendizaje_id_unidad_id` ON `${TABLE_NAME}` (`objetivo_aprendizaje_id`, `unidad_id`)"
+          },
+          {
+            "name": "index_objetivo_aprendizaje_unidad_objetivo_aprendizaje_id",
+            "unique": false,
+            "columnNames": [
+              "objetivo_aprendizaje_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_unidad_objetivo_aprendizaje_id` ON `${TABLE_NAME}` (`objetivo_aprendizaje_id`)"
+          },
+          {
+            "name": "index_objetivo_aprendizaje_unidad_unidad_id",
+            "unique": false,
+            "columnNames": [
+              "unidad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_unidad_unidad_id` ON `${TABLE_NAME}` (`unidad_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "objetivo_aprendizaje",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "objetivo_aprendizaje_id"
+            ],
+            "referencedColumns": [
+              "objetivo_aprendizaje_id"
+            ]
+          },
+          {
+            "table": "unidad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "unidad_id"
+            ],
+            "referencedColumns": [
+              "unidad_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "contenido",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contenido_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `descripcion` TEXT NOT NULL, `unidad_id` INTEGER NOT NULL, `estado_id` INTEGER NOT NULL, FOREIGN KEY(`unidad_id`) REFERENCES `unidad`(`unidad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`estado_id`) REFERENCES `estado_autorizacion`(`estado_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "contenido_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unidadId",
+            "columnName": "unidad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estadoId",
+            "columnName": "estado_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "contenido_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_contenido_unidad_id",
+            "unique": false,
+            "columnNames": [
+              "unidad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_contenido_unidad_id` ON `${TABLE_NAME}` (`unidad_id`)"
+          },
+          {
+            "name": "index_contenido_estado_id",
+            "unique": false,
+            "columnNames": [
+              "estado_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_contenido_estado_id` ON `${TABLE_NAME}` (`estado_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "unidad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "unidad_id"
+            ],
+            "referencedColumns": [
+              "unidad_id"
+            ]
+          },
+          {
+            "table": "estado_autorizacion",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "estado_id"
+            ],
+            "referencedColumns": [
+              "estado_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "recurso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`recurso_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `url` TEXT, `contenido_id` INTEGER NOT NULL, `tipo_recurso_id` INTEGER NOT NULL, FOREIGN KEY(`contenido_id`) REFERENCES `contenido`(`contenido_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`tipo_recurso_id`) REFERENCES `tipo_recurso`(`tipo_recurso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "recurso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contenidoId",
+            "columnName": "contenido_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipoRecursoId",
+            "columnName": "tipo_recurso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "recurso_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_recurso_contenido_id",
+            "unique": false,
+            "columnNames": [
+              "contenido_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_recurso_contenido_id` ON `${TABLE_NAME}` (`contenido_id`)"
+          },
+          {
+            "name": "index_recurso_tipo_recurso_id",
+            "unique": false,
+            "columnNames": [
+              "tipo_recurso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_recurso_tipo_recurso_id` ON `${TABLE_NAME}` (`tipo_recurso_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "contenido",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "contenido_id"
+            ],
+            "referencedColumns": [
+              "contenido_id"
+            ]
+          },
+          {
+            "table": "tipo_recurso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tipo_recurso_id"
+            ],
+            "referencedColumns": [
+              "tipo_recurso_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "actividad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`actividad_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `instrucciones` TEXT NOT NULL, `contenido_id` INTEGER NOT NULL, `tipo_actividad_id` INTEGER NOT NULL, `estado_id` INTEGER NOT NULL, FOREIGN KEY(`contenido_id`) REFERENCES `contenido`(`contenido_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`tipo_actividad_id`) REFERENCES `tipo_actividad`(`tipo_actividad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`estado_id`) REFERENCES `estado_autorizacion`(`estado_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "instrucciones",
+            "columnName": "instrucciones",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contenidoId",
+            "columnName": "contenido_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipoActividadId",
+            "columnName": "tipo_actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estadoId",
+            "columnName": "estado_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "actividad_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_actividad_contenido_id",
+            "unique": false,
+            "columnNames": [
+              "contenido_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividad_contenido_id` ON `${TABLE_NAME}` (`contenido_id`)"
+          },
+          {
+            "name": "index_actividad_tipo_actividad_id",
+            "unique": false,
+            "columnNames": [
+              "tipo_actividad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividad_tipo_actividad_id` ON `${TABLE_NAME}` (`tipo_actividad_id`)"
+          },
+          {
+            "name": "index_actividad_estado_id",
+            "unique": false,
+            "columnNames": [
+              "estado_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividad_estado_id` ON `${TABLE_NAME}` (`estado_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "contenido",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "contenido_id"
+            ],
+            "referencedColumns": [
+              "contenido_id"
+            ]
+          },
+          {
+            "table": "tipo_actividad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tipo_actividad_id"
+            ],
+            "referencedColumns": [
+              "tipo_actividad_id"
+            ]
+          },
+          {
+            "table": "estado_autorizacion",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "estado_id"
+            ],
+            "referencedColumns": [
+              "estado_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pregunta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`pregunta_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `enunciado` TEXT NOT NULL, `recurso_id` INTEGER, FOREIGN KEY(`recurso_id`) REFERENCES `recurso`(`recurso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "pregunta_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enunciado",
+            "columnName": "enunciado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recursoId",
+            "columnName": "recurso_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "pregunta_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pregunta_recurso_id",
+            "unique": false,
+            "columnNames": [
+              "recurso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pregunta_recurso_id` ON `${TABLE_NAME}` (`recurso_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "recurso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "recurso_id"
+            ],
+            "referencedColumns": [
+              "recurso_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "alternativa",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`alternativa_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `enunciado` TEXT NOT NULL, `correcta` INTEGER NOT NULL, `recurso_id` INTEGER, FOREIGN KEY(`recurso_id`) REFERENCES `recurso`(`recurso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "alternativa_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enunciado",
+            "columnName": "enunciado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correcta",
+            "columnName": "correcta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recursoId",
+            "columnName": "recurso_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "alternativa_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_alternativa_recurso_id",
+            "unique": false,
+            "columnNames": [
+              "recurso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_alternativa_recurso_id` ON `${TABLE_NAME}` (`recurso_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "recurso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "recurso_id"
+            ],
+            "referencedColumns": [
+              "recurso_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "alternativa_pregunta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pregunta_id` INTEGER NOT NULL, `alternativa_id` INTEGER NOT NULL, FOREIGN KEY(`pregunta_id`) REFERENCES `pregunta`(`pregunta_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`alternativa_id`) REFERENCES `alternativa`(`alternativa_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preguntaId",
+            "columnName": "pregunta_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alternativaId",
+            "columnName": "alternativa_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_alternativa_pregunta_pregunta_id_alternativa_id",
+            "unique": true,
+            "columnNames": [
+              "pregunta_id",
+              "alternativa_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_alternativa_pregunta_pregunta_id_alternativa_id` ON `${TABLE_NAME}` (`pregunta_id`, `alternativa_id`)"
+          },
+          {
+            "name": "index_alternativa_pregunta_pregunta_id",
+            "unique": false,
+            "columnNames": [
+              "pregunta_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_alternativa_pregunta_pregunta_id` ON `${TABLE_NAME}` (`pregunta_id`)"
+          },
+          {
+            "name": "index_alternativa_pregunta_alternativa_id",
+            "unique": false,
+            "columnNames": [
+              "alternativa_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_alternativa_pregunta_alternativa_id` ON `${TABLE_NAME}` (`alternativa_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pregunta",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pregunta_id"
+            ],
+            "referencedColumns": [
+              "pregunta_id"
+            ]
+          },
+          {
+            "table": "alternativa",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "alternativa_id"
+            ],
+            "referencedColumns": [
+              "alternativa_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pregunta_actividad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `pregunta_id` INTEGER NOT NULL, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`actividad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`pregunta_id`) REFERENCES `pregunta`(`pregunta_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadId",
+            "columnName": "actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preguntaId",
+            "columnName": "pregunta_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pregunta_actividad_actividad_id_pregunta_id",
+            "unique": true,
+            "columnNames": [
+              "actividad_id",
+              "pregunta_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_pregunta_actividad_actividad_id_pregunta_id` ON `${TABLE_NAME}` (`actividad_id`, `pregunta_id`)"
+          },
+          {
+            "name": "index_pregunta_actividad_actividad_id",
+            "unique": false,
+            "columnNames": [
+              "actividad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pregunta_actividad_actividad_id` ON `${TABLE_NAME}` (`actividad_id`)"
+          },
+          {
+            "name": "index_pregunta_actividad_pregunta_id",
+            "unique": false,
+            "columnNames": [
+              "pregunta_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pregunta_actividad_pregunta_id` ON `${TABLE_NAME}` (`pregunta_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "actividad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividad_id"
+            ],
+            "referencedColumns": [
+              "actividad_id"
+            ]
+          },
+          {
+            "table": "pregunta",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pregunta_id"
+            ],
+            "referencedColumns": [
+              "pregunta_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "objetivo_aprendizaje_contenido",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contenido_id` INTEGER NOT NULL, `objetivo_aprendizaje_id` INTEGER NOT NULL, `unidad_id` INTEGER NOT NULL, FOREIGN KEY(`contenido_id`) REFERENCES `contenido`(`contenido_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`objetivo_aprendizaje_id`) REFERENCES `objetivo_aprendizaje`(`objetivo_aprendizaje_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`unidad_id`) REFERENCES `unidad`(`unidad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contenidoId",
+            "columnName": "contenido_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "objetivoAprendizajeId",
+            "columnName": "objetivo_aprendizaje_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unidadId",
+            "columnName": "unidad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_objetivo_aprendizaje_contenido_contenido_id_objetivo_aprendizaje_id",
+            "unique": true,
+            "columnNames": [
+              "contenido_id",
+              "objetivo_aprendizaje_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_contenido_contenido_id_objetivo_aprendizaje_id` ON `${TABLE_NAME}` (`contenido_id`, `objetivo_aprendizaje_id`)"
+          },
+          {
+            "name": "index_objetivo_aprendizaje_contenido_contenido_id",
+            "unique": false,
+            "columnNames": [
+              "contenido_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_contenido_contenido_id` ON `${TABLE_NAME}` (`contenido_id`)"
+          },
+          {
+            "name": "index_objetivo_aprendizaje_contenido_objetivo_aprendizaje_id",
+            "unique": false,
+            "columnNames": [
+              "objetivo_aprendizaje_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_contenido_objetivo_aprendizaje_id` ON `${TABLE_NAME}` (`objetivo_aprendizaje_id`)"
+          },
+          {
+            "name": "index_objetivo_aprendizaje_contenido_unidad_id",
+            "unique": false,
+            "columnNames": [
+              "unidad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_objetivo_aprendizaje_contenido_unidad_id` ON `${TABLE_NAME}` (`unidad_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "contenido",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "contenido_id"
+            ],
+            "referencedColumns": [
+              "contenido_id"
+            ]
+          },
+          {
+            "table": "objetivo_aprendizaje",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "objetivo_aprendizaje_id"
+            ],
+            "referencedColumns": [
+              "objetivo_aprendizaje_id"
+            ]
+          },
+          {
+            "table": "unidad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "unidad_id"
+            ],
+            "referencedColumns": [
+              "unidad_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "asignatura_curso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `curso_id` INTEGER NOT NULL, `asignatura_id` INTEGER NOT NULL, `docente_id` INTEGER, FOREIGN KEY(`curso_id`) REFERENCES `curso`(`curso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`asignatura_id`) REFERENCES `asignatura`(`asignatura_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`docente_id`) REFERENCES `usuario`(`usuario_id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursoId",
+            "columnName": "curso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "asignaturaId",
+            "columnName": "asignatura_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "docenteId",
+            "columnName": "docente_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_asignatura_curso_curso_id_asignatura_id",
+            "unique": true,
+            "columnNames": [
+              "curso_id",
+              "asignatura_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_asignatura_curso_curso_id_asignatura_id` ON `${TABLE_NAME}` (`curso_id`, `asignatura_id`)"
+          },
+          {
+            "name": "index_asignatura_curso_curso_id",
+            "unique": false,
+            "columnNames": [
+              "curso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_asignatura_curso_curso_id` ON `${TABLE_NAME}` (`curso_id`)"
+          },
+          {
+            "name": "index_asignatura_curso_asignatura_id",
+            "unique": false,
+            "columnNames": [
+              "asignatura_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_asignatura_curso_asignatura_id` ON `${TABLE_NAME}` (`asignatura_id`)"
+          },
+          {
+            "name": "index_asignatura_curso_docente_id",
+            "unique": false,
+            "columnNames": [
+              "docente_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_asignatura_curso_docente_id` ON `${TABLE_NAME}` (`docente_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "curso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "curso_id"
+            ],
+            "referencedColumns": [
+              "curso_id"
+            ]
+          },
+          {
+            "table": "asignatura",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "asignatura_id"
+            ],
+            "referencedColumns": [
+              "asignatura_id"
+            ]
+          },
+          {
+            "table": "usuario",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "docente_id"
+            ],
+            "referencedColumns": [
+              "usuario_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "usuario_curso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuario_id` INTEGER NOT NULL, `curso_id` INTEGER NOT NULL, FOREIGN KEY(`usuario_id`) REFERENCES `usuario`(`usuario_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`curso_id`) REFERENCES `curso`(`curso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioId",
+            "columnName": "usuario_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursoId",
+            "columnName": "curso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_usuario_curso_usuario_id_curso_id",
+            "unique": true,
+            "columnNames": [
+              "usuario_id",
+              "curso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_usuario_curso_usuario_id_curso_id` ON `${TABLE_NAME}` (`usuario_id`, `curso_id`)"
+          },
+          {
+            "name": "index_usuario_curso_usuario_id",
+            "unique": false,
+            "columnNames": [
+              "usuario_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_usuario_curso_usuario_id` ON `${TABLE_NAME}` (`usuario_id`)"
+          },
+          {
+            "name": "index_usuario_curso_curso_id",
+            "unique": false,
+            "columnNames": [
+              "curso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_usuario_curso_curso_id` ON `${TABLE_NAME}` (`curso_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "usuario",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuario_id"
+            ],
+            "referencedColumns": [
+              "usuario_id"
+            ]
+          },
+          {
+            "table": "curso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "curso_id"
+            ],
+            "referencedColumns": [
+              "curso_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "actividad_curso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`actividad_curso_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `curso_id` INTEGER NOT NULL, `fecha_inicio` TEXT, `fecha_fin` TEXT, `habilitada` INTEGER NOT NULL, `visible` INTEGER NOT NULL, `max_intentos` INTEGER, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`actividad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`curso_id`) REFERENCES `curso`(`curso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "actividad_curso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadId",
+            "columnName": "actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursoId",
+            "columnName": "curso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaInicio",
+            "columnName": "fecha_inicio",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fechaFin",
+            "columnName": "fecha_fin",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "habilitada",
+            "columnName": "habilitada",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "visible",
+            "columnName": "visible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxIntentos",
+            "columnName": "max_intentos",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "actividad_curso_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_actividad_curso_actividad_id_curso_id",
+            "unique": true,
+            "columnNames": [
+              "actividad_id",
+              "curso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_actividad_curso_actividad_id_curso_id` ON `${TABLE_NAME}` (`actividad_id`, `curso_id`)"
+          },
+          {
+            "name": "index_actividad_curso_actividad_id",
+            "unique": false,
+            "columnNames": [
+              "actividad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividad_curso_actividad_id` ON `${TABLE_NAME}` (`actividad_id`)"
+          },
+          {
+            "name": "index_actividad_curso_curso_id",
+            "unique": false,
+            "columnNames": [
+              "curso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividad_curso_curso_id` ON `${TABLE_NAME}` (`curso_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "actividad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividad_id"
+            ],
+            "referencedColumns": [
+              "actividad_id"
+            ]
+          },
+          {
+            "table": "curso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "curso_id"
+            ],
+            "referencedColumns": [
+              "curso_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "intento",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`intento_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuario_id` INTEGER NOT NULL, `actividad_curso_id` INTEGER NOT NULL, `fecha_inicio` TEXT NOT NULL, `fecha_fin` TEXT, FOREIGN KEY(`usuario_id`) REFERENCES `usuario`(`usuario_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`actividad_curso_id`) REFERENCES `actividad_curso`(`actividad_curso_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "intento_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioId",
+            "columnName": "usuario_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadCursoId",
+            "columnName": "actividad_curso_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaInicio",
+            "columnName": "fecha_inicio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaFin",
+            "columnName": "fecha_fin",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "intento_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_intento_usuario_id",
+            "unique": false,
+            "columnNames": [
+              "usuario_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_intento_usuario_id` ON `${TABLE_NAME}` (`usuario_id`)"
+          },
+          {
+            "name": "index_intento_actividad_curso_id",
+            "unique": false,
+            "columnNames": [
+              "actividad_curso_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_intento_actividad_curso_id` ON `${TABLE_NAME}` (`actividad_curso_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "usuario",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuario_id"
+            ],
+            "referencedColumns": [
+              "usuario_id"
+            ]
+          },
+          {
+            "table": "actividad_curso",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividad_curso_id"
+            ],
+            "referencedColumns": [
+              "actividad_curso_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "respuesta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`respuesta_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `intento_id` INTEGER NOT NULL, `pregunta_id` INTEGER NOT NULL, `alternativa_id` INTEGER NOT NULL, FOREIGN KEY(`intento_id`) REFERENCES `intento`(`intento_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`pregunta_id`) REFERENCES `pregunta`(`pregunta_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`alternativa_id`) REFERENCES `alternativa`(`alternativa_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "respuesta_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intentoId",
+            "columnName": "intento_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preguntaId",
+            "columnName": "pregunta_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alternativaId",
+            "columnName": "alternativa_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "respuesta_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_respuesta_intento_id_pregunta_id_alternativa_id",
+            "unique": true,
+            "columnNames": [
+              "intento_id",
+              "pregunta_id",
+              "alternativa_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_respuesta_intento_id_pregunta_id_alternativa_id` ON `${TABLE_NAME}` (`intento_id`, `pregunta_id`, `alternativa_id`)"
+          },
+          {
+            "name": "index_respuesta_intento_id",
+            "unique": false,
+            "columnNames": [
+              "intento_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_respuesta_intento_id` ON `${TABLE_NAME}` (`intento_id`)"
+          },
+          {
+            "name": "index_respuesta_pregunta_id",
+            "unique": false,
+            "columnNames": [
+              "pregunta_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_respuesta_pregunta_id` ON `${TABLE_NAME}` (`pregunta_id`)"
+          },
+          {
+            "name": "index_respuesta_alternativa_id",
+            "unique": false,
+            "columnNames": [
+              "alternativa_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_respuesta_alternativa_id` ON `${TABLE_NAME}` (`alternativa_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "intento",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "intento_id"
+            ],
+            "referencedColumns": [
+              "intento_id"
+            ]
+          },
+          {
+            "table": "pregunta",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pregunta_id"
+            ],
+            "referencedColumns": [
+              "pregunta_id"
+            ]
+          },
+          {
+            "table": "alternativa",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "alternativa_id"
+            ],
+            "referencedColumns": [
+              "alternativa_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "informe_pedagogico",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`informe_pedagogico_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuario_id` INTEGER NOT NULL, `unidad_id` INTEGER NOT NULL, `fecha` TEXT NOT NULL, `descripcion` TEXT, `fecha_corte` TEXT NOT NULL, `origen` TEXT NOT NULL, FOREIGN KEY(`usuario_id`) REFERENCES `usuario`(`usuario_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`unidad_id`) REFERENCES `unidad`(`unidad_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "informe_pedagogico_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioId",
+            "columnName": "usuario_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unidadId",
+            "columnName": "unidad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fechaCorte",
+            "columnName": "fecha_corte",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origen",
+            "columnName": "origen",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "informe_pedagogico_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_informe_pedagogico_usuario_id",
+            "unique": false,
+            "columnNames": [
+              "usuario_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_informe_pedagogico_usuario_id` ON `${TABLE_NAME}` (`usuario_id`)"
+          },
+          {
+            "name": "index_informe_pedagogico_unidad_id",
+            "unique": false,
+            "columnNames": [
+              "unidad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_informe_pedagogico_unidad_id` ON `${TABLE_NAME}` (`unidad_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "usuario",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuario_id"
+            ],
+            "referencedColumns": [
+              "usuario_id"
+            ]
+          },
+          {
+            "table": "unidad",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "unidad_id"
+            ],
+            "referencedColumns": [
+              "unidad_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "detalle_informe_pedagogico",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `informe_pedagogico_id` INTEGER NOT NULL, `objetivo_aprendizaje_id` INTEGER NOT NULL, `correctas` INTEGER NOT NULL, `incorrectas` INTEGER NOT NULL, FOREIGN KEY(`informe_pedagogico_id`) REFERENCES `informe_pedagogico`(`informe_pedagogico_id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`objetivo_aprendizaje_id`) REFERENCES `objetivo_aprendizaje`(`objetivo_aprendizaje_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "informePedagogicoId",
+            "columnName": "informe_pedagogico_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "objetivoAprendizajeId",
+            "columnName": "objetivo_aprendizaje_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correctas",
+            "columnName": "correctas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "incorrectas",
+            "columnName": "incorrectas",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_detalle_informe_pedagogico_informe_pedagogico_id_objetivo_aprendizaje_id",
+            "unique": true,
+            "columnNames": [
+              "informe_pedagogico_id",
+              "objetivo_aprendizaje_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_detalle_informe_pedagogico_informe_pedagogico_id_objetivo_aprendizaje_id` ON `${TABLE_NAME}` (`informe_pedagogico_id`, `objetivo_aprendizaje_id`)"
+          },
+          {
+            "name": "index_detalle_informe_pedagogico_informe_pedagogico_id",
+            "unique": false,
+            "columnNames": [
+              "informe_pedagogico_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_detalle_informe_pedagogico_informe_pedagogico_id` ON `${TABLE_NAME}` (`informe_pedagogico_id`)"
+          },
+          {
+            "name": "index_detalle_informe_pedagogico_objetivo_aprendizaje_id",
+            "unique": false,
+            "columnNames": [
+              "objetivo_aprendizaje_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_detalle_informe_pedagogico_objetivo_aprendizaje_id` ON `${TABLE_NAME}` (`objetivo_aprendizaje_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "informe_pedagogico",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "informe_pedagogico_id"
+            ],
+            "referencedColumns": [
+              "informe_pedagogico_id"
+            ]
+          },
+          {
+            "table": "objetivo_aprendizaje",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "objetivo_aprendizaje_id"
+            ],
+            "referencedColumns": [
+              "objetivo_aprendizaje_id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9fc9341830f3e5141922d57b2d5a6d8c')"
+    ]
+  }
+}

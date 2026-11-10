@@ -1,11 +1,13 @@
 package com.ccstudio.mpaz_pro_6.ui.home
 
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,6 +37,12 @@ import com.ccstudio.mpaz_pro_6.ui.docente.DocenteInformesScreen
 import com.ccstudio.mpaz_pro_6.ui.estudiante.EstudianteActividadesScreen
 import com.ccstudio.mpaz_pro_6.ui.estudiante.EstudianteResolverActividadScreen
 import com.ccstudio.mpaz_pro_6.ui.navigation.NavDestination
+import com.ccstudio.mpaz_pro_6.ui.navigation.detailEnter
+import com.ccstudio.mpaz_pro_6.ui.navigation.detailExit
+import com.ccstudio.mpaz_pro_6.ui.navigation.detailPopEnter
+import com.ccstudio.mpaz_pro_6.ui.navigation.detailPopExit
+import com.ccstudio.mpaz_pro_6.ui.navigation.tabEnter
+import com.ccstudio.mpaz_pro_6.ui.navigation.tabExit
 import com.ccstudio.mpaz_pro_6.ui.screens.AsignaturasScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.GenericSectionScreen
 import com.ccstudio.mpaz_pro_6.ui.screens.InicioScreen
@@ -63,13 +72,13 @@ import com.ccstudio.mpaz_pro_6.ui.utp.UtpViewModel
  *   o botones de retroceso nativos.
  *
  * @param rol Rol del usuario autenticado ("UTP", "DOCENTE", "ESTUDIANTE").
- * @param onLogoutClick Callback ejecutado al cerrar sesión.
+ * @param onOpenDrawer Callback para abrir el menú lateral.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     rol: String,
-    onLogoutClick: () -> Unit,
+    onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
@@ -77,6 +86,12 @@ fun HomeScreen(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: NavDestination.Inicio.route
+
+    val topLevelRoutes = remember(navItems) { navItems.map { it.route }.toSet() }
+
+    fun isTabChange(from: NavBackStackEntry, to: NavBackStackEntry): Boolean =
+        from.destination.route in topLevelRoutes &&
+                to.destination.route in topLevelRoutes
 
     val utpViewModel: UtpViewModel = viewModel()
 
@@ -137,7 +152,14 @@ fun HomeScreen(
                     )
                 },
                 navigationIcon = {
-                    if (!isTopLevelDestination) {
+                    if (isTopLevelDestination) {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Abrir menú",
+                            )
+                        }
+                    } else {
                         IconButton(onClick = { navController.navigateUp() }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -147,13 +169,19 @@ fun HomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
             )
         },
         bottomBar = {
-            if (isTopLevelDestination && navItems.isNotEmpty()) {
+            AnimatedVisibility(
+                visible = isTopLevelDestination && navItems.isNotEmpty(),
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = ExitTransition.None
+            ) {
                 NavigationBar {
                     navItems.forEach { item ->
                         val selected = currentRoute == item.route
@@ -187,15 +215,22 @@ fun HomeScreen(
             navController = navController,
             startDestination = NavDestination.Inicio.route,
             modifier = Modifier.padding(innerPadding),
-            enterTransition = { fadeIn(animationSpec = tween(200)) },
-            exitTransition = { fadeOut(animationSpec = tween(200)) },
-            popEnterTransition = { fadeIn(animationSpec = tween(200)) },
-            popExitTransition = { fadeOut(animationSpec = tween(200)) },
+            enterTransition = {
+                if (isTabChange(initialState, targetState)) tabEnter() else detailEnter()
+            },
+            exitTransition = {
+                if (isTabChange(initialState, targetState)) tabExit() else detailExit()
+            },
+            popEnterTransition = {
+                if (isTabChange(initialState, targetState)) tabEnter() else detailPopEnter()
+            },
+            popExitTransition = {
+                if (isTabChange(initialState, targetState)) tabExit() else detailPopExit()
+            },
         ) {
             composable(NavDestination.Inicio.route) {
                 InicioScreen(
                     rol = rol,
-                    onLogoutClick = onLogoutClick,
                     viewModel = utpViewModel,
                     onNavigateToRevisiones = {
                         if (rol.equals("ESTUDIANTE", ignoreCase = true)) {

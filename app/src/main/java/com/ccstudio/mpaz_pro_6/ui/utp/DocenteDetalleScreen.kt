@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +27,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
 
 @Composable
 fun DocenteDetalleScreen(
@@ -58,6 +61,7 @@ fun DocenteDetalleScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.docenteDetailState.collectAsState()
+    val appColors = LocalAppColors.current
 
     var showAssignDialog by remember { mutableStateOf(false) }
     var itemToUnassign by remember { mutableStateOf<AsignaturaCursoDetalle?>(null) }
@@ -89,11 +93,12 @@ fun DocenteDetalleScreen(
     } else {
         val docente = state.docente!!
 
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Box(modifier = modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // Tarjeta de Información del Docente
             item {
                 Card(
@@ -101,7 +106,6 @@ fun DocenteDetalleScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -144,7 +148,7 @@ fun DocenteDetalleScreen(
                             Text(
                                 text = "Usuario: @${docente.nombreUsuario}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))
@@ -152,38 +156,21 @@ fun DocenteDetalleScreen(
                             Text(
                                 text = "Rol: Docente",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
             }
 
-            // Sección Header + Botón de Asignación
+            // Sección Header de Asignaturas
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Asignaturas asignadas (${state.asignaturasAsignadas.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-
-                    Button(
-                        onClick = { showAssignDialog = true }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
-                        Text("Asignar Asignatura")
-                    }
-                }
+                Text(
+                    text = "Asignaturas asignadas (${state.asignaturasAsignadas.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
 
             // Lista de asignaturas asignadas
@@ -204,7 +191,7 @@ fun DocenteDetalleScreen(
                             Text(
                                 text = "Este docente no tiene asignaturas asignadas.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.outline
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -216,7 +203,6 @@ fun DocenteDetalleScreen(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -238,10 +224,11 @@ fun DocenteDetalleScreen(
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = item.asignatura.nombre,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                SubjectLabel(
+                                    subjectName = item.asignatura.nombre,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    textColor = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,6 +261,26 @@ fun DocenteDetalleScreen(
                         }
                     }
                 }
+            }
+            }
+            FloatingActionButton(
+                onClick = { showAssignDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                containerColor = appColors.fabContainer,
+                contentColor = appColors.fabContent,
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    focusedElevation = 0.dp,
+                    hoveredElevation = 0.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Asignar asignatura"
+                )
             }
         }
     }
@@ -369,7 +376,7 @@ private fun AsignarAsignaturaDialog(
                 OutlinedTextField(
                     value = filterText,
                     onValueChange = { filterText = it },
-                    placeholder = { Text("Filtrar asignatura o curso...") },
+                    placeholder = { Text("Filtrar asignatura...") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -377,7 +384,8 @@ private fun AsignarAsignaturaDialog(
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -386,14 +394,14 @@ private fun AsignarAsignaturaDialog(
                     Text(
                         text = "No hay más asignaturas disponibles para asignar.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else if (filteredList.isEmpty()) {
                     Text(
                         text = "No se encontraron resultados con '$filterText'.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
@@ -406,9 +414,8 @@ private fun AsignarAsignaturaDialog(
                         items(filteredList) { item ->
                             val isSelected = selectedItem?.asignaturaCurso?.id == item.asignaturaCurso.id
                             Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { selectedItem = item },
+                                onClick = { selectedItem = item },
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = MaterialTheme.shapes.small,
                                 color = if (isSelected) {
                                     MaterialTheme.colorScheme.primaryContainer
@@ -448,7 +455,7 @@ private fun AsignarAsignaturaDialog(
                                             Text(
                                                 text = "Sin docente asignado",
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.outline
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }

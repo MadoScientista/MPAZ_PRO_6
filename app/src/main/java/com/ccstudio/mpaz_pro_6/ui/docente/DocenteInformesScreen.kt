@@ -1,7 +1,7 @@
 package com.ccstudio.mpaz_pro_6.ui.docente
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,12 +18,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -30,9 +32,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,7 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,7 +65,17 @@ import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
 import com.ccstudio.mpaz_pro_6.data.local.dao.InformePedagogicoDetalle
 import com.ccstudio.mpaz_pro_6.data.local.entity.curriculo.UnidadEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
+import com.ccstudio.mpaz_pro_6.ui.components.AppDatePickerDialog
+import com.ccstudio.mpaz_pro_6.ui.components.AppTimePickerDialog
 import com.ccstudio.mpaz_pro_6.ui.components.StatusChip
+import com.ccstudio.mpaz_pro_6.ui.navigation.fadeThroughContent
+import com.ccstudio.mpaz_pro_6.ui.util.formatFecha
+import com.ccstudio.mpaz_pro_6.ui.util.formatFechaHoraInputSegundos
+import com.ccstudio.mpaz_pro_6.ui.util.formatFechaInput
+import com.ccstudio.mpaz_pro_6.ui.util.parseFecha
+import com.ccstudio.mpaz_pro_6.ui.util.parseFechaHora
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +107,7 @@ fun DocenteInformesScreen(
             text = "Informes Pedagógicos",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = "Gestión y emisión de consolidados de rendimiento por unidad y objetivo de aprendizaje.",
@@ -104,7 +118,7 @@ fun DocenteInformesScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Pestañas
-        TabRow(selectedTabIndex = uiState.selectedTab) {
+        PrimaryTabRow(selectedTabIndex = uiState.selectedTab) {
             Tab(
                 selected = uiState.selectedTab == 0,
                 onClick = { viewModel.setTab(0) },
@@ -129,23 +143,30 @@ fun DocenteInformesScreen(
                 CircularProgressIndicator()
             }
         } else {
-            when (uiState.selectedTab) {
-                0 -> InformesEmitidosView(
-                    informes = uiState.informesEmitidos,
-                    onVerDetalle = { viewModel.verDetalleInforme(it) },
-                    onEliminar = { viewModel.eliminarInforme(it.informe.id) }
-                )
-                1 -> GenerarInformeView(
-                    uiState = uiState,
-                    onCursoSelected = { viewModel.onCursoSelected(it) },
-                    onEstudianteSelected = { viewModel.onEstudianteSelected(it) },
-                    onUnidadSelected = { viewModel.onUnidadSelected(it) },
-                    onFechaCorteChanged = { viewModel.setFechaCorte(it) },
-                    onFechaEmisionChanged = { viewModel.setFechaEmision(it) },
-                    onDescripcionChanged = { viewModel.setDescripcion(it) },
-                    onGenerarPreview = { viewModel.generarVistaPrevia() },
-                    onEmitirInforme = { viewModel.emitirInformeGenerado() }
-                )
+            AnimatedContent(
+                targetState = uiState.selectedTab,
+                transitionSpec = { fadeThroughContent() },
+                modifier = Modifier.fillMaxSize(),
+                label = "informesTabs"
+            ) { tab ->
+                when (tab) {
+                    0 -> InformesEmitidosView(
+                        informes = uiState.informesEmitidos,
+                        onVerDetalle = { viewModel.verDetalleInforme(it) },
+                        onEliminar = { viewModel.eliminarInforme(it.informe.id) }
+                    )
+                    1 -> GenerarInformeView(
+                        uiState = uiState,
+                        onCursoSelected = { viewModel.onCursoSelected(it) },
+                        onEstudianteSelected = { viewModel.onEstudianteSelected(it) },
+                        onUnidadSelected = { viewModel.onUnidadSelected(it) },
+                        onFechaCorteChanged = { viewModel.setFechaCorte(it) },
+                        onFechaEmisionChanged = { viewModel.setFechaEmision(it) },
+                        onDescripcionChanged = { viewModel.setDescripcion(it) },
+                        onGenerarPreview = { viewModel.generarVistaPrevia() },
+                        onEmitirInforme = { viewModel.emitirInformeGenerado() }
+                    )
+                }
             }
         }
     }
@@ -163,7 +184,7 @@ fun DocenteInformesScreen(
                 )
             },
             text = {
-                LazyColumn(modifier = Modifier.height(400.dp)) {
+                LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
                     item {
                         Column {
                             Text(
@@ -181,7 +202,7 @@ fun DocenteInformesScreen(
                                     statusName = if (detalle.informe.origen == "AUTOMATICO") "AUTOMÁTICO" else "MANUAL"
                                 )
                                 Text(
-                                    text = "Emisión: ${detalle.informe.fecha}",
+                                    text = "Emisión: ${formatFecha(detalle.informe.fecha)}",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
@@ -194,9 +215,9 @@ fun DocenteInformesScreen(
                             }
                             if (detalle.informe.fechaCorte.isNotBlank()) {
                                 Text(
-                                    text = "Corte Técnico: ${detalle.informe.fechaCorte}",
+                                    text = "Corte Técnico: ${formatFecha(detalle.informe.fechaCorte)}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.outline
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             Spacer(modifier = Modifier.height(12.dp))
@@ -228,7 +249,7 @@ fun DocenteInformesScreen(
                                     text = oaDetalle.objetivo.codigo,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = oaDetalle.objetivo.descripcion,
@@ -306,7 +327,7 @@ fun InformesEmitidosView(
                 Text(
                     text = "Vaya a la pestaña 'Generar Nuevo Informe' para calcular y guardar un nuevo reporte.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -332,7 +353,7 @@ fun InformesEmitidosView(
                                 Text(
                                     text = "${item.unidad.nombre} • ${item.asignatura.nombre}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             StatusChip(
@@ -342,14 +363,14 @@ fun InformesEmitidosView(
 
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Fecha de Emisión: ${item.informe.fecha}",
+                            text = "Fecha de Emisión: ${formatFecha(item.informe.fecha)}",
                             style = MaterialTheme.typography.bodySmall
                         )
                         if (item.informe.fechaCorte.isNotBlank()) {
                             Text(
-                                text = "Corte Técnico: ${item.informe.fechaCorte}",
+                                text = "Corte Técnico: ${formatFecha(item.informe.fechaCorte)}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.outline
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         if (!item.informe.descripcion.isNullOrBlank()) {
@@ -402,6 +423,44 @@ fun GenerarInformeView(
     onGenerarPreview: () -> Unit,
     onEmitirInforme: () -> Unit
 ) {
+    var showFechaCorteDatePicker by remember { mutableStateOf(false) }
+    var showFechaCorteTimePicker by remember { mutableStateOf(false) }
+    var showFechaEmisionDatePicker by remember { mutableStateOf(false) }
+
+    if (showFechaCorteDatePicker) {
+        AppDatePickerDialog(
+            initialDate = parseFechaHora(uiState.fechaCorte)?.toLocalDate(),
+            onDateSelected = { date ->
+                val current = parseFechaHora(uiState.fechaCorte) ?: LocalDateTime.now()
+                onFechaCorteChanged(
+                    formatFechaHoraInputSegundos(LocalDateTime.of(date, current.toLocalTime()))
+                )
+            },
+            onDismiss = { showFechaCorteDatePicker = false }
+        )
+    }
+
+    if (showFechaCorteTimePicker) {
+        AppTimePickerDialog(
+            initialTime = parseFechaHora(uiState.fechaCorte)?.toLocalTime() ?: LocalTime.now(),
+            onTimeSelected = { time ->
+                val current = parseFechaHora(uiState.fechaCorte) ?: LocalDateTime.now()
+                onFechaCorteChanged(
+                    formatFechaHoraInputSegundos(LocalDateTime.of(current.toLocalDate(), time))
+                )
+            },
+            onDismiss = { showFechaCorteTimePicker = false }
+        )
+    }
+
+    if (showFechaEmisionDatePicker) {
+        AppDatePickerDialog(
+            initialDate = parseFecha(uiState.fechaEmision),
+            onDateSelected = { date -> onFechaEmisionChanged(formatFechaInput(date)) },
+            onDismiss = { showFechaEmisionDatePicker = false }
+        )
+    }
+
     LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Card(
@@ -413,7 +472,7 @@ fun GenerarInformeView(
                         text = "1. Selección de Parámetros",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -456,9 +515,25 @@ fun GenerarInformeView(
                     OutlinedTextField(
                         value = uiState.fechaCorte,
                         onValueChange = onFechaCorteChanged,
-                        label = { Text("Fecha de Corte Técnico (Snapshot)") },
+                        label = { Text("Fecha de corte") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        trailingIcon = {
+                            Row {
+                                IconButton(onClick = { showFechaCorteDatePicker = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "Seleccionar fecha de corte"
+                                    )
+                                }
+                                IconButton(onClick = { showFechaCorteTimePicker = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Schedule,
+                                        contentDescription = "Seleccionar hora de corte"
+                                    )
+                                }
+                            }
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -487,14 +562,14 @@ fun GenerarInformeView(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "2. Consolidado Preliminar Evaluado",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -542,7 +617,7 @@ fun GenerarInformeView(
                     text = "3. Desglose por Objetivos de Aprendizaje",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -556,7 +631,7 @@ fun GenerarInformeView(
                             text = detalle.objetivoAprendizaje.codigo,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = detalle.objetivoAprendizaje.descripcion,
@@ -600,7 +675,7 @@ fun GenerarInformeView(
                             text = "4. Emisión de Informe Snapshot",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -609,7 +684,15 @@ fun GenerarInformeView(
                             onValueChange = onFechaEmisionChanged,
                             label = { Text("Fecha de Emisión") },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            trailingIcon = {
+                                IconButton(onClick = { showFechaEmisionDatePicker = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "Seleccionar fecha de emisión"
+                                    )
+                                }
+                            }
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -631,7 +714,7 @@ fun GenerarInformeView(
                         ) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Emitir e Guardar Informe Pedagógico")
+                            Text("Emitir y Guardar Informe Pedagógico")
                         }
                     }
                 }
@@ -640,6 +723,7 @@ fun GenerarInformeView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> DropdownSelector(
     label: String,
@@ -652,30 +736,26 @@ fun <T> DropdownSelector(
     var expanded by remember { mutableStateOf(false) }
     val selectedItem = items.find { itemId(it) == selectedId }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier.fillMaxWidth()
+    ) {
         OutlinedTextField(
             value = selectedItem?.let { itemLabel(it) } ?: "Seleccionar...",
             onValueChange = {},
             readOnly = true,
             label = { Text(label) },
             trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    modifier = Modifier.clickable { expanded = !expanded }
-                )
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Box(
             modifier = Modifier
-                .matchParentSize()
-                .clickable { expanded = !expanded }
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         )
-        DropdownMenu(
+        ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth(0.9f)
+            onDismissRequest = { expanded = false }
         ) {
             items.forEach { item ->
                 DropdownMenuItem(

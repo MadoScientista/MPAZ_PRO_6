@@ -1,10 +1,8 @@
 package com.ccstudio.mpaz_pro_6.ui.utp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,8 +69,8 @@ fun DocentesListScreen(
             onValueChange = { viewModel.updateDocentesSearchQuery(it) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            placeholder = { Text("Buscar docente por nombre o usuario...") },
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            placeholder = { Text("Buscar docente...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -90,7 +87,8 @@ fun DocentesListScreen(
                     }
                 }
             },
-            singleLine = true
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium
         )
 
         if (state.isLoading) {
@@ -140,16 +138,13 @@ private fun DocenteCardItem(
     onClick: () -> Unit
 ) {
     val docente = docenteWithAssignments.docente
-    val assignments = docenteWithAssignments.asignaturasCurso
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
@@ -180,7 +175,7 @@ private fun DocenteCardItem(
                         text = docente.nombreCompleto,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -194,42 +189,8 @@ private fun DocenteCardItem(
                 Text(
                     text = "@${docente.nombreUsuario}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (assignments.isEmpty()) {
-                    Text(
-                        text = "Sin asignaturas a cargo",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                } else {
-                    Text(
-                        text = "${assignments.size} ${if (assignments.size == 1) "asignatura a cargo" else "asignaturas a cargo"}:",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        assignments.forEach { item ->
-                            SuggestionChip(
-                                onClick = { },
-                                label = {
-                                    Text(
-                                        text = "${item.asignatura.nombre} (${item.nombreCurso})",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.width(8.dp))

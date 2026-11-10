@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.estudiante
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,10 +44,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ccstudio.mpaz_pro_6.ui.theme.LocalAppColors
+import com.ccstudio.mpaz_pro_6.ui.util.formatFecha
 
 @Composable
 fun EstudianteActividadesScreen(
@@ -57,6 +57,7 @@ fun EstudianteActividadesScreen(
     viewModel: EstudianteViewModel = viewModel()
 ) {
     val state by viewModel.actividadesState.collectAsState()
+    val appColors = LocalAppColors.current
 
     var selectedItemForConfirm by remember { mutableStateOf<ActividadEstudianteItem?>(null) }
 
@@ -157,7 +158,7 @@ fun EstudianteActividadesScreen(
                     if (ultimo != null) {
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = if (ultimo.porcentajeLogro >= 60) Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
+                            color = if (ultimo.porcentajeLogro >= 60) appColors.success.container else appColors.warning.container,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
@@ -165,7 +166,7 @@ fun EstudianteActividadesScreen(
                                     text = "Resultado del Intento #${ultimo.numeroIntento}:",
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = if (ultimo.porcentajeLogro >= 60) Color(0xFF2E7D32) else Color(0xFFE65100)
+                                        color = if (ultimo.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                                     )
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
@@ -173,7 +174,7 @@ fun EstudianteActividadesScreen(
                                     text = "${ultimo.porcentajeLogro}% de logro (${ultimo.cantidadCorrectas} correctas y ${ultimo.cantidadIncorrectas} incorrectas de ${ultimo.totalPreguntas})",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.SemiBold,
-                                        color = if (ultimo.porcentajeLogro >= 60) Color(0xFF1B5E20) else Color(0xFFBF360C)
+                                        color = if (ultimo.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                                     )
                                 )
                             }
@@ -253,6 +254,7 @@ fun ActividadCardEstudiante(
     val curso = item.actividadCursoConDetalles.curso
     val asignatura = item.asignatura
     val unidad = item.unidad
+    val appColors = LocalAppColors.current
 
     val maxIntentosStr = item.maxIntentos?.let { "$it" } ?: "Sin límite"
     val intentoTexto = if (item.sinIntentosDisponibles) {
@@ -261,15 +263,13 @@ fun ActividadCardEstudiante(
         "Intento ${item.siguienteIntentoNumero} de $maxIntentosStr"
     }
 
-    val fechaInicioStr = if (!ac.fechaInicio.isNull_or_blank()) ac.fechaInicio!! else "No definida"
-    val fechaFinStr = if (!ac.fechaFin.isNull_or_blank()) ac.fechaFin!! else "Sin fecha límite"
+    val fechaInicioStr = if (!ac.fechaInicio.isNull_or_blank()) formatFecha(ac.fechaInicio) else "No definida"
+    val fechaFinStr = if (!ac.fechaFin.isNull_or_blank()) formatFecha(ac.fechaFin) else "Sin fecha límite"
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onIniciarClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        onClick = onIniciarClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Header: Asignatura / Curso
@@ -295,7 +295,7 @@ fun ActividadCardEstudiante(
                     Text(
                         text = "${asignatura?.nombre ?: "Asignatura"} • ${curso.nombreCompletoConAnnio}",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -347,7 +347,7 @@ fun ActividadCardEstudiante(
                     val ult = item.ultimoIntentoResumen
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (ult.porcentajeLogro >= 60) Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
+                        color = if (ult.porcentajeLogro >= 60) appColors.success.container else appColors.warning.container,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -357,14 +357,14 @@ fun ActividadCardEstudiante(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = if (ult.porcentajeLogro >= 60) Color(0xFF2E7D32) else Color(0xFFE65100),
+                                tint = if (ult.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content,
                                 modifier = Modifier.padding(end = 6.dp)
                             )
                             Text(
                                 text = "Último intento (#${ult.numeroIntento}): ${ult.porcentajeLogro}% de logro (${ult.cantidadCorrectas}/${ult.totalPreguntas} correctas)",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = if (ult.porcentajeLogro >= 60) Color(0xFF2E7D32) else Color(0xFFE65100)
+                                    color = if (ult.porcentajeLogro >= 60) appColors.success.content else appColors.warning.content
                                 )
                             )
                         }
@@ -385,7 +385,7 @@ fun ActividadCardEstudiante(
                         )
                         Text(
                             text = "Inicio: $fechaInicioStr",
-                            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.outline)
+                            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                         )
                     }
 
@@ -398,7 +398,7 @@ fun ActividadCardEstudiante(
                         )
                         Text(
                             text = "Fin: $fechaFinStr",
-                            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.outline)
+                            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                         )
                     }
                 }

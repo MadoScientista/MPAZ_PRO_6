@@ -23,14 +23,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +44,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.ccstudio.mpaz_pro_6.ui.components.AppFilterChip
+import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
 
 @Composable
 fun CrearUsuarioScreen(
@@ -122,9 +122,6 @@ fun CrearUsuarioScreen(
                     onValueChange = { viewModel.updateCrearUsuarioNombreUsuario(it) },
                     label = { Text("Nombre de Usuario (Login) *") },
                     placeholder = { Text("ej. jgonzalez") },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Person, contentDescription = null)
-                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -134,9 +131,6 @@ fun CrearUsuarioScreen(
                     value = state.password,
                     onValueChange = { viewModel.updateCrearUsuarioPassword(it) },
                     label = { Text("Contraseña *") },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Lock, contentDescription = null)
-                    },
                     trailingIcon = {
                         val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -233,25 +227,21 @@ fun CrearUsuarioScreen(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        ,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     state.roles.forEach { rolEntity ->
                         val isSelected = state.rolId == rolEntity.id
-                        FilterChip(
+                        AppFilterChip(
                             selected = isSelected,
                             onClick = { viewModel.updateCrearUsuarioRolId(rolEntity.id) },
-                            label = { Text(rolEntity.nombre) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = when (rolEntity.nombre.uppercase()) {
-                                        "UTP" -> Icons.Default.Security
-                                        "DOCENTE" -> Icons.Default.Badge
-                                        else -> Icons.Default.School
-                                    },
-                                    contentDescription = null,
-                                    modifier = Modifier.height(16.dp)
-                                )
+                            label = roleDisplayLabel(rolEntity.nombre),
+                            leadingIcon = when (rolEntity.nombre.uppercase()) {
+                                "UTP" -> Icons.Default.Security
+                                "DOCENTE" -> Icons.Default.Badge
+                                else -> Icons.Default.School
                             }
                         )
                     }
@@ -268,7 +258,7 @@ fun CrearUsuarioScreen(
                         text = "Usuario Activo",
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    Switch(
+                    AppSwitch(
                         checked = state.activo,
                         onCheckedChange = { viewModel.updateCrearUsuarioActivo(it) }
                     )
@@ -313,4 +303,13 @@ fun CrearUsuarioScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
     }
+}
+
+/**
+ * Nombre del rol para mostrar en la UI: sin mayúsculas sostenidas, salvo el
+ * acrónimo UTP. Los datos se guardan en mayúsculas ("DOCENTE", "ESTUDIANTE").
+ */
+private fun roleDisplayLabel(roleName: String): String = when (roleName.uppercase()) {
+    "UTP" -> "UTP"
+    else -> roleName.lowercase().replaceFirstChar { it.titlecase() }
 }

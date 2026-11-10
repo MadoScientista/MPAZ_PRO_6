@@ -1,6 +1,5 @@
 package com.ccstudio.mpaz_pro_6.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
+import com.ccstudio.mpaz_pro_6.ui.components.SubjectLabel
 
 @Composable
 fun AsignaturasScreen(
@@ -94,7 +94,7 @@ fun AsignaturasScreen(
             value = state.searchQuery,
             onValueChange = { viewModel.updateSearchQuery(it) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Buscar asignatura, curso o docente...") },
+            placeholder = { Text("Buscar asignatura...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -106,12 +106,13 @@ fun AsignaturasScreen(
                     IconButton(onClick = { viewModel.updateSearchQuery("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Limpiar",
+                            contentDescription = "Limpiar búsqueda",
                         )
                     }
                 }
             },
             singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium,
         )
 
         // Subtítulo según Rol
@@ -201,13 +202,11 @@ private fun AsignaturaItemCard(
     val docenteNombre = item.docente?.let { "${it.pnombre} ${it.apaterno}" } ?: "Sin docente asignado"
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier
@@ -229,11 +228,11 @@ private fun AsignaturaItemCard(
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.asignatura.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                SubjectLabel(
+                    subjectName = item.asignatura.nombre,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
