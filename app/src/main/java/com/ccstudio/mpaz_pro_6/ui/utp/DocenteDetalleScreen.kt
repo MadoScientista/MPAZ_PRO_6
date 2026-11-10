@@ -376,7 +376,7 @@ private fun AsignarAsignaturaDialog(
                 OutlinedTextField(
                     value = filterText,
                     onValueChange = { filterText = it },
-                    placeholder = { Text("Filtrar asignatura o curso...") },
+                    placeholder = { Text("Filtrar asignatura...") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -384,7 +384,8 @@ private fun AsignarAsignaturaDialog(
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

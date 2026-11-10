@@ -6,8 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,10 +42,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalView
@@ -50,13 +58,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.ccstudio.mpaz_pro_6.data.local.preferences.ThemeMode
+import androidx.lifecycle.lifecycleScope
 import com.ccstudio.mpaz_pro_6.data.local.preferences.ThemePreferenceStore
 import com.ccstudio.mpaz_pro_6.ui.components.AppSwitch
 import com.ccstudio.mpaz_pro_6.ui.home.HomeScreen
 import com.ccstudio.mpaz_pro_6.ui.login.LoginScreen
 import com.ccstudio.mpaz_pro_6.ui.login.LoginViewModel
+import com.ccstudio.mpaz_pro_6.ui.splash.SplashScreen
 import com.ccstudio.mpaz_pro_6.ui.theme.MPAZ_PRO_6Theme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -71,11 +82,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        setContent {
-            // `SYSTEM` es el valor inicial: mientras DataStore responde, la app
-            // sigue el modo del teléfono. Después manda la elección guardada.
+        lifecycleScope.launch {
+            // Espera la preferencia guardada antes del primer frame para que el
+            // splash no arranque con el tema del sistema y luego cambie.
+            val initialThemeMode = themePreferenceStore.mode.first()
+            setContent {
             val themeMode by themePreferenceStore.mode
-                .collectAsState(initial = ThemeMode.SYSTEM)
+                .collectAsState(initial = initialThemeMode)
             val isDarkTheme = themeMode.resolveDarkTheme(isSystemInDarkTheme())
             val scope = rememberCoroutineScope()
 
@@ -91,8 +104,15 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val uiState by loginViewModel.uiState.collectAsState()
+                    var minSplashElapsed by rememberSaveable { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        delay(650)
+                        minSplashElapsed = true
+                    }
 
                     val currentRol = uiState.loggedInRol
+                    val showSplash = !uiState.isSessionLoaded || !minSplashElapsed
                     val view = LocalView.current
                     if (!view.isInEditMode) {
                         SideEffect {
@@ -101,6 +121,7 @@ class MainActivity : ComponentActivity() {
                                 .isAppearanceLightStatusBars = !isDarkTheme
                         }
                     }
+                    Box(modifier = Modifier.fillMaxSize()) {
                     Crossfade(
                         targetState = currentRol,
                         animationSpec = tween(300),
@@ -147,8 +168,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
+                    AnimatedVisibility(
+                        visible = showSplash,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        label = "splash"
+                    ) {
+                        SplashScreen(isDarkTheme = isDarkTheme)
+                    }
+                    }
                 }
             }
+        }
         }
     }
 }

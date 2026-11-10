@@ -69,8 +69,8 @@ fun DocentesListScreen(
             onValueChange = { viewModel.updateDocentesSearchQuery(it) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            placeholder = { Text("Buscar docente por nombre o usuario...") },
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            placeholder = { Text("Buscar docente...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -87,7 +87,8 @@ fun DocentesListScreen(
                     }
                 }
             },
-            singleLine = true
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium
         )
 
         if (state.isLoading) {

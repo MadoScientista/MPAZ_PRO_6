@@ -100,8 +100,8 @@ fun UsuariosListScreen(
                 onValueChange = { viewModel.updateUsuariosSearchQuery(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Buscar usuario por nombre, @usuario o rol...") },
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                placeholder = { Text("Buscar usuario...") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -118,7 +118,8 @@ fun UsuariosListScreen(
                         }
                     }
                 },
-                singleLine = true
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium
             )
 
             // Filtros de Rol por Chips
