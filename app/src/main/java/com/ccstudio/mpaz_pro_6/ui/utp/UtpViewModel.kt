@@ -45,6 +45,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.toEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.time.ZoneId
@@ -201,6 +202,18 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     val currentUserName: StateFlow<String> = _currentUserName.asStateFlow()
 
     init {
+        refreshInitialData()
+        viewModelScope.launch {
+            // El arranque con sesion guardada muestra Home antes de que
+            // termine el sync. Al terminar, se recargan los contadores y
+            // nombres con los datos definitivos de Room.
+            container.syncCompleted.drop(1).collect {
+                refreshInitialData()
+            }
+        }
+    }
+
+    private fun refreshInitialData() {
         loadCurrentUserName()
         loadPendingUnits()
         loadCursos()

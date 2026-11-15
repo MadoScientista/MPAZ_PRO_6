@@ -156,6 +156,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 onSuccess = { remote ->
                     container.currentUsuario = remote.usuario
                     val sync = container.initialSync.sync(remote.usuario)
+                    if (sync.isSuccess) {
+                        container.notifySyncCompleted()
+                    }
                     withContext(Dispatchers.Main) {
                         suppressSessionUpdates = false
                         _uiState.update {
@@ -196,7 +199,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             container.remoteAuth.bootstrap()
                 .onSuccess { remote ->
                     container.currentUsuario = remote.usuario
-                    container.initialSync.sync(remote.usuario)
+                    val sync = container.initialSync.sync(remote.usuario)
+                    if (sync.isSuccess) {
+                        container.notifySyncCompleted()
+                    }
                 }
         }
     }

@@ -14,6 +14,9 @@ import com.ccstudio.mpaz_pro_6.data.dto.identidad.UsuarioResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -50,6 +53,19 @@ class AppContainer(context: Context) {
 
     val initialSync = InitialSync(api, database)
 
+    private val _syncCompleted = MutableStateFlow(0L)
+
+    /**
+     * Emite una nueva version cada vez que Room termina de repoblarse. Las
+     * pantallas que ya se mostraron con la cache anterior pueden recargar sin
+     * esperar a que el usuario navegue.
+     */
+    val syncCompleted: StateFlow<Long> = _syncCompleted.asStateFlow()
+
+    fun notifySyncCompleted() {
+        _syncCompleted.value += 1
+    }
+
     /** Ultimo usuario autenticado, usado para reconstruir la cache Room. */
     @Volatile
     var currentUsuario: UsuarioResponse? = null
@@ -58,6 +74,10 @@ class AppContainer(context: Context) {
     suspend fun refresh(): Result<Unit> {
         val usuario = currentUsuario
             ?: return Result.failure(IllegalStateException("No hay usuario autenticado"))
-        return initialSync.sync(usuario)
+        val result = initialSync.sync(usuario)
+        if (result.isSuccess) {
+            notifySyncCompleted()
+        }
+        return result
     }
 }
