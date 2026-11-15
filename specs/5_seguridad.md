@@ -8,6 +8,21 @@
 
 El proceso de autenticación valida las credenciales introducidas contra la base de datos local `MpazDatabase` (tabla `usuario`) o la API remota.
 
+### 1.1. Modo remoto (JWT)
+
+Con `MPAZ_LOCAL_ONLY=false`, `LoginViewModel` llama a `POST /api/auth/login`.
+La respuesta trae `token`, `tokenType`, `expiresIn` y `usuario`:
+
+- `ApiClient` agrega `Authorization: Bearer <token>` a todas las llamadas salvo login.
+- `SessionManager` guarda token, tipo, expiración y datos básicos del usuario en DataStore.
+- `GET /api/auth/me` valida el token al arrancar; un `401` limpia la sesión.
+- Después del login, `InitialSync` descarga catálogo, intentos, respuestas e informes
+  y los guarda en Room. La UI sigue leyendo Room como caché.
+- `MPAZ_LOCAL_ONLY=true` conserva el login local contra `MpazDatabase` para demos
+  sin backend.
+
+### 1.2. Validación de credenciales
+
 1. **Validación de Credenciales:**
    - Se consulta el usuario activo por `nombre_usuario`.
    - Se verifica que la cuenta esté activa (`activo = true`).
@@ -32,6 +47,10 @@ Para evitar que la sesión del usuario se pierda al cerrar o reiniciar la aplica
 | `user_id` | `Long` | ID del usuario autenticado (`usuario_id`). |
 | `username` | `String` | Nombre del usuario logueado (`nombre_usuario`). |
 | `user_rol` | `String` | Nombre del rol del usuario (`UTP`, `DOCENTE`, `ESTUDIANTE`). |
+| `token` | `String` | JWT del backend (solo modo remoto). |
+| `token_type` | `String` | Normalmente `Bearer`. |
+| `expires_in` | `Long` | Segundos de vigencia informados por el backend. |
+| `expires_at` | `Long` | Epoch millis calculado en el dispositivo. |
 
 ### Operaciones del Ciclo de Vida de Sesión:
 - **`saveSession(userId, username, rol)`:** Guarda los datos del usuario en DataStore cuando el login es exitoso.
