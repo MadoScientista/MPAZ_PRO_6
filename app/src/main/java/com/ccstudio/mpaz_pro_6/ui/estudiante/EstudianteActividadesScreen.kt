@@ -87,6 +87,22 @@ fun EstudianteActividadesScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
 
+        state.errorMessage?.let { message ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = message,
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+
         if (state.actividades.isEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -113,7 +129,10 @@ fun EstudianteActividadesScreen(
                 items(state.actividades) { item ->
                     ActividadCardEstudiante(
                         item = item,
-                        onIniciarClick = { selectedItemForConfirm = item }
+                        onIniciarClick = {
+                            viewModel.clearActividadesError()
+                            selectedItemForConfirm = item
+                        }
                     )
                 }
             }

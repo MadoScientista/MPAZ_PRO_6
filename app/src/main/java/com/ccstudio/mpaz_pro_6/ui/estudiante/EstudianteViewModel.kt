@@ -183,6 +183,10 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    fun clearActividadesError() {
+        _actividadesState.value = _actividadesState.value.copy(errorMessage = null)
+    }
+
     fun iniciarIntento(actividadId: Long, cursoId: Long, onIntentoListo: (Long) -> Unit) {
         viewModelScope.launch {
             val session = sessionManager.userSessionFlow.firstOrNull()
@@ -201,17 +205,23 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
             val abierto = previos.firstOrNull { it.fechaFin == null }
 
             if (!localOnly) {
-                val remoto = container.remoteEvaluation.iniciarIntento(userId, ac.id)
-                evaluacionDao.insertIntento(
-                    IntentoEntity(
-                        id = remoto.id,
-                        usuarioId = remoto.usuario.id,
-                        actividadCursoId = remoto.actividadCurso?.id ?: ac.id,
-                        fechaInicio = remoto.fechaInicio,
-                        fechaFin = remoto.fechaFin
+                runCatching {
+                    val remoto = container.remoteEvaluation.iniciarIntento(userId, ac.id)
+                    evaluacionDao.insertIntento(
+                        IntentoEntity(
+                            id = remoto.id,
+                            usuarioId = remoto.usuario.id,
+                            actividadCursoId = remoto.actividadCurso?.id ?: ac.id,
+                            fechaInicio = remoto.fechaInicio,
+                            fechaFin = remoto.fechaFin
+                        )
                     )
-                )
-                onIntentoListo(remoto.id)
+                    onIntentoListo(remoto.id)
+                }.onFailure {
+                    _actividadesState.value = _actividadesState.value.copy(
+                        errorMessage = "No se pudo iniciar el intento. Revisa la conexión."
+                    )
+                }
                 return@launch
             }
 
@@ -245,18 +255,25 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
 
             val nowStr = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now())
             if (!localOnly) {
-                val remoto = container.remoteEvaluation.iniciarIntento(userId, ac.id)
-                evaluacionDao.insertIntento(
-                    IntentoEntity(
-                        id = remoto.id,
-                        usuarioId = remoto.usuario.id,
-                        actividadCursoId = remoto.actividadCurso?.id ?: ac.id,
-                        fechaInicio = remoto.fechaInicio,
-                        fechaFin = remoto.fechaFin
+                runCatching {
+                    val remoto = container.remoteEvaluation.iniciarIntento(userId, ac.id)
+                    evaluacionDao.insertIntento(
+                        IntentoEntity(
+                            id = remoto.id,
+                            usuarioId = remoto.usuario.id,
+                            actividadCursoId = remoto.actividadCurso?.id ?: ac.id,
+                            fechaInicio = remoto.fechaInicio,
+                            fechaFin = remoto.fechaFin
+                        )
                     )
-                )
-                onIntentoCreado?.invoke(remoto.id)
-                loadResolverActividad(actividadId, cursoId, remoto.id)
+                    onIntentoCreado?.invoke(remoto.id)
+                    loadResolverActividad(actividadId, cursoId, remoto.id)
+                }.onFailure {
+                    _resolverState.value = ResolverActividadState(
+                        estado = EstadoResolverActividad.ERROR,
+                        errorMessage = "No se pudo iniciar el intento. Revisa la conexión."
+                    )
+                }
                 return@launch
             }
 
