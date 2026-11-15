@@ -1,7 +1,9 @@
 package com.ccstudio.mpaz_pro_6.ui.util
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val DATE_TIME_INPUT_FORMATS = listOf(
@@ -30,6 +32,12 @@ private val DATE_INPUT_OUTPUT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 fun formatFecha(value: String?): String {
     if (value.isNullOrBlank()) return ""
 
+    // El backend entrega Instant ISO-8601 (con o sin fraccion/offset).
+    runCatching { Instant.parse(value) }.getOrNull()?.let { instant ->
+        return instant.atZone(ZoneId.systemDefault())
+            .format(DATE_TIME_OUTPUT_FORMAT)
+    }
+
     DATE_TIME_INPUT_FORMATS.forEach { pattern ->
         try {
             return LocalDateTime.parse(value, DateTimeFormatter.ofPattern(pattern))
@@ -54,6 +62,10 @@ fun formatFecha(value: String?): String {
 /** Convierte un valor del backend a fecha-hora, o `null` si no se puede parsear. */
 fun parseFechaHora(value: String?): LocalDateTime? {
     if (value.isNullOrBlank()) return null
+
+    runCatching { Instant.parse(value) }.getOrNull()?.let { instant ->
+        return instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
+    }
 
     DATE_TIME_INPUT_FORMATS.forEach { pattern ->
         try {
@@ -100,3 +112,6 @@ fun formatFechaHoraInputSegundos(value: LocalDateTime): String =
 /** Formato de entrada de fecha usado por los informes. */
 fun formatFechaInput(value: LocalDate): String =
     value.format(DATE_INPUT_OUTPUT_FORMAT)
+
+/** Formato ISO-8601 que espera el backend para un instante. */
+fun formatInstantInput(value: Instant): String = value.toString()

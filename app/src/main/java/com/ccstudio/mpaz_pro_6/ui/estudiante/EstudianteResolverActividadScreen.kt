@@ -171,6 +171,13 @@ fun EstudianteResolverActividadScreen(
             transitionSpec = { fadeThroughContent() },
             label = "resolverMode"
         ) { estado ->
+        // Los modos comparten el scope de AnimatedContent (un Box). Sin este
+        // Column, las tarjetas y botones de cada modo se apilan uno encima de
+        // otro en lugar de mostrarse en orden vertical.
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
         // --- MODO: CONFIRMACION (Pasos 1, 2 y 7) ---
         if (estado == EstadoResolverActividad.CONFIRMACION) {
             val ultimo = state.ultimoIntentoResumen
@@ -730,6 +737,7 @@ fun EstudianteResolverActividadScreen(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
+        }
         }
         }
     }

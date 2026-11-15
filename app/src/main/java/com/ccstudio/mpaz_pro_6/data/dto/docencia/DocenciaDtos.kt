@@ -14,6 +14,11 @@ data class AsignaturaCursoRequest(
 )
 
 @Serializable
+data class AsignaturaCursoUpdateRequest(
+    val docenteId: Long? = null
+)
+
+@Serializable
 data class AsignaturaCursoResponse(
     val id: Long,
     val curso: CursoResumen,
