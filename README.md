@@ -103,22 +103,34 @@ ln -sf "$HOME/Android/Sdk/platform-tools/adb" ~/.local/bin/adb
 
 ## 2. Elegir el tipo de conexión
 
-| Entorno | URL de la app | Cómo compilar | ¿Necesita ADB reverse? |
+| Entorno | URL de la app | Configuración | ¿Necesita ADB reverse? |
 |---|---|---|---|
-| USB | `http://127.0.0.1:8080/` | Configuración actual | Sí |
-| Wi-Fi | `http://IP_DEL_PC:8080/` | Recompilar con la IP LAN | No |
-| Emulador | `http://10.0.2.2:8080/` | Cambiar URL o usar reverse | Opcional |
+| USB | `http://127.0.0.1:8080/` | `local.properties` local | Sí |
+| Wi-Fi | `http://IP_DEL_PC:8080/` | `-PMPAZ_BASE_URL=...` o `local.properties` | No |
+| Emulador | `http://10.0.2.2:8080/` | Fallback por defecto | Opcional |
 
-La configuración actual del repo es:
+`MPAZ_BASE_URL` **no se versiona en `gradle.properties`**. Se resuelve al compilar
+con esta precedencia:
+
+1. `-PMPAZ_BASE_URL=...`
+2. Variable de entorno `MPAZ_BASE_URL`
+3. Clave `MPAZ_BASE_URL` en `local.properties`
+4. Fallback: `http://10.0.2.2:8080/`
+
+Cada PC configura su archivo local, que está en `.gitignore`:
 
 ```properties
-MPAZ_LOCAL_ONLY=false
+sdk.dir=/home/nico/Android/Sdk
 MPAZ_BASE_URL=http://127.0.0.1:8080/
 ```
 
-Por eso el APK actual está pensado para **USB con `adb reverse`**. El mismo APK
-**no conecta por Wi-Fi**, porque en el teléfono `127.0.0.1` es el propio teléfono,
-no el PC.
+En Windows, `local.properties` va en la raíz del proyecto con la ruta del SDK de
+Windows. Android Studio la genera al abrir el proyecto; la clave
+`MPAZ_BASE_URL` se agrega manualmente.
+
+Por eso el APK compilado en este PC está pensado para **USB con `adb reverse`**.
+El mismo APK **no conecta por Wi-Fi**, porque en el teléfono `127.0.0.1` es el
+propio teléfono, no el PC.
 
 ---
 
@@ -335,7 +347,7 @@ Cambia `192.168.1.50` por la IP real.
 
 #### Opción B: Android Studio o IntelliJ
 
-1. Editar temporalmente `gradle.properties`:
+1. Editar `local.properties` en la raíz del proyecto:
 
    ```properties
    MPAZ_BASE_URL=http://192.168.1.50:8080/
@@ -343,7 +355,7 @@ Cambia `192.168.1.50` por la IP real.
 
 2. Ejecutar **Gradle Sync**.
 3. Pulsar **Run ‘app’** o instalar desde el terminal integrado.
-4. Para volver a USB, cambiar de nuevo a `http://127.0.0.1:8080/`.
+4. Para volver a USB, cambiar la clave a `http://127.0.0.1:8080/`.
 
 También puedes ejecutar en el terminal integrado:
 
@@ -351,7 +363,8 @@ También puedes ejecutar en el terminal integrado:
 ./gradlew installDebug -PMPAZ_BASE_URL=http://192.168.1.50:8080/
 ```
 
-Eso evita modificar el archivo, pero sigue siendo una compilación distinta.
+`-P` tiene prioridad sobre `local.properties` y evita editar el archivo, pero
+sigue siendo una compilación distinta.
 
 ### Paso 6: iniciar sesión
 

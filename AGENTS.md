@@ -29,11 +29,14 @@ Este documento contiene las directrices de arquitectura, convenciones de código
   respuestas e informes en Room como caché.
 - `MPAZ_LOCAL_ONLY=true` (`-PMPAZ_LOCAL_ONLY=true`): modo demo sin backend; usa
   el seed local de Room y el login local.
+- `MPAZ_BASE_URL` se resuelve al compilar con esta precedencia:
+  `-PMPAZ_BASE_URL` > variable de entorno > `local.properties` >
+  fallback `http://10.0.2.2:8080/`. `local.properties` no se versiona.
 - El backend debe correr en `http://10.0.2.2:8080/` para el emulador o en la IP
-  LAN configurada con `MPAZ_BASE_URL`.
-- Dispositivo físico por USB: ejecutar `adb reverse tcp:8080 tcp:8080` y
-  compilar con `-PMPAZ_BASE_URL=http://127.0.0.1:8080/`. El túnel se pierde al
-  desconectar el cable o reiniciar ADB.
+  LAN configurada por `MPAZ_BASE_URL`.
+- Dispositivo físico por USB: ejecutar `adb reverse tcp:8080 tcp:8080` y usar
+  `MPAZ_BASE_URL=http://127.0.0.1:8080/` en `local.properties` o con `-P`. El
+  túnel se pierde al desconectar el cable o reiniciar ADB.
 - Guía completa de conexión (terminal, Android Studio, IntelliJ, emulador y
   Wi-Fi): `README.md` en la raíz de este repositorio.
 
