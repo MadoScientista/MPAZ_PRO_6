@@ -130,6 +130,7 @@ data class UsuariosUiState(
     val selectedRolFilter: Long? = null,
     val errorMessage: String? = null
 )
+    val currentUserId: Long? = null,
 
 data class CrearUsuarioUiState(
     val nombreUsuario: String = "",
@@ -1134,7 +1135,8 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             val usuariosConRol = identidadDao.getAllUsuariosConRol()
             _usuariosState.value = _usuariosState.value.copy(
                 isLoading = false,
-                usuarios = usuariosConRol
+                usuarios = usuariosConRol,
+                currentUserId = session?.userId
             )
         }
     }
@@ -1185,6 +1187,7 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             val defaultRolId = roles.firstOrNull { it.nombre.uppercase() == "ESTUDIANTE" }?.id
                 ?: roles.firstOrNull()?.id
                 ?: 3L
+            val session = sessionManager.userSessionFlow.firstOrNull()
             _crearUsuarioState.value = CrearUsuarioUiState(
                 roles = roles,
                 rolId = defaultRolId
@@ -1203,6 +1206,13 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun updateCrearUsuarioPnombre(value: String) {
         _crearUsuarioState.value = _crearUsuarioState.value.copy(pnombre = value, errorMessage = null)
     }
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            if (usuario.activo && session?.userId == usuario.id) {
+                _usuariosState.value = _usuariosState.value.copy(
+                    errorMessage = "No puedes desactivar tu propia cuenta."
+                )
+                return@launch
+            }
 
     fun updateCrearUsuarioSnombre(value: String) {
         _crearUsuarioState.value = _crearUsuarioState.value.copy(snombre = value, errorMessage = null)
