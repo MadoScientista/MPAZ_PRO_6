@@ -26,15 +26,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -163,6 +164,42 @@ fun DocenteDetalleScreen(
                 }
             }
 
+            state.errorMessage?.let { mensaje ->
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = mensaje,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(
+                                onClick = { viewModel.clearDocenteDetailError() }
+                            ) {
+                                Text("Cerrar")
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (state.isSaving) {
+                item {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            }
+
             // Sección Header de Asignaturas
             item {
                 Text(
@@ -264,7 +301,9 @@ fun DocenteDetalleScreen(
             }
             }
             FloatingActionButton(
-                onClick = { showAssignDialog = true },
+                onClick = {
+                    if (!state.isSaving) showAssignDialog = true
+                },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
@@ -327,11 +366,10 @@ fun DocenteDetalleScreen(
             docenteNombre = state.docente?.nombreCompleto ?: "",
             availableList = state.availableAsignaturasCurso,
             onDismiss = { showAssignDialog = false },
-            onConfirm = { cursoId, asignaturaId ->
-                viewModel.assignDocenteToAsignaturaCursoFromDetail(
+            onConfirm = { seleccionadas ->
+                viewModel.assignDocenteToAsignaturasCursoFromDetail(
                     docenteId = docenteId,
-                    cursoId = cursoId,
-                    asignaturaId = asignaturaId
+                    items = seleccionadas
                 )
                 showAssignDialog = false
             }
@@ -344,9 +382,9 @@ private fun AsignarAsignaturaDialog(
     docenteNombre: String,
     availableList: List<AsignaturaCursoDetalle>,
     onDismiss: () -> Unit,
-    onConfirm: (cursoId: Long, asignaturaId: Long) -> Unit
+    onConfirm: (List<AsignaturaCursoDetalle>) -> Unit
 ) {
-    var selectedItem by remember { mutableStateOf<AsignaturaCursoDetalle?>(null) }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var filterText by remember { mutableStateOf("") }
 
     val filteredList = availableList.filter { item ->
@@ -359,14 +397,20 @@ private fun AsignarAsignaturaDialog(
                     (item.docente?.nombreCompleto?.lowercase()?.contains(query) == true)
         }
     }
+    val filteredIds = filteredList.map { it.asignaturaCurso.id }.toSet()
+    val allFilteredSelected = filteredIds.isNotEmpty() && filteredIds.all { it in selectedIds }
+
+    fun toggleSelection(id: Long) {
+        selectedIds = if (id in selectedIds) selectedIds - id else selectedIds + id
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Asignar Asignatura a $docenteNombre") },
+        title = { Text("Asignar asignaturas a $docenteNombre") },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Selecciona una asignatura de los cursos disponibles:",
+                    text = "Selecciona una o varias asignaturas de los cursos disponibles:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -388,7 +432,42 @@ private fun AsignarAsignaturaDialog(
                     textStyle = MaterialTheme.typography.bodyMedium
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "${selectedIds.size} seleccionada${if (selectedIds.size == 1) "" else "s"}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (filteredList.isNotEmpty()) {
+                        TextButton(
+                            onClick = {
+                                selectedIds = if (allFilteredSelected) {
+                                    selectedIds - filteredIds
+                                } else {
+                                    selectedIds + filteredIds
+                                }
+                            }
+                        ) {
+                            Text(
+                                if (allFilteredSelected) "Quitar visibles" else "Seleccionar visibles"
+                            )
+                        }
+                    }
+                    if (selectedIds.isNotEmpty()) {
+                        TextButton(onClick = { selectedIds = emptySet() }) {
+                            Text("Limpiar")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 if (availableList.isEmpty()) {
                     Text(
@@ -411,10 +490,10 @@ private fun AsignarAsignaturaDialog(
                             .heightIn(max = 280.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(filteredList) { item ->
-                            val isSelected = selectedItem?.asignaturaCurso?.id == item.asignaturaCurso.id
+                        items(filteredList, key = { it.asignaturaCurso.id }) { item ->
+                            val isSelected = item.asignaturaCurso.id in selectedIds
                             Surface(
-                                onClick = { selectedItem = item },
+                                onClick = { toggleSelection(item.asignaturaCurso.id) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = MaterialTheme.shapes.small,
                                 color = if (isSelected) {
@@ -429,9 +508,11 @@ private fun AsignarAsignaturaDialog(
                                         .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    RadioButton(
-                                        selected = isSelected,
-                                        onClick = { selectedItem = item }
+                                    Checkbox(
+                                        checked = isSelected,
+                                        onCheckedChange = {
+                                            toggleSelection(item.asignaturaCurso.id)
+                                        }
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column(modifier = Modifier.weight(1f)) {
@@ -468,15 +549,12 @@ private fun AsignarAsignaturaDialog(
         },
         confirmButton = {
             Button(
-                enabled = selectedItem != null,
+                enabled = selectedIds.isNotEmpty(),
                 onClick = {
-                    val sel = selectedItem
-                    if (sel != null) {
-                        onConfirm(sel.asignaturaCurso.cursoId, sel.asignaturaCurso.asignaturaId)
-                    }
+                    onConfirm(availableList.filter { it.asignaturaCurso.id in selectedIds })
                 }
             ) {
-                Text("Asignar")
+                Text("Asignar (${selectedIds.size})")
             }
         },
         dismissButton = {

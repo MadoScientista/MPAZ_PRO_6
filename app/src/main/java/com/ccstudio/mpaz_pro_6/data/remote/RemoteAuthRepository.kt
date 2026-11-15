@@ -57,10 +57,9 @@ class RemoteAuthRepository(
         if (stored.token.isNullOrBlank()) {
             throw UnauthorizedException("La sesion no tiene token")
         }
-        if (stored.expiresAt > 0 && stored.expiresAt <= System.currentTimeMillis()) {
-            sessionManager.clearSession()
-            throw UnauthorizedException("La sesion guardada expiro")
-        }
+        // No se borra la sesion local por expiresAt: si no hay red se debe
+        // poder abrir la app con la cache. El backend invalida el token con 401
+        // cuando vuelve la conexion.
         sessionManager.restoreToken()
         val usuario = api.me()
         val session = stored.copy(
@@ -78,6 +77,14 @@ class RemoteAuthRepository(
             expiresAt = session.expiresAt
         )
         RemoteLoginResult(session, usuario)
+    }.onFailure { error ->
+        // Solo una respuesta de autorizacion invalida la sesion local. Un
+        // fallo de red debe conservar la cache para el arranque offline.
+        if (error is UnauthorizedException ||
+            (error is HttpException && (error.code() == 401 || error.code() == 403))
+        ) {
+            sessionManager.clearSession()
+        }
     }.mapError()
 
     suspend fun logout(): Result<Unit> = runCatching {

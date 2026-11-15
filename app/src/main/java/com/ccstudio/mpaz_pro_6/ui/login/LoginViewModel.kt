@@ -37,13 +37,23 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    /**
+     * Un login nuevo debe esperar al sync inicial para no mostrar el Home con
+     * la cache anterior. En cambio, una sesion restaurada al arrancar debe
+     * mostrarse de inmediato, aunque el backend no responda.
+     */
     @Volatile
-    private var remoteReady = localOnly
+    private var suppressSessionUpdates = false
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Primero se restaura el token en memoria para que cualquier
+            // pantalla que consulte la cache pueda autenticarse si hay red.
+            if (!localOnly) {
+                sessionManager.restoreToken()
+            }
             sessionManager.userSessionFlow.collect { session ->
-                if (remoteReady) {
+                if (!suppressSessionUpdates) {
                     _uiState.update {
                         it.copy(
                             loggedInRol = session?.rol,
@@ -138,7 +148,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun loginRemote(currentUsername: String, currentPassword: String) {
-        remoteReady = false
+        suppressSessionUpdates = true
         viewModelScope.launch(Dispatchers.IO) {
             val result = container.remoteAuth.login(currentUsername, currentPassword)
 
@@ -146,8 +156,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 onSuccess = { remote ->
                     container.currentUsuario = remote.usuario
                     val sync = container.initialSync.sync(remote.usuario)
+                    if (sync.isSuccess) {
+                        container.notifySyncCompleted()
+                    }
                     withContext(Dispatchers.Main) {
-                        remoteReady = true
+                        suppressSessionUpdates = false
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -164,7 +177,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 },
                 onFailure = { error ->
                     withContext(Dispatchers.Main) {
-                        remoteReady = true
+                        suppressSessionUpdates = false
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -180,30 +193,17 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun bootstrapRemoteSession() {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = container.remoteAuth.bootstrap()
-            result.onSuccess { remote ->
-                container.currentUsuario = remote.usuario
-                val sync = container.initialSync.sync(remote.usuario)
-                withContext(Dispatchers.Main) {
-                    remoteReady = true
-                    _uiState.update {
-                        it.copy(
-                            loggedInRol = remote.session.rol,
-                            loggedInUserId = remote.session.userId,
-                            loggedInUsername = remote.session.username,
-                            isSessionLoaded = true,
-                            errorMessage = sync.exceptionOrNull()?.let { error ->
-                                "No se pudo sincronizar el catálogo: ${error.message}"
-                            },
-                        )
+            // La sesion local ya se mostro en la UI. Si no hay red se conserva
+            // la cache; si el backend devuelve 401/403, RemoteAuthRepository
+            // limpia la sesion y el flujo vuelve al login.
+            container.remoteAuth.bootstrap()
+                .onSuccess { remote ->
+                    container.currentUsuario = remote.usuario
+                    val sync = container.initialSync.sync(remote.usuario)
+                    if (sync.isSuccess) {
+                        container.notifySyncCompleted()
                     }
                 }
-            }.onFailure {
-                withContext(Dispatchers.Main) {
-                    remoteReady = true
-                    _uiState.update { it.copy(isSessionLoaded = true) }
-                }
-            }
         }
     }
 

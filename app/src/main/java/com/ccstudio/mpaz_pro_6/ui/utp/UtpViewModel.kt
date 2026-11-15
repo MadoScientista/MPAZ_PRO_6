@@ -45,6 +45,7 @@ import com.ccstudio.mpaz_pro_6.data.remote.toEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.time.ZoneId
@@ -119,7 +120,9 @@ data class DocenteDetailUiState(
     val isLoading: Boolean = true,
     val docente: UsuarioEntity? = null,
     val asignaturasAsignadas: List<AsignaturaCursoDetalle> = emptyList(),
-    val availableAsignaturasCurso: List<AsignaturaCursoDetalle> = emptyList()
+    val availableAsignaturasCurso: List<AsignaturaCursoDetalle> = emptyList(),
+    val isSaving: Boolean = false,
+    val errorMessage: String? = null
 )
 
 data class UsuariosUiState(
@@ -127,6 +130,7 @@ data class UsuariosUiState(
     val usuarios: List<UsuarioConRol> = emptyList(),
     val searchQuery: String = "",
     val selectedRolFilter: Long? = null,
+    val currentUserId: Long? = null,
     val errorMessage: String? = null
 )
 
@@ -201,6 +205,18 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     val currentUserName: StateFlow<String> = _currentUserName.asStateFlow()
 
     init {
+        refreshInitialData()
+        viewModelScope.launch {
+            // El arranque con sesion guardada muestra Home antes de que
+            // termine el sync. Al terminar, se recargan los contadores y
+            // nombres con los datos definitivos de Room.
+            container.syncCompleted.drop(1).collect {
+                refreshInitialData()
+            }
+        }
+    }
+
+    private fun refreshInitialData() {
         loadCurrentUserName()
         loadPendingUnits()
         loadCursos()
@@ -1055,41 +1071,93 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun loadDocenteDetail(docenteId: Long) {
         viewModelScope.launch {
             _docenteDetailState.value = DocenteDetailUiState(isLoading = true)
-            val docente = identidadDao.getUsuarioById(docenteId)
-            val asignaturasAsignadas = docenciaDao.getAsignaturasCursoByDocenteId(docenteId)
-            val allAssignments = docenciaDao.getAllAsignaturasCursoDetalles()
-
-            val availableAsignaturasCurso = allAssignments.filter {
-                it.asignaturaCurso.docenteId != docenteId
-            }
-
-            _docenteDetailState.value = DocenteDetailUiState(
-                isLoading = false,
-                docente = docente,
-                asignaturasAsignadas = asignaturasAsignadas,
-                availableAsignaturasCurso = availableAsignaturasCurso
-            )
+            _docenteDetailState.value = buildDocenteDetailState(docenteId)
         }
     }
 
-    fun assignDocenteToAsignaturaCursoFromDetail(docenteId: Long, cursoId: Long, asignaturaId: Long) {
+    fun clearDocenteDetailError() {
+        _docenteDetailState.value = _docenteDetailState.value.copy(errorMessage = null)
+    }
+
+    fun assignDocenteToAsignaturasCursoFromDetail(
+        docenteId: Long,
+        items: List<AsignaturaCursoDetalle>
+    ) {
+        if (items.isEmpty()) return
         viewModelScope.launch {
-            if (!localOnly) {
-                runCatching {
-                    guardarDocencia(cursoId, asignaturaId, docenteId)
-                }
-                loadDocenteDetail(docenteId)
-                loadDocentes()
-                return@launch
-            }
-            docenciaDao.updateDocenteInAsignaturaCurso(cursoId, asignaturaId, docenteId)
-            docenciaDao.insertUsuarioCurso(
-                UsuarioCursoEntity(usuarioId = docenteId, cursoId = cursoId)
+            _docenteDetailState.value = _docenteDetailState.value.copy(
+                isSaving = true,
+                errorMessage = null
             )
-            loadDocenteDetail(docenteId)
+
+            val fallidas = mutableListOf<String>()
+
+            if (!localOnly) {
+                items.forEach { item ->
+                    runCatching {
+                        persistirDocencia(
+                            cursoId = item.asignaturaCurso.cursoId,
+                            asignaturaId = item.asignaturaCurso.asignaturaId,
+                            docenteId = docenteId
+                        )
+                    }.onFailure {
+                        fallidas += item.descripcionAsignacion()
+                    }
+                }
+                if (fallidas.size < items.size) {
+                    runCatching { container.refresh() }
+                }
+            } else {
+                items.forEach { item ->
+                    runCatching {
+                        docenciaDao.updateDocenteInAsignaturaCurso(
+                            item.asignaturaCurso.cursoId,
+                            item.asignaturaCurso.asignaturaId,
+                            docenteId
+                        )
+                        docenciaDao.insertUsuarioCurso(
+                            UsuarioCursoEntity(
+                                usuarioId = docenteId,
+                                cursoId = item.asignaturaCurso.cursoId
+                            )
+                        )
+                    }.onFailure {
+                        fallidas += item.descripcionAsignacion()
+                    }
+                }
+            }
+
+            _docenteDetailState.value = buildDocenteDetailState(docenteId).copy(
+                isSaving = false,
+                errorMessage = if (fallidas.isEmpty()) {
+                    null
+                } else {
+                    "No se pudieron asignar: ${fallidas.joinToString(", ")}"
+                }
+            )
             loadDocentes()
         }
     }
+
+    private suspend fun buildDocenteDetailState(docenteId: Long): DocenteDetailUiState {
+        val docente = identidadDao.getUsuarioById(docenteId)
+        val asignaturasAsignadas = docenciaDao.getAsignaturasCursoByDocenteId(docenteId)
+        val allAssignments = docenciaDao.getAllAsignaturasCursoDetalles()
+
+        val availableAsignaturasCurso = allAssignments.filter {
+            it.asignaturaCurso.docenteId != docenteId
+        }
+
+        return DocenteDetailUiState(
+            isLoading = false,
+            docente = docente,
+            asignaturasAsignadas = asignaturasAsignadas,
+            availableAsignaturasCurso = availableAsignaturasCurso
+        )
+    }
+
+    private fun AsignaturaCursoDetalle.descripcionAsignacion(): String =
+        "${asignatura.nombre} (${nombreCompletoCurso})"
 
     fun unassignDocenteFromAsignaturaCurso(docenteId: Long, cursoId: Long, asignaturaId: Long) {
         viewModelScope.launch {
@@ -1118,10 +1186,12 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun loadUsuarios() {
         viewModelScope.launch {
             _usuariosState.value = _usuariosState.value.copy(isLoading = true)
+            val session = sessionManager.userSessionFlow.firstOrNull()
             val usuariosConRol = identidadDao.getAllUsuariosConRol()
             _usuariosState.value = _usuariosState.value.copy(
                 isLoading = false,
-                usuarios = usuariosConRol
+                usuarios = usuariosConRol,
+                currentUserId = session?.userId
             )
         }
     }
@@ -1136,6 +1206,13 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleUsuarioActivo(usuario: UsuarioEntity) {
         viewModelScope.launch {
+            val session = sessionManager.userSessionFlow.firstOrNull()
+            if (usuario.activo && session?.userId == usuario.id) {
+                _usuariosState.value = _usuariosState.value.copy(
+                    errorMessage = "No puedes desactivar tu propia cuenta."
+                )
+                return@launch
+            }
             if (!localOnly) {
                 val result = runCatching {
                     val actualizado = container.remoteCatalog.cambiarUsuarioActivo(
@@ -1307,6 +1384,15 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         asignaturaId: Long,
         docenteId: Long?
     ) {
+        persistirDocencia(cursoId, asignaturaId, docenteId)
+        container.refresh()
+    }
+
+    private suspend fun persistirDocencia(
+        cursoId: Long,
+        asignaturaId: Long,
+        docenteId: Long?
+    ) {
         val existente = docenciaDao.getAsignaturasByCursoId(cursoId)
             .firstOrNull { it.asignaturaId == asignaturaId }
 
@@ -1324,6 +1410,5 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
                 )
             )
         }
-        container.refresh()
     }
 }

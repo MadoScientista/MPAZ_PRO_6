@@ -1,10 +1,17 @@
 package com.ccstudio.mpaz_pro_6
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.app.Activity
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -29,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -40,6 +48,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +66,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.ccstudio.mpaz_pro_6.data.local.preferences.ThemePreferenceStore
@@ -78,9 +88,18 @@ class MainActivity : ComponentActivity() {
         ThemePreferenceStore(applicationContext)
     }
 
+    private var localNetworkPermissionDenied by mutableStateOf(false)
+
+    private val localNetworkPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        localNetworkPermissionDenied = !granted
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        requestLocalNetworkPermissionIfNeeded()
 
         lifecycleScope.launch {
             // Espera la preferencia guardada antes del primer frame para que el
@@ -178,10 +197,72 @@ class MainActivity : ComponentActivity() {
                         SplashScreen(isDarkTheme = isDarkTheme)
                     }
                     }
+
+                    if (localNetworkPermissionDenied) {
+                        AlertDialog(
+                            onDismissRequest = { localNetworkPermissionDenied = false },
+                            title = { Text("Permiso de red local") },
+                            text = {
+                                Text(
+                                    "Para conectarte por Wi-Fi, permite el acceso " +
+                                        "a dispositivos de la red local."
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        localNetworkPermissionDenied = false
+                                        openAppSettings()
+                                    }
+                                ) {
+                                    Text("Abrir ajustes")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = { localNetworkPermissionDenied = false }
+                                ) {
+                                    Text("Cerrar")
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
         }
+    }
+
+    private fun requestLocalNetworkPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < 37) return
+        if (!requiresLocalNetworkPermission(BuildConfig.MPAZ_BASE_URL)) return
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_LOCAL_NETWORK
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        localNetworkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+    }
+
+    private fun requiresLocalNetworkPermission(url: String): Boolean {
+        val host = Uri.parse(url).host?.lowercase() ?: return false
+        if (host == "127.0.0.1" || host == "localhost" || host == "10.0.2.2") {
+            return false
+        }
+        return host.startsWith("192.168.") ||
+            host.startsWith("10.") ||
+            Regex("^172\\.(1[6-9]|2[0-9]|3[0-1])\\.").containsMatchIn(host)
+    }
+
+    private fun openAppSettings() {
+        startActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null)
+            )
+        )
     }
 }
 

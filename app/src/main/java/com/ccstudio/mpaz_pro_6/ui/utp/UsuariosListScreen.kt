@@ -215,6 +215,7 @@ fun UsuariosListScreen(
                     items(filteredUsuarios, key = { it.usuario.id }) { item ->
                         UsuarioCardItem(
                             usuarioConRol = item,
+                            isCurrentUser = item.usuario.id == state.currentUserId,
                             onToggleActive = { viewModel.toggleUsuarioActivo(item.usuario) }
                         )
                     }
@@ -244,6 +245,7 @@ fun UsuariosListScreen(
 @Composable
 private fun UsuarioCardItem(
     usuarioConRol: UsuarioConRol,
+    isCurrentUser: Boolean,
     onToggleActive: () -> Unit
 ) {
     val usuario = usuarioConRol.usuario
@@ -302,6 +304,15 @@ private fun UsuarioCardItem(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
+                if (isCurrentUser) {
+                    Text(
+                        text = "Tu cuenta",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 RoleBadge(
@@ -320,7 +331,10 @@ private fun UsuarioCardItem(
                 )
                 AppSwitch(
                     checked = usuario.activo,
-                    onCheckedChange = { onToggleActive() }
+                    onCheckedChange = if (isCurrentUser) null else {
+                        { onToggleActive() }
+                    },
+                    enabled = !isCurrentUser
                 )
             }
         }
