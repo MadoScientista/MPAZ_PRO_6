@@ -95,6 +95,7 @@ fun UnidadDetalleScreen(
     val estado = unidadConDetalles.estado
     val curso = state.cursoConDetalles
     val isAuthorized = estado.id == 3L || estado.nombre == "AUTORIZADO"
+    val isDraft = estado.nombre.equals("BORRADOR", ignoreCase = true)
     val isEstudiante = rol.equals("ESTUDIANTE", ignoreCase = true)
 
     if (isEstudiante && !isAuthorized) {
@@ -276,15 +277,19 @@ fun UnidadDetalleScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        AppPillButton(
-                            text = "A Borrador",
-                            onClick = { showBorradorConfirmDialog = true },
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 52.dp),
-                            containerColor = appColors.destructiveButton.container,
-                            contentColor = appColors.destructiveButton.content
-                        )
+                        // "A Borrador" solo tiene sentido si la unidad aún no
+                        // está en borrador. En BORRADOR solo se puede autorizar.
+                        if (!isDraft) {
+                            AppPillButton(
+                                text = "A Borrador",
+                                onClick = { showBorradorConfirmDialog = true },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 52.dp),
+                                containerColor = appColors.destructiveButton.container,
+                                contentColor = appColors.destructiveButton.content
+                            )
+                        }
 
                         AppPillButton(
                             text = "Autorizar",

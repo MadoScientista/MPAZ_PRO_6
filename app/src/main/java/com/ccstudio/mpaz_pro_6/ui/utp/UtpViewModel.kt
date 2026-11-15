@@ -3,6 +3,22 @@ package com.ccstudio.mpaz_pro_6.ui.utp
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ccstudio.mpaz_pro_6.MpazApplication
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.ActividadUpdateRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.AlternativaPreguntaRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.AlternativaRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.AlternativaUpdateRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.PreguntaActividadRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.PreguntaRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.PreguntaUpdateRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.RecursoRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.UnidadRequest
+import com.ccstudio.mpaz_pro_6.data.dto.curriculo.UnidadUpdateRequest
+import com.ccstudio.mpaz_pro_6.data.dto.docencia.ActividadCursoUpdateRequest
+import com.ccstudio.mpaz_pro_6.data.dto.docencia.AsignaturaCursoRequest
+import com.ccstudio.mpaz_pro_6.data.dto.docencia.AsignaturaCursoUpdateRequest
+import com.ccstudio.mpaz_pro_6.data.dto.docencia.UsuarioCursoRequest
+import com.ccstudio.mpaz_pro_6.data.dto.identidad.UsuarioRequest
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadConTipo
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadCursoConDetalles
@@ -25,11 +41,14 @@ import com.ccstudio.mpaz_pro_6.data.local.entity.docencia.UsuarioCursoEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.RolEntity
 import com.ccstudio.mpaz_pro_6.data.local.entity.identidad.UsuarioEntity
 import com.ccstudio.mpaz_pro_6.data.local.preferences.SessionManager
+import com.ccstudio.mpaz_pro_6.data.remote.toEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import java.time.ZoneId
+import com.ccstudio.mpaz_pro_6.ui.util.parseFechaHora
 
 data class UnitDetailUiState(
     val isLoading: Boolean = true,
@@ -107,7 +126,8 @@ data class UsuariosUiState(
     val isLoading: Boolean = true,
     val usuarios: List<UsuarioConRol> = emptyList(),
     val searchQuery: String = "",
-    val selectedRolFilter: Long? = null
+    val selectedRolFilter: Long? = null,
+    val errorMessage: String? = null
 )
 
 data class CrearUsuarioUiState(
@@ -127,11 +147,13 @@ data class CrearUsuarioUiState(
 
 class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = MpazDatabase.getDatabase(application)
+    private val container = (application as MpazApplication).container
+    private val db = container.database
     private val curriculoDao = db.curriculoDao()
     private val identidadDao = db.identidadDao()
     private val docenciaDao = db.docenciaDao()
-    private val sessionManager = SessionManager(application)
+    private val sessionManager = container.sessionManager
+    private val localOnly = container.localOnly
 
     private val _pendingUnits = MutableStateFlow<List<UnidadConDetalles>>(emptyList())
     val pendingUnits: StateFlow<List<UnidadConDetalles>> = _pendingUnits.asStateFlow()
@@ -258,6 +280,16 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun autorizarUnidad(unidadId: Long, cursoId: Long? = null) {
         viewModelScope.launch {
+            if (!localOnly) {
+                container.remoteCatalog.actualizarUnidad(
+                    unidadId,
+                    UnidadUpdateRequest(estadoId = 3L)
+                )
+                container.refresh()
+                loadPendingUnits()
+                loadUnitDetail(unidadId, cursoId ?: _unitDetailState.value.cursoConDetalles?.curso?.id)
+                return@launch
+            }
             // 3L = AUTORIZADO
             curriculoDao.updateUnidadEstado(unidadId, 3L)
             loadPendingUnits()
@@ -267,6 +299,16 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun cambiarEstadoUnidadBorrador(unidadId: Long, cursoId: Long? = null) {
         viewModelScope.launch {
+            if (!localOnly) {
+                container.remoteCatalog.actualizarUnidad(
+                    unidadId,
+                    UnidadUpdateRequest(estadoId = 1L)
+                )
+                container.refresh()
+                loadPendingUnits()
+                loadUnitDetail(unidadId, cursoId ?: _unitDetailState.value.cursoConDetalles?.curso?.id)
+                return@launch
+            }
             // 1L = BORRADOR
             curriculoDao.updateUnidadEstado(unidadId, 1L)
             loadPendingUnits()
@@ -307,7 +349,7 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             var actividadesCurso = docenciaDao.getActividadesCursoConDetallesByActividadId(actividadId)
             val allCursos = identidadDao.getCursosConDetalles()
 
-            if (actividadesCurso.isEmpty() && allCursos.isNotEmpty()) {
+            if (localOnly && actividadesCurso.isEmpty() && allCursos.isNotEmpty()) {
                 allCursos.forEach { cursoDetalle ->
                     docenciaDao.insertActividadCurso(
                         ActividadCursoEntity(
@@ -356,23 +398,55 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         fechaFin: String?
     ) {
         viewModelScope.launch {
-            val current = docenciaDao.getActividadCursoById(actividadCursoId)
-            if (current != null) {
-                val updated = current.copy(
-                    visible = visible,
-                    habilitada = habilitada,
-                    maxIntentos = maxIntentos,
-                    fechaInicio = fechaInicio?.ifBlank { null },
-                    fechaFin = fechaFin?.ifBlank { null }
-                )
-                docenciaDao.updateActividadCurso(updated)
+            val current = docenciaDao.getActividadCursoById(actividadCursoId) ?: return@launch
+
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.actualizarActividadCurso(
+                        actividadCursoId,
+                        ActividadCursoUpdateRequest(
+                            fechaInicio = fechaIso(fechaInicio),
+                            fechaFin = fechaIso(fechaFin),
+                            maxIntentos = maxIntentos
+                        )
+                    )
+                    container.remoteCatalog.cambiarActividadCursoHabilitada(
+                        actividadCursoId, habilitada
+                    )
+                    container.remoteCatalog.cambiarActividadCursoVisible(
+                        actividadCursoId, visible
+                    )
+                    container.refresh()
+                }
                 loadActivityPreview(current.actividadId)
+                return@launch
             }
+
+            val updated = current.copy(
+                visible = visible,
+                habilitada = habilitada,
+                maxIntentos = maxIntentos,
+                fechaInicio = fechaInicio?.ifBlank { null },
+                fechaFin = fechaFin?.ifBlank { null }
+            )
+            docenciaDao.updateActividadCurso(updated)
+            loadActivityPreview(current.actividadId)
         }
     }
 
     fun updateActividadInstrucciones(actividadId: Long, instrucciones: String) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.actualizarActividad(
+                        actividadId,
+                        ActividadUpdateRequest(instrucciones = instrucciones)
+                    )
+                    container.refresh()
+                }
+                loadActivityPreview(actividadId)
+                return@launch
+            }
             val actividad = curriculoDao.getActividadById(actividadId)
             if (actividad != null) {
                 curriculoDao.updateActividad(actividad.copy(instrucciones = instrucciones))
@@ -383,27 +457,70 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updatePreguntaEnunciado(actividadId: Long, preguntaId: Long, nuevoEnunciado: String) {
         viewModelScope.launch {
-            val pregunta = curriculoDao.getPreguntaById(preguntaId)
-            if (pregunta != null) {
-                curriculoDao.updatePregunta(pregunta.copy(enunciado = nuevoEnunciado))
+            val pregunta = curriculoDao.getPreguntaById(preguntaId) ?: return@launch
+
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.actualizarPregunta(
+                        preguntaId,
+                        PreguntaUpdateRequest(
+                            enunciado = nuevoEnunciado,
+                            recursoId = pregunta.recursoId
+                        )
+                    )
+                    container.refresh()
+                }
                 loadActivityPreview(actividadId)
+                return@launch
             }
+
+            curriculoDao.updatePregunta(pregunta.copy(enunciado = nuevoEnunciado))
+            loadActivityPreview(actividadId)
         }
     }
 
     fun updateAlternativaEnunciado(actividadId: Long, alternativaId: Long, nuevoEnunciado: String) {
         viewModelScope.launch {
-            val alternativa = curriculoDao.getAlternativaById(alternativaId)
-            if (alternativa != null) {
-                curriculoDao.updateAlternativa(alternativa.copy(enunciado = nuevoEnunciado))
+            val alternativa = curriculoDao.getAlternativaById(alternativaId) ?: return@launch
+
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.actualizarAlternativa(
+                        alternativaId,
+                        AlternativaUpdateRequest(
+                            enunciado = nuevoEnunciado,
+                            recursoId = alternativa.recursoId
+                        )
+                    )
+                    container.refresh()
+                }
                 loadActivityPreview(actividadId)
+                return@launch
             }
+
+            curriculoDao.updateAlternativa(alternativa.copy(enunciado = nuevoEnunciado))
+            loadActivityPreview(actividadId)
         }
     }
 
     fun setAlternativaCorrecta(actividadId: Long, preguntaId: Long, alternativaIdCorrecta: Long) {
         viewModelScope.launch {
             val rels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+
+            if (!localOnly) {
+                runCatching {
+                    rels.forEach { rel ->
+                        container.remoteCatalog.cambiarAlternativaCorrecta(
+                            rel.alternativaId,
+                            rel.alternativaId == alternativaIdCorrecta
+                        )
+                    }
+                    container.refresh()
+                }
+                loadActivityPreview(actividadId)
+                return@launch
+            }
+
             rels.forEach { rel ->
                 val alt = curriculoDao.getAlternativaById(rel.alternativaId)
                 if (alt != null) {
@@ -424,6 +541,39 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
         correctaIndex: Int
     ) {
         viewModelScope.launch {
+            if (!localOnly) {
+                val recursoId = recursoIdParaActividad(actividadId) ?: return@launch
+                runCatching {
+                    val pregunta = container.remoteCatalog.crearPregunta(
+                        PreguntaRequest(enunciado = enunciado, recursoId = recursoId)
+                    )
+                    container.remoteCatalog.crearPreguntaActividad(
+                        PreguntaActividadRequest(
+                            actividadId = actividadId,
+                            preguntaId = pregunta.id
+                        )
+                    )
+                    alternativasTexto.forEachIndexed { index, texto ->
+                        val alternativa = container.remoteCatalog.crearAlternativa(
+                            AlternativaRequest(
+                                enunciado = texto,
+                                correcta = index == correctaIndex,
+                                recursoId = recursoId
+                            )
+                        )
+                        container.remoteCatalog.crearAlternativaPregunta(
+                            AlternativaPreguntaRequest(
+                                preguntaId = pregunta.id,
+                                alternativaId = alternativa.id
+                            )
+                        )
+                    }
+                    container.refresh()
+                }
+                loadActivityPreview(actividadId)
+                return@launch
+            }
+
             val preguntaId = curriculoDao.insertPregunta(
                 PreguntaEntity(enunciado = enunciado)
             )
@@ -445,6 +595,25 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun deletePreguntaFromActividad(actividadId: Long, preguntaId: Long) {
         viewModelScope.launch {
             val altRels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+
+            if (!localOnly) {
+                runCatching {
+                    altRels.forEach { rel ->
+                        container.remoteCatalog.eliminarAlternativaPregunta(rel.id)
+                        container.remoteCatalog.eliminarAlternativa(rel.alternativaId)
+                    }
+                    curriculoDao.getPreguntaActividadByActividadYPregunta(
+                        actividadId, preguntaId
+                    )?.let { asociacion ->
+                        container.remoteCatalog.eliminarPreguntaActividad(asociacion.id)
+                    }
+                    container.remoteCatalog.eliminarPregunta(preguntaId)
+                    container.refresh()
+                }
+                loadActivityPreview(actividadId)
+                return@launch
+            }
+
             altRels.forEach { rel ->
                 curriculoDao.deleteAlternativaPreguntaByAlternativaId(rel.alternativaId)
                 val alt = curriculoDao.getAlternativaById(rel.alternativaId)
@@ -459,6 +628,36 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addAlternativaToPregunta(actividadId: Long, preguntaId: Long, enunciado: String, correcta: Boolean) {
         viewModelScope.launch {
+            if (!localOnly) {
+                val recursoId = recursoIdParaActividad(actividadId) ?: return@launch
+                runCatching {
+                    val rels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+                    if (correcta) {
+                        rels.forEach { rel ->
+                            container.remoteCatalog.cambiarAlternativaCorrecta(
+                                rel.alternativaId, false
+                            )
+                        }
+                    }
+                    val alternativa = container.remoteCatalog.crearAlternativa(
+                        AlternativaRequest(
+                            enunciado = enunciado,
+                            correcta = correcta,
+                            recursoId = recursoId
+                        )
+                    )
+                    container.remoteCatalog.crearAlternativaPregunta(
+                        AlternativaPreguntaRequest(
+                            preguntaId = preguntaId,
+                            alternativaId = alternativa.id
+                        )
+                    )
+                    container.refresh()
+                }
+                loadActivityPreview(actividadId)
+                return@launch
+            }
+
             if (correcta) {
                 val rels = curriculoDao.getAlternativasByPreguntaId(preguntaId)
                 rels.forEach { rel ->
@@ -481,6 +680,31 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteAlternativaFromPregunta(actividadId: Long, preguntaId: Long, alternativaId: Long) {
         viewModelScope.launch {
             val altToDelete = curriculoDao.getAlternativaById(alternativaId)
+            val relToDelete = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+                .firstOrNull { it.alternativaId == alternativaId }
+
+            if (!localOnly) {
+                runCatching {
+                    if (relToDelete != null) {
+                        container.remoteCatalog.eliminarAlternativaPregunta(relToDelete.id)
+                    }
+                    container.remoteCatalog.eliminarAlternativa(alternativaId)
+
+                    if (altToDelete?.correcta == true) {
+                        val remaining = curriculoDao.getAlternativasByPreguntaId(preguntaId)
+                            .filterNot { it.alternativaId == alternativaId }
+                        remaining.firstOrNull()?.let { rel ->
+                            container.remoteCatalog.cambiarAlternativaCorrecta(
+                                rel.alternativaId, true
+                            )
+                        }
+                    }
+                    container.refresh()
+                }
+                loadActivityPreview(actividadId)
+                return@launch
+            }
+
             curriculoDao.deleteAlternativaPreguntaByAlternativaId(alternativaId)
             if (altToDelete != null) {
                 curriculoDao.deleteAlternativa(altToDelete)
@@ -496,6 +720,31 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             }
             loadActivityPreview(actividadId)
         }
+    }
+
+    private fun fechaIso(value: String?): String? {
+        if (value.isNullOrBlank()) return null
+        return parseFechaHora(value)
+            ?.atZone(ZoneId.systemDefault())
+            ?.toInstant()
+            ?.toString()
+    }
+
+    private suspend fun recursoIdParaActividad(actividadId: Long): Long? {
+        val actividad = curriculoDao.getActividadById(actividadId) ?: return null
+        val recursos = curriculoDao.getAllRecursos()
+            .filter { it.contenidoId == actividad.contenidoId }
+        if (recursos.isNotEmpty()) {
+            return recursos.first().id
+        }
+        return container.remoteCatalog.crearRecurso(
+            RecursoRequest(
+                nombre = "Material de la actividad",
+                url = null,
+                contenidoId = actividad.contenidoId,
+                tipoRecursoId = 3
+            )
+        ).id
     }
 
     // --- CURSOS ---
@@ -569,6 +818,11 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addAsignaturaToCurso(cursoId: Long, asignaturaId: Long, docenteId: Long? = null) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching { guardarDocencia(cursoId, asignaturaId, docenteId) }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.insertAsignaturaCurso(
                 AsignaturaCursoEntity(cursoId = cursoId, asignaturaId = asignaturaId, docenteId = docenteId)
             )
@@ -583,6 +837,19 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun createAndAddAsignaturaToCurso(cursoId: Long, nombre: String, nivelId: Long, docenteId: Long? = null) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    val asignatura = container.remoteCatalog.crearAsignatura(
+                        com.ccstudio.mpaz_pro_6.data.dto.curriculo.AsignaturaRequest(
+                            nombre = nombre,
+                            nivelId = nivelId
+                        )
+                    )
+                    guardarDocencia(cursoId, asignatura.id, docenteId)
+                }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             val newAsigId = curriculoDao.insertAsignatura(
                 AsignaturaEntity(nombre = nombre, nivelId = nivelId)
             )
@@ -600,6 +867,11 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun assignDocenteToAsignaturaCurso(cursoId: Long, asignaturaId: Long, docenteId: Long?) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching { guardarDocencia(cursoId, asignaturaId, docenteId) }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.updateDocenteInAsignaturaCurso(cursoId, asignaturaId, docenteId)
             if (docenteId != null) {
                 docenciaDao.insertUsuarioCurso(
@@ -612,6 +884,18 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeAsignaturaFromCurso(cursoId: Long, asignaturaId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    val existente = docenciaDao.getAsignaturasByCursoId(cursoId)
+                        .firstOrNull { it.asignaturaId == asignaturaId }
+                    if (existente != null) {
+                        container.remoteCatalog.eliminarAsignaturaCurso(existente.id)
+                        container.refresh()
+                    }
+                }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.deleteAsignaturaCursoByCursoYAsignatura(cursoId, asignaturaId)
             loadCursoDetail(cursoId)
         }
@@ -619,6 +903,16 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addDocenteToCurso(cursoId: Long, usuarioId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.crearUsuarioCurso(
+                        UsuarioCursoRequest(usuarioId = usuarioId, cursoId = cursoId)
+                    )
+                    container.refresh()
+                }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.insertUsuarioCurso(
                 UsuarioCursoEntity(usuarioId = usuarioId, cursoId = cursoId)
             )
@@ -628,6 +922,18 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeDocenteFromCurso(cursoId: Long, usuarioId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    val existente = docenciaDao.getUsuariosByCursoId(cursoId)
+                        .firstOrNull { it.usuarioId == usuarioId }
+                    if (existente != null) {
+                        container.remoteCatalog.eliminarUsuarioCurso(existente.id)
+                        container.refresh()
+                    }
+                }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.deleteUsuarioCursoByCursoYUsuario(cursoId, usuarioId)
             loadCursoDetail(cursoId)
         }
@@ -635,6 +941,16 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addEstudianteToCurso(cursoId: Long, usuarioId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.crearUsuarioCurso(
+                        UsuarioCursoRequest(usuarioId = usuarioId, cursoId = cursoId)
+                    )
+                    container.refresh()
+                }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.insertUsuarioCurso(
                 UsuarioCursoEntity(usuarioId = usuarioId, cursoId = cursoId)
             )
@@ -644,6 +960,18 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeEstudianteFromCurso(cursoId: Long, usuarioId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    val existente = docenciaDao.getUsuariosByCursoId(cursoId)
+                        .firstOrNull { it.usuarioId == usuarioId }
+                    if (existente != null) {
+                        container.remoteCatalog.eliminarUsuarioCurso(existente.id)
+                        container.refresh()
+                    }
+                }
+                loadCursoDetail(cursoId)
+                return@launch
+            }
             docenciaDao.deleteUsuarioCursoByCursoYUsuario(cursoId, usuarioId)
             loadCursoDetail(cursoId)
         }
@@ -671,6 +999,20 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addUnidadToAsignatura(cursoId: Long, asignaturaId: Long, nombreUnidad: String) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    container.remoteCatalog.crearUnidad(
+                        UnidadRequest(
+                            nombre = nombreUnidad,
+                            asignaturaId = asignaturaId,
+                            estadoId = 2L
+                        )
+                    )
+                    container.refresh()
+                }
+                loadAsignaturaDetail(cursoId, asignaturaId)
+                return@launch
+            }
             // estado_id = 2 es EN_REVISION
             curriculoDao.insertUnidad(
                 UnidadEntity(
@@ -732,6 +1074,14 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun assignDocenteToAsignaturaCursoFromDetail(docenteId: Long, cursoId: Long, asignaturaId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    guardarDocencia(cursoId, asignaturaId, docenteId)
+                }
+                loadDocenteDetail(docenteId)
+                loadDocentes()
+                return@launch
+            }
             docenciaDao.updateDocenteInAsignaturaCurso(cursoId, asignaturaId, docenteId)
             docenciaDao.insertUsuarioCurso(
                 UsuarioCursoEntity(usuarioId = docenteId, cursoId = cursoId)
@@ -743,6 +1093,14 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun unassignDocenteFromAsignaturaCurso(docenteId: Long, cursoId: Long, asignaturaId: Long) {
         viewModelScope.launch {
+            if (!localOnly) {
+                runCatching {
+                    guardarDocencia(cursoId, asignaturaId, null)
+                }
+                loadDocenteDetail(docenteId)
+                loadDocentes()
+                return@launch
+            }
             docenciaDao.updateDocenteInAsignaturaCurso(cursoId, asignaturaId, null)
 
             val remainingInCurso = docenciaDao.countAsignaturasByDocenteYCurso(docenteId, cursoId)
@@ -778,9 +1136,32 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleUsuarioActivo(usuario: UsuarioEntity) {
         viewModelScope.launch {
+            if (!localOnly) {
+                val result = runCatching {
+                    val actualizado = container.remoteCatalog.cambiarUsuarioActivo(
+                        usuario.id,
+                        !usuario.activo
+                    )
+                    identidadDao.insertUsuario(actualizado.toEntity())
+                }
+                _usuariosState.value = _usuariosState.value.copy(
+                    errorMessage = if (result.isFailure) {
+                        "No se pudo actualizar el usuario. Revisa la conexión."
+                    } else {
+                        null
+                    }
+                )
+                loadUsuarios()
+                return@launch
+            }
             identidadDao.updateUsuario(usuario.copy(activo = !usuario.activo))
+            _usuariosState.value = _usuariosState.value.copy(errorMessage = null)
             loadUsuarios()
         }
+    }
+
+    fun clearUsuariosError() {
+        _usuariosState.value = _usuariosState.value.copy(errorMessage = null)
     }
 
     // --- CREAR USUARIO ---
@@ -850,6 +1231,43 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
+        if (!localOnly) {
+            viewModelScope.launch {
+                _crearUsuarioState.value = _crearUsuarioState.value.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+                try {
+                    container.remoteCatalog.crearUsuario(
+                        UsuarioRequest(
+                            nombreUsuario = state.nombreUsuario.trim(),
+                            password = state.password.trim(),
+                            pnombre = state.pnombre.trim(),
+                            snombre = state.snombre.trim().ifBlank { null },
+                            apaterno = state.apaterno.trim(),
+                            amaterno = state.amaterno.trim().ifBlank { null },
+                            rolId = state.rolId,
+                            activo = state.activo
+                        )
+                    )
+                    container.refresh()
+                    loadUsuarios()
+                    _crearUsuarioState.value = _crearUsuarioState.value.copy(
+                        isLoading = false,
+                        errorMessage = null,
+                        isSuccess = true
+                    )
+                    onSuccess()
+                } catch (e: Exception) {
+                    _crearUsuarioState.value = _crearUsuarioState.value.copy(
+                        isLoading = false,
+                        errorMessage = "No se pudo crear el usuario: ${e.message ?: "error de red"}"
+                    )
+                }
+            }
+            return
+        }
+
         viewModelScope.launch {
             _crearUsuarioState.value = _crearUsuarioState.value.copy(isLoading = true, errorMessage = null)
 
@@ -882,5 +1300,30 @@ class UtpViewModel(application: Application) : AndroidViewModel(application) {
             )
             onSuccess()
         }
+    }
+
+    private suspend fun guardarDocencia(
+        cursoId: Long,
+        asignaturaId: Long,
+        docenteId: Long?
+    ) {
+        val existente = docenciaDao.getAsignaturasByCursoId(cursoId)
+            .firstOrNull { it.asignaturaId == asignaturaId }
+
+        if (existente != null) {
+            container.remoteCatalog.actualizarAsignaturaCurso(
+                existente.id,
+                AsignaturaCursoUpdateRequest(docenteId = docenteId)
+            )
+        } else {
+            container.remoteCatalog.crearAsignaturaCurso(
+                AsignaturaCursoRequest(
+                    cursoId = cursoId,
+                    asignaturaId = asignaturaId,
+                    docenteId = docenteId
+                )
+            )
+        }
+        container.refresh()
     }
 }

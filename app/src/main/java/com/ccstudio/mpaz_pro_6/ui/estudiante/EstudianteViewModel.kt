@@ -3,6 +3,7 @@ package com.ccstudio.mpaz_pro_6.ui.estudiante
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ccstudio.mpaz_pro_6.MpazApplication
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.ActividadCursoConDetalles
 import com.ccstudio.mpaz_pro_6.data.local.dao.PreguntaConAlternativas
@@ -90,11 +91,13 @@ data class ResolverActividadState(
 
 class EstudianteViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = MpazDatabase.getDatabase(application)
+    private val container = (application as MpazApplication).container
+    private val db = container.database
     private val docenciaDao = db.docenciaDao()
     private val curriculoDao = db.curriculoDao()
     private val evaluacionDao = db.evaluacionDao()
-    private val sessionManager = SessionManager(application)
+    private val sessionManager = container.sessionManager
+    private val localOnly = container.localOnly
 
     private val _actividadesState = MutableStateFlow(ActividadesPendientesEstudianteState())
     val actividadesState: StateFlow<ActividadesPendientesEstudianteState> = _actividadesState.asStateFlow()
@@ -197,6 +200,21 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
             val previos = evaluacionDao.getIntentosByUsuarioYActividadCurso(userId, ac.id)
             val abierto = previos.firstOrNull { it.fechaFin == null }
 
+            if (!localOnly) {
+                val remoto = container.remoteEvaluation.iniciarIntento(userId, ac.id)
+                evaluacionDao.insertIntento(
+                    IntentoEntity(
+                        id = remoto.id,
+                        usuarioId = remoto.usuario.id,
+                        actividadCursoId = remoto.actividadCurso?.id ?: ac.id,
+                        fechaInicio = remoto.fechaInicio,
+                        fechaFin = remoto.fechaFin
+                    )
+                )
+                onIntentoListo(remoto.id)
+                return@launch
+            }
+
             val intentoId = if (abierto != null) {
                 abierto.id
             } else {
@@ -226,6 +244,22 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
             } ?: return@launch
 
             val nowStr = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now())
+            if (!localOnly) {
+                val remoto = container.remoteEvaluation.iniciarIntento(userId, ac.id)
+                evaluacionDao.insertIntento(
+                    IntentoEntity(
+                        id = remoto.id,
+                        usuarioId = remoto.usuario.id,
+                        actividadCursoId = remoto.actividadCurso?.id ?: ac.id,
+                        fechaInicio = remoto.fechaInicio,
+                        fechaFin = remoto.fechaFin
+                    )
+                )
+                onIntentoCreado?.invoke(remoto.id)
+                loadResolverActividad(actividadId, cursoId, remoto.id)
+                return@launch
+            }
+
             val nuevoIntento = IntentoEntity(
                 usuarioId = userId,
                 actividadCursoId = ac.id,
@@ -427,6 +461,12 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
     fun finalizarIntento(intentoId: Long, onFinalizado: () -> Unit) {
         viewModelScope.launch {
             val currentState = _resolverState.value
+
+            if (!localOnly) {
+                finalizarIntentoRemoto(currentState, intentoId, onFinalizado)
+                return@launch
+            }
+
             var intento = currentState.intento ?: evaluacionDao.getIntentoById(intentoId)
 
             if (intento == null) {
@@ -468,11 +508,67 @@ class EstudianteViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    private suspend fun finalizarIntentoRemoto(
+        currentState: ResolverActividadState,
+        intentoId: Long,
+        onFinalizado: () -> Unit
+    ) {
+        val id = currentState.intento?.id ?: intentoId
+        runCatching {
+            val existentes = evaluacionDao.getRespuestasByIntentoId(id)
+                .map { it.preguntaId }
+                .toSet()
+
+            currentState.respuestasSeleccionadas.forEach { (preguntaId, alternativaId) ->
+                if (preguntaId !in existentes) {
+                    val respuesta = container.remoteEvaluation.responder(
+                        intentoId = id,
+                        preguntaId = preguntaId,
+                        alternativaId = alternativaId
+                    )
+                    evaluacionDao.insertRespuesta(
+                        RespuestaEntity(
+                            id = respuesta.id,
+                            intentoId = respuesta.intento.id,
+                            preguntaId = respuesta.pregunta.id,
+                            alternativaId = respuesta.alternativa.id
+                        )
+                    )
+                }
+            }
+
+            val cerrado = container.remoteEvaluation.cerrarIntento(id)
+            val intentoLocal = IntentoEntity(
+                id = cerrado.id,
+                usuarioId = cerrado.usuario.id,
+                actividadCursoId = cerrado.actividadCurso?.id
+                    ?: currentState.actividadCursoId,
+                fechaInicio = cerrado.fechaInicio,
+                fechaFin = cerrado.fechaFin
+            )
+            evaluacionDao.insertIntento(intentoLocal)
+
+            val newState = currentState.copy(
+                intento = intentoLocal,
+                estado = EstadoResolverActividad.RESULTADO
+            )
+            _resolverState.value = calcularResultadosInterno(
+                newState,
+                currentState.respuestasSeleccionadas
+            )
+            onFinalizado()
+        }.onFailure { error ->
+            _resolverState.value = currentState.copy(
+                estado = EstadoResolverActividad.ERROR,
+                errorMessage = error.message ?: "No se pudo guardar el intento"
+            )
+        }
+    }
+
     private fun calcularResultadosInterno(
         baseState: ResolverActividadState,
         respuestasMap: Map<Long, Long>
-    ): ResolverActividadState {
-        val detalles = baseState.preguntas.map { pConAlt ->
+    ): ResolverActividadState {        val detalles = baseState.preguntas.map { pConAlt ->
             val altCorrecta = pConAlt.alternativas.firstOrNull { it.correcta }?.id
             val altSeleccionada = respuestasMap[pConAlt.pregunta.id]
             val esCorrecta = altSeleccionada != null && altSeleccionada == altCorrecta

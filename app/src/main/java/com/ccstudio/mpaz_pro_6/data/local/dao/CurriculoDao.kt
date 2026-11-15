@@ -281,6 +281,16 @@ interface CurriculoDao {
     @Query("SELECT * FROM pregunta_actividad WHERE actividad_id = :actividadId")
     suspend fun getPreguntasByActividadId(actividadId: Long): List<PreguntaActividadEntity>
 
+    @Query("""
+        SELECT * FROM pregunta_actividad
+        WHERE actividad_id = :actividadId AND pregunta_id = :preguntaId
+        LIMIT 1
+    """)
+    suspend fun getPreguntaActividadByActividadYPregunta(
+        actividadId: Long,
+        preguntaId: Long
+    ): PreguntaActividadEntity?
+
     @Query("DELETE FROM pregunta_actividad WHERE actividad_id = :actividadId AND pregunta_id = :preguntaId")
     suspend fun deletePreguntaActividadByActividadYPregunta(actividadId: Long, preguntaId: Long)
 

@@ -3,8 +3,11 @@ package com.ccstudio.mpaz_pro_6.ui.docente
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ccstudio.mpaz_pro_6.MpazApplication
 import com.ccstudio.mpaz_pro_6.data.dto.informe.ActividadEvaluadaResumen
 import com.ccstudio.mpaz_pro_6.data.dto.informe.DetallePreliminarResponse
+import com.ccstudio.mpaz_pro_6.data.dto.informe.GenerarInformeRequest
+import com.ccstudio.mpaz_pro_6.data.dto.informe.InformePedagogicoDetalladoResponse
 import com.ccstudio.mpaz_pro_6.data.dto.informe.InformePreliminarResponse
 import com.ccstudio.mpaz_pro_6.data.local.MpazDatabase
 import com.ccstudio.mpaz_pro_6.data.local.dao.AsignaturaCursoDetalle
@@ -22,7 +25,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 data class InformesUiState(
@@ -34,6 +40,7 @@ data class InformesUiState(
     // Filtros
     val cursosAsignados: List<AsignaturaCursoDetalle> = emptyList(),
     val selectedCursoId: Long? = null,
+    val selectedAsignaturaCursoId: Long? = null,
     val estudiantesCurso: List<UsuarioEntity> = emptyList(),
     val selectedEstudianteId: Long? = null,
     val unidadesCurso: List<UnidadEntity> = emptyList(),
@@ -59,13 +66,15 @@ data class InformesUiState(
 
 class InformesViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = MpazDatabase.getDatabase(application)
+    private val container = (application as MpazApplication).container
+    private val db = container.database
     private val docenciaDao = db.docenciaDao()
     private val identidadDao = db.identidadDao()
     private val curriculoDao = db.curriculoDao()
     private val evaluacionDao = db.evaluacionDao()
     private val informeDao = db.informeDao()
-    private val sessionManager = SessionManager(application)
+    private val sessionManager = container.sessionManager
+    private val localOnly = container.localOnly
 
     private val _uiState = MutableStateFlow(InformesUiState())
     val uiState: StateFlow<InformesUiState> = _uiState.asStateFlow()
@@ -106,10 +115,12 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
                     )
                 }
 
-                // Autoseleccionar primer curso si existe
-                val primerCursoId = asignaturasCurso.firstOrNull()?.curso?.id
-                if (primerCursoId != null && _uiState.value.selectedCursoId == null) {
-                    onCursoSelected(primerCursoId)
+                // Autoseleccionar la primera asignatura-curso si existe
+                val primeraAsignaturaCurso = asignaturasCurso.firstOrNull()
+                if (primeraAsignaturaCurso != null &&
+                    _uiState.value.selectedAsignaturaCursoId == null
+                ) {
+                    onAsignaturaCursoSelected(primeraAsignaturaCurso)
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -122,18 +133,18 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun onCursoSelected(cursoId: Long) {
+    fun onAsignaturaCursoSelected(detalle: AsignaturaCursoDetalle) {
         viewModelScope.launch {
             try {
+                val cursoId = detalle.curso.id
+                val asignaturaId = detalle.asignatura.id
                 val estudiantes = docenciaDao.getEstudiantesByCursoId(cursoId)
 
-                // Obtener asignaturas del curso y sus unidades
-                val asignaturas = docenciaDao.getAsignaturasEntityByCursoId(cursoId)
-                val unidades = mutableListOf<UnidadEntity>()
-                for (asig in asignaturas) {
-                    val uList = curriculoDao.getUnidadesConDetallesByAsignaturaId(asig.id).map { it.unidad }
-                    unidades.addAll(uList)
-                }
+                // Las unidades deben pertenecer a la asignatura elegida: un
+                // curso puede ofrecer varias asignaturas y no deben mezclarse.
+                val unidades = curriculoDao
+                    .getUnidadesConDetallesByAsignaturaId(asignaturaId)
+                    .map { it.unidad }
 
                 val primerEstudianteId = estudiantes.firstOrNull()?.id
                 val primeraUnidadId = unidades.firstOrNull()?.id
@@ -141,6 +152,7 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
                 _uiState.update { state ->
                     state.copy(
                         selectedCursoId = cursoId,
+                        selectedAsignaturaCursoId = detalle.asignaturaCurso.id,
                         estudiantesCurso = estudiantes,
                         selectedEstudianteId = primerEstudianteId,
                         unidadesCurso = unidades,
@@ -149,7 +161,9 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error al seleccionar curso: ${e.message}") }
+                _uiState.update {
+                    it.copy(errorMessage = "Error al seleccionar asignatura: ${e.message}")
+                }
             }
         }
     }
@@ -187,7 +201,15 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             _uiState.update { it.copy(isCalculatingPreview = true, errorMessage = null) }
             try {
-                val preliminar = calcularInformePreliminar(estudianteId, unidadId, fechaCorte)
+                val preliminar = if (localOnly) {
+                    calcularInformePreliminar(estudianteId, unidadId, fechaCorte)
+                } else {
+                    container.remoteCatalog.previsualizarInforme(
+                        usuarioId = estudianteId,
+                        unidadId = unidadId,
+                        fechaCorte = fechaHoraIso(fechaCorte)
+                    )
+                }
                 _uiState.update {
                     it.copy(
                         isCalculatingPreview = false,
@@ -350,6 +372,33 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                if (!localOnly) {
+                    val response = container.remoteCatalog.generarInforme(
+                        GenerarInformeRequest(
+                            usuarioId = estudianteId,
+                            unidadId = unidadId,
+                            fecha = fechaIso(fecha),
+                            descripcion = descripcion.ifBlank {
+                                "Informe pedagógico emitido desde resultados"
+                            },
+                            fechaCorte = fechaHoraIso(fechaCorte)
+                        )
+                    )
+                    guardarInformeRemoto(response)
+                    val emitidosActualizados = informeDao.getAllInformesDetallados()
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            successMessage = "Informe pedagógico emitido exitosamente (ID #${response.informe.id}).",
+                            informesEmitidos = emitidosActualizados,
+                            preliminarResponse = null,
+                            descripcion = "",
+                            selectedTab = 0
+                        )
+                    }
+                    return@launch
+                }
+
                 // Insertar cabecera
                 val informeEntity = InformePedagogicoEntity(
                     usuarioId = estudianteId,
@@ -427,6 +476,9 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                if (!localOnly) {
+                    container.remoteCatalog.eliminarInforme(informeId)
+                }
                 informeDao.deleteDetallesByInformeId(informeId)
                 informeDao.deleteInformePedagogicoById(informeId)
 
@@ -449,4 +501,47 @@ class InformesViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
+
+    private suspend fun guardarInformeRemoto(response: InformePedagogicoDetalladoResponse) {
+        val informe = response.informe
+        informeDao.insertInformePedagogico(
+            InformePedagogicoEntity(
+                id = informe.id,
+                usuarioId = informe.usuario.id,
+                unidadId = informe.unidad.id,
+                fecha = informe.fecha,
+                descripcion = informe.descripcion,
+                fechaCorte = informe.fechaCorte,
+                origen = informe.origen
+            )
+        )
+        val detalles = response.detalles.map { detalle ->
+            DetalleInformePedagogicoEntity(
+                id = detalle.id,
+                informePedagogicoId = informe.id,
+                objetivoAprendizajeId = detalle.objetivoAprendizaje.id,
+                correctas = detalle.correctas,
+                incorrectas = detalle.incorrectas
+            )
+        }
+        if (detalles.isNotEmpty()) {
+            informeDao.insertDetallesInforme(detalles)
+        }
+    }
+
+    private fun fechaIso(value: String): String =
+        runCatching {
+            LocalDate.parse(value)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toString()
+        }.getOrElse { Instant.now().toString() }
+
+    private fun fechaHoraIso(value: String): String =
+        runCatching {
+            LocalDateTime.parse(
+                value,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            ).atZone(ZoneId.systemDefault()).toInstant().toString()
+        }.getOrElse { Instant.now().toString() }
 }

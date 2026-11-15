@@ -216,6 +216,7 @@ data class ActividadRequest(
 data class ActividadUpdateRequest(
     val instrucciones: String? = null,
     val tipoActividadId: Long? = null,
+    val contenidoId: Long? = null,
     val estadoId: Long? = null
 )
 @Serializable

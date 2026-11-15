@@ -157,7 +157,7 @@ fun DocenteInformesScreen(
                     )
                     1 -> GenerarInformeView(
                         uiState = uiState,
-                        onCursoSelected = { viewModel.onCursoSelected(it) },
+                        onAsignaturaCursoSelected = { viewModel.onAsignaturaCursoSelected(it) },
                         onEstudianteSelected = { viewModel.onEstudianteSelected(it) },
                         onUnidadSelected = { viewModel.onUnidadSelected(it) },
                         onFechaCorteChanged = { viewModel.setFechaCorte(it) },
@@ -414,7 +414,7 @@ fun InformesEmitidosView(
 @Composable
 fun GenerarInformeView(
     uiState: InformesUiState,
-    onCursoSelected: (Long) -> Unit,
+    onAsignaturaCursoSelected: (AsignaturaCursoDetalle) -> Unit,
     onEstudianteSelected: (Long) -> Unit,
     onUnidadSelected: (Long) -> Unit,
     onFechaCorteChanged: (String) -> Unit,
@@ -480,10 +480,14 @@ fun GenerarInformeView(
                     DropdownSelector(
                         label = "Curso y Asignatura",
                         items = uiState.cursosAsignados,
-                        selectedId = uiState.selectedCursoId,
+                        selectedId = uiState.selectedAsignaturaCursoId,
                         itemLabel = { "${it.nombreCompletoCurso} - ${it.asignatura.nombre}" },
-                        itemId = { it.curso.id },
-                        onSelected = { onCursoSelected(it) }
+                        itemId = { it.asignaturaCurso.id },
+                        onSelected = { asignaturaCursoId ->
+                            uiState.cursosAsignados
+                                .firstOrNull { it.asignaturaCurso.id == asignaturaCursoId }
+                                ?.let(onAsignaturaCursoSelected)
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))

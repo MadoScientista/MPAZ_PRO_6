@@ -22,6 +22,21 @@ Este documento contiene las directrices de arquitectura, convenciones de código
 
 ## 2. Estructura y Áreas Funcionales (26 Entidades)
 
+### Modo de ejecución
+
+- `MPAZ_LOCAL_ONLY=false` (default actual): la app usa Retrofit contra el backend
+  de 27 tablas, guarda el JWT en DataStore y sincroniza el catálogo, intentos,
+  respuestas e informes en Room como caché.
+- `MPAZ_LOCAL_ONLY=true` (`-PMPAZ_LOCAL_ONLY=true`): modo demo sin backend; usa
+  el seed local de Room y el login local.
+- El backend debe correr en `http://10.0.2.2:8080/` para el emulador o en la IP
+  LAN configurada con `MPAZ_BASE_URL`.
+- Dispositivo físico por USB: ejecutar `adb reverse tcp:8080 tcp:8080` y
+  compilar con `-PMPAZ_BASE_URL=http://127.0.0.1:8080/`. El túnel se pierde al
+  desconectar el cable o reiniciar ADB.
+- Guía completa de conexión (terminal, Android Studio, IntelliJ, emulador y
+  Wi-Fi): `README.md` en la raíz de este repositorio.
+
 El modelo de datos y la arquitectura están divididos en **5 características principales (features)**:
 
 | Feature | Descripción | Entidades (26) | DTOs & DAOs |
@@ -86,6 +101,9 @@ com.ccstudio.mpaz_pro_6/
 3. **Resúmenes anidados:**
    - Las respuestas de consulta no exponen entidades Room ni colecciones cíclicas. Usan DTOs `XxxResumen` (e.g., `CursoResumen`, `UnidadResumen`, `UsuarioResumen`).
 4. **Seguridad, Autenticación y Control de Acceso (RBAC):**
+   - En modo remoto, `POST /api/auth/login` devuelve un JWT Bearer; `ApiClient`
+     lo adjunta a cada llamada y `SessionManager` persiste token y expiración.
+   - Un `401` limpia la sesión y devuelve al login.
    - `UsuarioResponse` y `UsuarioResumen` **nunca** exponen la contraseña ni `passwordHash`.
    - `UsuarioRequest` sobrescribe `toString()` para imprimir `password='***'` e impedir fugas en logs.
    - Toda la navegación interna está protegida por `SessionManager` (DataStore Preferences) y `NavDestination.isRouteAllowedForRole` mediante `ProtectedScreen`. Para mayores detalles consultar `specs/5_seguridad.md`.

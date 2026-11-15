@@ -152,6 +152,35 @@ fun UsuariosListScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            state.errorMessage?.let { message ->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Row(
+                        modifier = Modifier.padding(start = 12.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = message,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        IconButton(onClick = { viewModel.clearUsuariosError() }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Cerrar error",
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            }
+
             if (state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
