@@ -213,6 +213,20 @@ val MIGRATION_6_8 = object : Migration(6, 8) {
     }
 }
 
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        seedFinalExamsLenguajeCiencias(db)
+    }
+}
+
+val MIGRATION_1_9 = object : Migration(1, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+val MIGRATION_2_9 = object : Migration(2, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+val MIGRATION_3_9 = object : Migration(3, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+val MIGRATION_4_9 = object : Migration(4, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+val MIGRATION_5_9 = object : Migration(5, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+val MIGRATION_6_9 = object : Migration(6, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+val MIGRATION_7_9 = object : Migration(7, 9) { override fun migrate(db: SupportSQLiteDatabase) { seedInitialData(db) } }
+
 fun seedInitialData(db: SupportSQLiteDatabase) {
     // 1. Roles
     db.execSQL("INSERT OR IGNORE INTO rol (rol_id, nombre) VALUES (1, 'UTP')")
@@ -1032,6 +1046,7 @@ Pasto → Saltamontes → Rana → Serpiente
 
     seedMathData(db)
     seedHistoryData(db)
+    seedFinalExamsLenguajeCiencias(db)
 }
 
 fun seedMathData(db: SupportSQLiteDatabase) {
@@ -1680,6 +1695,43 @@ Comprender estos antecedentes permite reconocer que la Independencia de Chile fo
     }
 }
 
+fun seedFinalExamsLenguajeCiencias(db: SupportSQLiteDatabase) {
+    // 1. Actualizar estado de las Unidades a PUBLICADO (4)
+    db.execSQL("UPDATE unidad SET estado_id = 4 WHERE unidad_id IN (1, 3)")
+
+    // 2. Actividades de Prueba Final (tipo_actividad_id = 3)
+    // Actividad 11: Prueba Final Lenguaje y Comunicación (Unidad 1, Contenido 1)
+    val instPFLenguaje = "Evaluación sumativa final de la Unidad de Lectura - Comprensión. Lee con atención cada enunciado y selecciona la opción correcta."
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (11, '$instPFLenguaje', 1, 3, 4)")
+
+    // Actividad 12: Prueba Final Ciencias Naturales (Unidad 3, Contenido 3)
+    val instPFCiencias = "Evaluación sumativa final de la Unidad de Ciencias de la Vida. Lee con atención cada enunciado y selecciona la opción correcta."
+    db.execSQL("INSERT OR IGNORE INTO actividad (actividad_id, instrucciones, contenido_id, tipo_actividad_id, estado_id) VALUES (12, '$instPFCiencias', 3, 3, 4)")
+
+    // 3. ActividadCurso (Configurar visibilidad en Cursos 1 y 2)
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (21, 11, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (22, 11, 2, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (23, 12, 1, 1, 1, 3)")
+    db.execSQL("INSERT OR IGNORE INTO actividad_curso (actividad_curso_id, actividad_id, curso_id, habilitada, visible, max_intentos) VALUES (24, 12, 2, 1, 1, 3)")
+
+    // 4. PreguntaActividad (Vincular preguntas existentes a las pruebas finales)
+    // Lenguaje: Actividad 11 junta las preguntas de Actividad 1 (Preguntas 1, 2, 3) y Actividad 2 (Preguntas 4, 5, 6)
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (49, 11, 1)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (50, 11, 2)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (51, 11, 3)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (52, 11, 4)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (53, 11, 5)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (54, 11, 6)")
+
+    // Ciencias: Actividad 12 junta las preguntas de Actividad 3 (Preguntas 7, 8, 9) y Actividad 4 (Preguntas 10, 11, 12)
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (55, 12, 7)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (56, 12, 8)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (57, 12, 9)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (58, 12, 10)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (59, 12, 11)")
+    db.execSQL("INSERT OR IGNORE INTO pregunta_actividad (id, actividad_id, pregunta_id) VALUES (60, 12, 12)")
+}
+
 @Database(
     entities = [
         // Identidad (5)
@@ -1719,7 +1771,7 @@ Comprender estos antecedentes permite reconocer que la Independencia de Chile fo
         InformePedagogicoEntity::class,
         DetalleInformePedagogicoEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -1751,7 +1803,8 @@ abstract class MpazDatabase : RoomDatabase() {
                     MIGRATION_4_5, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5,
                     MIGRATION_5_6, MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6,
                     MIGRATION_6_7, MIGRATION_1_7, MIGRATION_2_7, MIGRATION_3_7, MIGRATION_4_7, MIGRATION_5_7,
-                    MIGRATION_7_8, MIGRATION_1_8, MIGRATION_2_8, MIGRATION_3_8, MIGRATION_4_8, MIGRATION_5_8, MIGRATION_6_8
+                    MIGRATION_7_8, MIGRATION_1_8, MIGRATION_2_8, MIGRATION_3_8, MIGRATION_4_8, MIGRATION_5_8, MIGRATION_6_8,
+                    MIGRATION_8_9, MIGRATION_1_9, MIGRATION_2_9, MIGRATION_3_9, MIGRATION_4_9, MIGRATION_5_9, MIGRATION_6_9, MIGRATION_7_9
                 )
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
